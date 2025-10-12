@@ -5,21 +5,6 @@ S1 — Rule-Based Extraction (MVP)
 Берёт S0-вывод (s0.json) и rules/common.yaml, извлекает узлы/связи
 без LLM. Полярность (supports/refutes) определяется упрощённо по regex.
 
-Вход (s0.json, минимально):
-{
-  "doc_id": "demo",
-  "sections": [{"name": "Results", "text": "..."}, ...],
-  "captions": [{"id":"Fig1","text":"Figure 1: ..."}, ...]
-}
-
-Правила: rules/common.yaml (см. пример из ответа)
-
-Выход (graph.json):
-{
-  "doc_id": "demo",
-  "nodes": [{"id":"demo:Result:001","type":"Result","text":"...","prov":{...},"conf":0.83,"polarity":"positive"}],
-  "edges": [{"from":"...","to":"...","type":"produces","prov":{...},"conf":0.75}]
-}
 """
 
 from __future__ import annotations
@@ -272,9 +257,8 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
     edges = [e for e in edges if e["conf"] >= edge_thr]
 
     out = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
-    outp = Path(out_path)
-    outp.parent.mkdir(parents=True, exist_ok=True)
-    outp.write_text(json.dumps(out, ensure_ascii=False, indent=2))
+    out_dir = Path(out_path).parent
+    (out_dir / "s1_graph.json").write_text(json.dumps(out, ensure_ascii=False, indent=2))
 
     # --- s1_debug.json ---  # NEW
     debug = {
@@ -291,6 +275,6 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
             "candidates_head": candidates[:20],
         }
     }
-    debug_path = outp.parent / "s1_debug.json"
-    debug_path.write_text(json.dumps(debug, ensure_ascii=False, indent=2))  # NEW
+    debug_path = out_dir / "s1_debug.json"
+    debug_path.write_text(json.dumps(debug, ensure_ascii=False, indent=2))
     return out

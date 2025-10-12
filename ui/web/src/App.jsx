@@ -24,6 +24,7 @@ export default function App() {
     const [polling, setPolling] = useState(false);
     const [s0Preview, setS0Preview] = useState(null);
     const [graphPreview, setGraphPreview] = useState(null);
+    const [s2Preview, setS2Preview] = useState(null);
 
     // init cytoscape
     useEffect(() => {
@@ -83,6 +84,17 @@ export default function App() {
             setS1Preview(data.preview);
         } catch (e) {
             console.error("loadS1Preview failed", e);
+        }
+    }
+
+    async function loadS2Preview(idOverride) {
+        const id = idOverride || docId;
+        if (!id) return;
+        try {
+            const {data} = await axios.get(`${API}/preview/${encodeURIComponent(id)}/s2`);
+            setS2Preview(data.preview);
+        } catch (e) {
+            console.error("loadS2Preview failed", e);
         }
     }
 
@@ -184,6 +196,7 @@ export default function App() {
                 setPolling(false);
                 await loadS0Preview();
                 await loadS1Preview();
+                await loadS2Preview();
                 await loadGraphPreview();
                 await loadGraph();
             }
@@ -283,6 +296,16 @@ export default function App() {
 {s1Preview || "—"}
   </pre>
                     </details>
+                    <details style={{marginTop: 8}}>
+                        <summary>S2 preview (JSON)</summary>
+                        <pre style={{
+                            whiteSpace: "pre-wrap", fontSize: 12, maxHeight: 220, overflow: "auto",
+                            background: "#111", color: "#ddd", padding: 8, borderRadius: 6
+                        }}>
+{s2Preview || "—"}
+  </pre>
+                    </details>
+
                     <details style={{marginTop: 8}}>
                         <summary>Graph preview (JSON)</summary>
                         <pre style={{

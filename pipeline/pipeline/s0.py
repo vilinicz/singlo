@@ -187,8 +187,9 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
     tables = [{"id": cap["id"], "page": cap["page"], "caption": cap["text"]} for cap in captions if cap["kind"]=="Table"]
 
     # 5) Метаданные
+    doc_id_dir = Path(out_dir).name
     s0 = {
-        "doc_id": Path(pdf_path).stem,
+        "doc_id": doc_id_dir,
         "source_pdf": str(pdf_path),
         "page_count": len(doc),
         "metadata": {

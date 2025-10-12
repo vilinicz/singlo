@@ -71,15 +71,26 @@ def status(doc_id: str):
 
 @app.get("/preview/{doc_id}/{artifact}")
 def preview(doc_id: str, artifact: str):
-    base = EXPORT_DIR if artifact == "graph" else DATA_DIR
-    filename = "graph.json" if artifact == "graph" else "s0.json"
-    path = base / doc_id / filename
+    # куда и какой файл смотреть
+    mapping = {
+        "s0":   (DATA_DIR,   "s0.json"),
+        "graph":(EXPORT_DIR, "graph.json"),
+        "s1":   (EXPORT_DIR, "s1_debug.json"),
+        "s2":   (EXPORT_DIR, "s2_debug.json"),
+    }
+    if artifact not in mapping:
+        raise HTTPException(404, f"unknown artifact '{artifact}'")
+
+    base, fname = mapping[artifact]
+    path = base / doc_id / fname
     if not path.exists():
-        raise HTTPException(404, "artifact not found")
+        raise HTTPException(404, f"artifact not found: {path}")
+
     txt = path.read_text()
     if len(txt) > 50_000:
         txt = txt[:50_000] + "\n... [truncated]"
     return {"artifact": artifact, "path": str(path), "preview": txt}
+
 
 @app.get("/graph/{doc_id}")
 def get_graph(doc_id: str):
@@ -126,13 +137,3 @@ async def parse_pdf(
     q.enqueue("pipeline.worker.run_pipeline", doc_id, job_timeout=900)
 
     return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
-
-@app.get("/preview/{doc_id}/s1")
-def preview_s1(doc_id: str):
-    path = EXPORT_DIR / doc_id / "s1_debug.json"
-    if not path.exists():
-        raise HTTPException(404, "artifact not found")
-    txt = path.read_text()
-    if len(txt) > 50_000:
-        txt = txt[:50_000] + "\n... [truncated]"
-    return {"artifact": "s1", "path": str(path), "preview": txt}
