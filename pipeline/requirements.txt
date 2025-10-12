@@ -1,0 +1,26 @@
+# Core
+pydantic>=2.8
+pyyaml>=6.0.1
+regex>=2024.5.15
+rapidfuzz>=3.9.6
+pint>=0.23
+
+# NLP
+spacy>=3.7.5
+negspacy>=1.0.3
+
+# Embeddings (S2) - можно отключить, если не нужно на хакатоне
+sentence-transformers>=3.0.1
+faiss-cpu>=1.8.0.post1
+
+# IO
+ujson>=5.10.0
+orjson>=3.10.7
+
+# Queue (пример с RQ; можно заменить на Celery/Arq)
+rq==1.15.1
+redis>=5.0.7
+
+# Optional PDF utilities if you hook S0 here
+pymupdf>=1.24.9
+camelot-py[base]>=0.11.0

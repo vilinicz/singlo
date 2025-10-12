@@ -1,0 +1,83 @@
+meta:
+  version: "0.1"
+  section_weights:
+    Abstract: 0.4
+    Introduction: 0.6
+    Methods: 0.4
+    Results: 1.0
+    Discussion: 0.7
+    Conclusion: 0.7
+    FigureCaption: 0.9
+    TableCaption: 0.9
+  conf_thresholds:
+    node: 0.55
+    edge: 0.60
+
+elements:
+  - id: common/Hypothesis/hypothesize
+    type: Hypothesis
+    sections: [Introduction, Discussion, Abstract]
+    weight: 0.6
+    pattern: "(?i)\\b(we|this (?:study|work|paper))\\s+(?:hypothesi[sz]e|propose|predict|suggest)\\b[^\\.\\n]{10,300}"
+    negatives:
+      - "(?i)have been (?:hypothesized|suggested)"   # пересказ чужой гипотезы
+
+  - id: common/Experiment/treated_vs_control
+    type: Experiment
+    sections: [Methods, Results]
+    weight: 0.9
+    pattern: "(?i)\\b(treated|exposed|administered|injected|trained)\\b[^\\.\\n]{0,200}?(?:vs\\.?|compared\\s+to|control|baseline)\\b[^\\.\\n]{0,200}"
+
+  - id: common/Experiment/protocol
+    type: Experiment
+    sections: [Methods]
+    weight: 0.7
+    pattern: "(?i)\\b(we\\s+(?:conducted|performed|ran)|protocol|experimental setup)\\b[^\\.\\n]{10,300}"
+
+  - id: common/Result/p_value
+    type: Result
+    sections: [Results, FigureCaption, TableCaption, Abstract]
+    weight: 1.0
+    pattern: "(?i)\\bp\\s*[<>=]\\s*0?\\.\\d+"
+
+  - id: common/Result/percent_delta
+    type: Result
+    sections: [Results, FigureCaption, TableCaption, Abstract]
+    weight: 0.9
+    pattern: "(?i)\\b(?:increase|decrease)[sd]?\\s+by\\s+\\d+(?:\\.\\d+)?\\s*%|\\d+(?:\\.\\d+)?\\s*%\\s*(?:increase|decrease)"
+
+  - id: common/Result/significant
+    type: Result
+    sections: [Results, FigureCaption, TableCaption]
+    weight: 0.8
+    pattern: "(?i)\\b(significant(?:ly)?)\\b[^\\.\\n]{0,160}"
+
+  - id: common/Method/used
+    type: Method
+    sections: [Methods, Results]
+    weight: 0.5
+    pattern: "(?i)\\b(we\\s+(?:used|applied|employed|implemented)|using|with)\\b[^\\.\\n]{10,200}\\b(assay|protocol|kit|algorithm|pipeline|model|dataset)\\b"
+
+hedging:
+  words: ["may","might","could","possibly","likely","suggest","appears","seems","trend","not significant","ns","trend toward"]
+
+relations:
+  - id: produces
+    from: Experiment
+    to: Result
+    rule: "same_section OR shared_figure"
+
+  - id: uses
+    from: [Experiment, Result]
+    to: Method
+    rule: "sentence_window<=2 OR same_paragraph"
+
+  - id: supports
+    from: [Result, Conclusion]
+    to: Hypothesis
+    rule: "polarity==positive AND entity_overlap>=1"
+
+  - id: refutes
+    from: [Result, Conclusion]
+    to: Hypothesis
+    rule: "polarity==negative AND entity_overlap>=1"

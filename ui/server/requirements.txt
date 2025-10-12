@@ -1,0 +1,6 @@
+rq==1.15.1
+redis>=5.0.7
+fastapi>=0.114.2
+uvicorn[standard]>=0.30.6
+pydantic>=2.8
+python-multipart>=0.0.9
