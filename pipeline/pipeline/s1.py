@@ -49,27 +49,46 @@ def _rx(p: str) -> Pattern:
     return re.compile(p, flags=re.I | re.M)
 
 
-def load_rules(path: str) -> Tuple[Dict[str, Any], Set[str], List[Rule], List[Dict[str, Any]]]:
+def load_rules(path: str):
     cfg = yaml.safe_load(Path(path).read_text())
-    meta = cfg.get("meta", {})
-    hedge_words = set(cfg.get("hedging", {}).get("words", []))
+    if not isinstance(cfg, dict):
+        raise ValueError(f"Rules file is not a mapping: {path}")
 
-    rules: List[Rule] = []
-    for r in cfg.get("elements", []):
-        rules.append(
-            Rule(
-                id=r["id"],
-                type=r["type"],
-                sections=set(r.get("sections", [])),
-                weight=float(r.get("weight", 0.5)),
-                regex=_rx(r["pattern"]),
-                negatives=[_rx(p) for p in r.get("negatives", [])],
-                captures=r.get("captures", []),
-            )
-        )
+    meta = cfg.get("meta", {}) or {}
+    hedge_words = set((cfg.get("hedging") or {}).get("words", []) or [])
+    raw_elements = cfg.get("elements") or []
+    if not isinstance(raw_elements, list):
+        raise ValueError(f"'elements' must be a list in {path}")
 
-    relations = cfg.get("relations", [])
+    rules = []
+    for idx, r in enumerate(raw_elements):
+        if not isinstance(r, dict):
+            raise ValueError(f"elements[{idx}] is not a mapping in {path}")
+        try:
+            rid = r["id"]
+            rtype = r["type"]
+            pattern = r["pattern"]
+        except KeyError as ke:
+            raise ValueError(f"Missing key {ke} in elements[{idx}] (id={r.get('id')}) in {path}") from None
+
+        sections = set(r.get("sections", []))
+        weight = float(r.get("weight", 0.5))
+        negatives = [re.compile(p, re.I | re.M) for p in r.get("negatives", [])]
+        captures = r.get("captures", [])
+
+        rules.append(Rule(
+            id=rid,
+            type=rtype,
+            sections=sections,
+            weight=weight,
+            regex=re.compile(pattern, re.I | re.M),
+            negatives=negatives,
+            captures=captures
+        ))
+
+    relations = cfg.get("relations", []) or []
     return meta, hedge_words, rules, relations
+
 
 
 # ------------------------- Helpers -------------------------
@@ -242,20 +261,36 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
     sections = s0.get("sections", [])
     captions = s0.get("captions", [])
 
-    nodes = match_rules(doc_id, sections, captions, meta, hedge_words, rule_objs)
+    # --- кандидаты ДО порогов (для отладки) ---  # NEW
+    candidates = match_rules(doc_id, sections, captions, meta, hedge_words, rule_objs)
 
-    # Порог по уверенности для узлов
     node_thr = float(meta.get("conf_thresholds", {}).get("node", 0.55))
-    nodes = [n for n in nodes if n["conf"] >= node_thr]
+    nodes = [n for n in candidates if n["conf"] >= node_thr]
 
-    # Внутри-документные рёбра
     edges = link_inside(doc_id, nodes, meta)
-
-    # Порог для рёбер
     edge_thr = float(meta.get("conf_thresholds", {}).get("edge", 0.6))
     edges = [e for e in edges if e["conf"] >= edge_thr]
 
     out = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
-    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(out_path).write_text(json.dumps(out, ensure_ascii=False, indent=2))
+    outp = Path(out_path)
+    outp.parent.mkdir(parents=True, exist_ok=True)
+    outp.write_text(json.dumps(out, ensure_ascii=False, indent=2))
+
+    # --- s1_debug.json ---  # NEW
+    debug = {
+        "doc_id": doc_id,
+        "summary": {
+            "candidates_total": len(candidates),
+            "nodes_after_threshold": len(nodes),
+            "edges_after_threshold": len(edges),
+            "node_threshold": node_thr,
+            "edge_threshold": edge_thr,
+            "section_names": list({s.get("name","Unknown") for s in sections}),
+        },
+        "samples": {
+            "candidates_head": candidates[:20],
+        }
+    }
+    debug_path = outp.parent / "s1_debug.json"
+    debug_path.write_text(json.dumps(debug, ensure_ascii=False, indent=2))  # NEW
     return out

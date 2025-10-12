@@ -1,14 +1,16 @@
 meta:
   version: "0.1"
   section_weights:
-    Abstract: 0.4
+    Abstract: 0.5
     Introduction: 0.6
-    Methods: 0.4
+    Methods: 0.6
     Results: 1.0
     Discussion: 0.7
     Conclusion: 0.7
     FigureCaption: 0.9
     TableCaption: 0.9
+    Body: 0.6
+    Unknown: 0.5
   conf_thresholds:
     node: 0.55
     edge: 0.60
@@ -16,7 +18,7 @@ meta:
 elements:
   - id: common/Hypothesis/hypothesize
     type: Hypothesis
-    sections: [Introduction, Discussion, Abstract]
+    sections: [Introduction, Discussion, Abstract, Body, Unknown]
     weight: 0.6
     pattern: "(?i)\\b(we|this (?:study|work|paper))\\s+(?:hypothesi[sz]e|propose|predict|suggest)\\b[^\\.\\n]{10,300}"
     negatives:
@@ -24,39 +26,40 @@ elements:
 
   - id: common/Experiment/treated_vs_control
     type: Experiment
-    sections: [Methods, Results]
+    sections: [Methods, Results, Body, Unknown]
     weight: 0.9
     pattern: "(?i)\\b(treated|exposed|administered|injected|trained)\\b[^\\.\\n]{0,200}?(?:vs\\.?|compared\\s+to|control|baseline)\\b[^\\.\\n]{0,200}"
 
-  - id: common/Experiment/protocol
+  - id: common/Experiment/treated_vs_control
     type: Experiment
-    sections: [Methods]
-    weight: 0.7
-    pattern: "(?i)\\b(we\\s+(?:conducted|performed|ran)|protocol|experimental setup)\\b[^\\.\\n]{10,300}"
+    sections: [ Methods, Results, Body, Unknown ]
+    weight: 0.9
+    pattern: "(?i)\\b(treat(?:ed|ment)?|expos(?:e|ed|ure)|administered|injected|trained|applied)\\b[^\\.\\n]{0,300}?(?:vs\\.?|versus|compared\\s+to|control|baseline)\\b[^\\.\\n]{0,300}"
 
   - id: common/Result/p_value
     type: Result
-    sections: [Results, FigureCaption, TableCaption, Abstract]
+    sections: [Results, FigureCaption, TableCaption, Abstract, Body, Unknown]
     weight: 1.0
     pattern: "(?i)\\bp\\s*[<>=]\\s*0?\\.\\d+"
 
   - id: common/Result/percent_delta
     type: Result
-    sections: [Results, FigureCaption, TableCaption, Abstract]
+    sections: [Results, FigureCaption, TableCaption, Abstract, Body, Unknown]
     weight: 0.9
     pattern: "(?i)\\b(?:increase|decrease)[sd]?\\s+by\\s+\\d+(?:\\.\\d+)?\\s*%|\\d+(?:\\.\\d+)?\\s*%\\s*(?:increase|decrease)"
 
   - id: common/Result/significant
     type: Result
-    sections: [Results, FigureCaption, TableCaption]
+    sections: [Results, FigureCaption, TableCaption, Body, Unknown]
     weight: 0.8
     pattern: "(?i)\\b(significant(?:ly)?)\\b[^\\.\\n]{0,160}"
 
   - id: common/Method/used
     type: Method
-    sections: [Methods, Results]
+    sections: [ Methods, Results, Body, Unknown ]
     weight: 0.5
-    pattern: "(?i)\\b(we\\s+(?:used|applied|employed|implemented)|using|with)\\b[^\\.\\n]{10,200}\\b(assay|protocol|kit|algorithm|pipeline|model|dataset)\\b"
+    pattern: "(?i)\\b(we\\s+(?:used|applied|employed|implemented)|using|with)\\b[^\\.\\n]{10,300}\\b(assay|protocol|kit|algorithm|pipeline|model|dataset|procedure|method)\\b"
+
 
 hedging:
   words: ["may","might","could","possibly","likely","suggest","appears","seems","trend","not significant","ns","trend toward"]

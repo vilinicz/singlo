@@ -1,9 +1,11 @@
 import os, json, time
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import redis
+from uuid import uuid4
+import re
 from rq import Queue
 
 # -------------------- App --------------------
@@ -36,32 +38,6 @@ class ParseResp(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.post("/parse", response_model=ParseResp)
-async def parse_pdf(doc_id: str, file: UploadFile = File(...)):
-    """
-    Мини-S0: сохраняем PDF и создаём простую s0-заглушку.
-    Этого достаточно, чтобы пройти цикл Parse -> Extract -> Graph.
-    """
-    doc_dir = DATA_DIR / doc_id
-    doc_dir.mkdir(parents=True, exist_ok=True)
-    pdf_path = doc_dir / "input.pdf"
-    with pdf_path.open("wb") as f:
-        f.write(await file.read())
-
-    # S0-заглушка: одна секция + caption, чтобы S1 не падал
-    s0 = {
-        "doc_id": doc_id,
-        "sections": [
-            {"name": "Results", "text": "Example results text with p=0.008 and 9% increase."}
-        ],
-        "captions": [
-            {"id": "Fig1", "text": "Figure 1: Example caption with significant effect (p=0.008)."}
-        ]
-    }
-    s0_path = doc_dir / "s0.json"
-    s0_path.write_text(json.dumps(s0, ensure_ascii=False, indent=2))
-    return {"doc_id": doc_id, "s0_path": str(s0_path)}
 
 @app.post("/extract")
 def extract_graph(doc_id: str):
@@ -111,3 +87,52 @@ def get_graph(doc_id: str):
     if not gpath.exists():
         raise HTTPException(404, f"graph not found for {doc_id}")
     return json.loads(gpath.read_text())
+
+def _slugify(name: str) -> str:
+    slug = re.sub(r'[^a-zA-Z0-9_-]+', '-', name).strip('-').lower()
+    return slug or 'doc'
+
+@app.post("/parse", response_model=ParseResp)
+async def parse_pdf(
+    doc_id: str | None = Query(default=None),
+    file: UploadFile = File(...)
+):
+    """
+    Принимаем PDF, генерируем doc_id, сохраняем input.pdf и
+    АСИНХРОННО запускаем полный пайплайн S0→S1→S2 в воркере.
+    """
+    # 1) doc_id
+    if not doc_id or doc_id.strip() == "" or doc_id == "demo":
+        stem = Path(file.filename or "doc").stem
+        doc_id = f"{_slugify(stem)}-{str(uuid4())[:8]}"
+
+    # 2) сохранить PDF
+    doc_dir = DATA_DIR / doc_id
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    pdf_path = doc_dir / "input.pdf"
+    with pdf_path.open("wb") as f:
+        f.write(await file.read())
+
+    # 3) пометить статус "queued" и запустить конвейер
+    r = _r()
+    r.hset(_status_key(doc_id), mapping={
+        "state": "queued",
+        "stage": "queued",
+        "started_at": time.time(),
+        "stages": json.dumps([]),
+        "artifacts": json.dumps({})
+    })
+    q = Queue("singularis", connection=r)
+    q.enqueue("pipeline.worker.run_pipeline", doc_id, job_timeout=900)
+
+    return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
+
+@app.get("/preview/{doc_id}/s1")
+def preview_s1(doc_id: str):
+    path = EXPORT_DIR / doc_id / "s1_debug.json"
+    if not path.exists():
+        raise HTTPException(404, "artifact not found")
+    txt = path.read_text()
+    if len(txt) > 50_000:
+        txt = txt[:50_000] + "\n... [truncated]"
+    return {"artifact": "s1", "path": str(path), "preview": txt}
