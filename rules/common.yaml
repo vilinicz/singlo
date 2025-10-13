@@ -24,6 +24,36 @@ meta:
   conf_thresholds:
     node: 0.55
     edge: 0.60
+  conf_boosts:
+    caption: 0.08
+    capture: 0.05
+    short_penalty: 0.06
+    edge_participation: 0.02
+    seeds:
+      regexes:
+        - "\\bwe\\s+(propose|present|introduce)\\b"
+        - "\\b(statistically\\s+)?significant\\b"
+        - "\\bp\\s*[<≤]\\s*0\\.(?:0[1-5]|05)\\b"
+        - "\\b(increase|decrease|improve|reduce)[sd]?\\b"
+      method_lexicon:
+        - "svm"
+        - "eegnet"
+        - "pca"
+        - "random forest"
+  auto_learn:
+    enable: true
+    trigger:
+      min_node_types: 2
+      min_edges: 1
+      fallback_if_zero_nodes: true
+    review:
+      mode: "auto-approve-if-sane"   # либо "manual"
+      sanity_limits:
+        max_regex_len: 320
+        max_new_rules_per_doc: 6
+        forbidden_tokens: [ "(?s).*?\\1", "(?R)", "(?0)" ]  # рекурсии/катастрофы запрещены
+    storage:
+      dir: "rules_learned"           # куда писать новые rules-паки (yaml)
 
 hedging:
   words:
