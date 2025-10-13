@@ -1,0 +1,63 @@
+/* Оверлеи рисуем прямо поверх канваса cytoscape */
+.cols-hood {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    pointer-events: none; /* не блокировать взаимодействие с графом */
+    z-index: 10; /* поверх canvas */
+    font-weight: 600;
+    color: #374151;
+    font-size: 13px;
+    text-shadow: 0 1px 0 #fff;
+}
+
+.cols-hood .col-head {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* легенда внутри контейнера, справа-снизу */
+.legend-box {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+    z-index: 10;
+    pointer-events: none;
+    font-size: 12px;
+    color: #111827;
+    max-width: 360px;
+}
+
+.legend-box .legend-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.legend-box .legend-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 6px 0;
+    line-height: 1.25;
+}
+
+.legend-box .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+.legend-box .legend-text {
+    flex: 1;
+}
