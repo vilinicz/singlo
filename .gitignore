@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+.env
+
+# Logs
+*.log
+
+# IDEs and editors
+.idea/
+.vscode/
+*.code-workspace
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Project-specific artifacts
+export/
+data/
+pipeline/data/
+pipeline/export/
+article.pdf
+
+# Local overrides
+*.local
