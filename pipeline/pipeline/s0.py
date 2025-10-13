@@ -23,9 +23,20 @@ SECTION_PAT = re.compile(
 )
 ALLCAPS_SECTION_PAT = re.compile(r"^[A-Z][A-Z\s\-]{3,}$")
 
-FIG_PAT = re.compile(r"^\s*(Figure|Fig\.)\s*([A-Za-z]?\d+[A-Za-z]?)\s*[:\-]?\s*(.*)$", re.I)
-TAB_PAT = re.compile(r"^\s*(Table|Tab\.|TABLE)\s*([A-Za-z]?\d+[A-Za-z]?)?\s*[:\-]?\s*(.*)$", re.I)
-TAB_ROMAN_PAT = re.compile(r"^\s*TABLE\s+([IVXLC]+)\s*[:\-]?\s*(.*)$", re.I)
+CAPTION_PAT = re.compile(
+    r"""
+    ^\s*
+    (?P<label>fig(?:\.|ure)?|table|tab\.)
+    \s*
+    (?P<num>[A-Za-z0-9]+(?:[.\-][A-Za-z0-9]+)*)?
+    \s*
+    (?P<punct>[:.\-–—])
+    \s*
+    (?P<body>.*)
+    $
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
 # --------- DocID helpers ---------
 
@@ -121,6 +132,17 @@ def _normalize_text(text: str) -> str:
 
 # --------- Вытаскиваем строки/капшены со страницы ---------
 
+def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
+    """Определяем, является ли строка началом подписи и возвращаем (kind, num, body)."""
+    m = CAPTION_PAT.match(line or "")
+    if not m:
+        return None
+    label = m.group("label").lower()
+    kind = "Figure" if label.startswith("fig") else "Table"
+    num = (m.group("num") or "").strip()
+    tail = (m.group("body") or "").strip()
+    return kind, num, tail
+
 def _extract_page_lines(page: fitz.Page) -> List[str]:
     return page.get_text("text").splitlines()
 
@@ -160,44 +182,23 @@ def _collect_captions(lines: List[str], page_no: int) -> List[Caption]:
     i = 0
     while i < len(lines):
         line = lines[i]
-        m_fig = FIG_PAT.match(line)
-        m_tab = TAB_PAT.match(line)
-        m_tab_roman = TAB_ROMAN_PAT.match(line)
-
-        if m_tab_roman:
-            num = m_tab_roman.group(1)
-            tail = m_tab_roman.group(2).strip()
+        cap_head = _match_caption(line)
+        if cap_head:
+            kind, num, tail = cap_head
+            cap_id = f"{kind}{num}" if num else kind
             buf = [tail] if tail else []
             j = i + 1
             while j < len(lines):
-                nxt = (lines[j] or "").strip()
+                nxt_raw = lines[j]
+                nxt = (nxt_raw or "").strip()
                 if not nxt:
                     break
-                if FIG_PAT.match(nxt) or TAB_PAT.match(nxt) or TAB_ROMAN_PAT.match(nxt) or _is_section_heading(nxt):
+                if _match_caption(nxt_raw) or _is_section_heading(nxt):
                     break
-                buf.append(nxt);
+                buf.append(nxt)
                 j += 1
-            caps.append(Caption(kind="Table", id=f"Table{num}", page=page_no, text=" ".join(buf).strip()))
-            i = j;
-            continue
-
-        if m_fig or m_tab:
-            kind = "Figure" if m_fig else "Table"
-            m = m_fig or m_tab
-            num = (m.group(2) or "").strip()
-            tail = (m.group(3) or "").strip()
-            buf = [tail] if tail else []
-            j = i + 1
-            while j < len(lines):
-                nxt = (lines[j] or "").strip()
-                if not nxt:
-                    break
-                if FIG_PAT.match(nxt) or TAB_PAT.match(nxt) or _is_section_heading(nxt):
-                    break
-                buf.append(nxt);
-                j += 1
-            caps.append(Caption(kind=kind, id=f"{kind}{num}", page=page_no, text=" ".join(buf).strip()))
-            i = j;
+            caps.append(Caption(kind=kind, id=cap_id, page=page_no, text=" ".join(buf).strip()))
+            i = j
             continue
 
         i += 1
@@ -299,14 +300,20 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
 
     # 3) приводим капшены
     captions = []
+    seen_caps = set()
     for c in all_captions:
         if not c.text:
             continue
+        norm_text = _normalize_text(c.text)
+        key = (c.id, norm_text, c.page)
+        if key in seen_caps:
+            continue
+        seen_caps.add(key)
         captions.append({
             "id": c.id,
             "kind": c.kind,
             "page": c.page,
-            "text": _normalize_text(c.text)
+            "text": norm_text
         })
     tables = [{"id": cap["id"], "page": cap["page"], "caption": cap["text"]}
               for cap in captions if cap["kind"] == "Table"]
