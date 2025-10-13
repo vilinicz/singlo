@@ -187,7 +187,7 @@ export default function App() {
             }
 
             // --- edges: filter by confidence and cap fan-out ---
-            const EDGE_CONF_MIN = 0.62;
+            const EDGE_CONF_MIN = 0.55;
             const MAX_FAN_OUT = 3;
             const outCount = {};
             const prunedEdges = [];
