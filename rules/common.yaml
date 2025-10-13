@@ -1,147 +1,183 @@
-meta:
-  version: "0.2"
-  section_weights:
-    Abstract: 0.6
-    Introduction: 0.8
-    Background: 0.7
-    Methods: 0.8
-    "Materials and Methods": 0.8
-    "Materials & Methods": 0.8
-    Model: 0.85
-    Modeling: 0.85
-    Evaluation: 0.9
-    Results: 1.0
-    "Results and Discussion": 1.0
-    Discussion: 0.9
-    Conclusion: 0.9
-    Conclusions: 0.9
-    Related Work: 0.6
-    Limitations: 0.6
-    FigureCaption: 0.95
-    TableCaption: 0.95
-    Body: 0.6
-    Unknown: 0.5
-  conf_thresholds:
-    node: 0.55
-    edge: 0.60
-  conf_boosts:
-    caption: 0.08
-    capture: 0.05
-    short_penalty: 0.06
-    edge_participation: 0.02
-    seeds:
-      regexes:
-        - "\\bwe\\s+(propose|present|introduce)\\b"
-        - "\\b(statistically\\s+)?significant\\b"
-        - "\\bp\\s*[<≤]\\s*0\\.(?:0[1-5]|05)\\b"
-        - "\\b(increase|decrease|improve|reduce)[sd]?\\b"
-      method_lexicon:
-        - "svm"
-        - "eegnet"
-        - "pca"
-        - "random forest"
-  auto_learn:
-    enable: true
-    trigger:
-      min_node_types: 2
-      min_edges: 1
-      fallback_if_zero_nodes: true
-    review:
-      mode: "auto-approve-if-sane"   # либо "manual"
-      sanity_limits:
-        max_regex_len: 320
-        max_new_rules_per_doc: 6
-        forbidden_tokens: [ "(?s).*?\\1", "(?R)", "(?0)" ]  # рекурсии/катастрофы запрещены
-    storage:
-      dir: "rules_learned"           # куда писать новые rules-паки (yaml)
+# ==============================================================================
+# Singularis — S1 rules config (Regex/Heuristics)
+# Канон типов: Input Fact, Hypothesis, Experiment, Technique, Result, Dataset, Analysis, Conclusion
+# ==============================================================================
 
-hedging:
-  words:
+meta:
+  # Пороговые значения уверенности
+  conf_thresholds:
+    node: 0.40
+    edge: 0.55
+
+  # Веса секций (норм. от 0 до 1). Можно расширять под домен.
+  section_weights:
+    abstract: 0.55
+    introduction: 0.50
+    background: 0.50
+    related work: 0.45
+    methods: 0.70
+    "materials and methods": 0.70
+    methodology: 0.68
+    results: 0.85
+    "results and discussion": 0.85
+    discussion: 0.65
+    conclusion: 0.70
+    conclusions: 0.70
+    figurecaption: 0.92
+    tablecaption: 0.90
+    body: 0.55
+    unknown: 0.50
+
+  # Доп. бусты/штрафы для conf (поддерживается в доработанном s1.py)
+  conf_boosts:
+    caption: 0.08            # + к весу секции, если это подпись фигуры/таблицы
+    capture: 0.05            # + если у правила сработали именованные группы
+    short_penalty: 0.06      # - если предложение слишком короткое (< ~40 символов)
+    edge_participation: 0.02 # + узлам, вошедшим в ребро при линковке
+
+  # Слова «осторожности» для штрафа hedging (s1.py читает из правил/кода)
+  hedge_words:
     - may
     - might
     - could
-    - possibly
-    - likely
     - appears
-    - seems
-    - suggest
-    - suggest that
-    - trend
-    - not significant
-    - ns
+    - likely
+    - suggest(s)?
+    - possible
+    - potentially
     - approximately
     - around
 
+  # Семена для поиска «gap»-предложений (S1.5 AutoRule)
+  seeds:
+    # Предикативные маркеры «пахнущих» предложений
+    regexes:
+      - "\\bwe\\s+(propose|present|introduce|evaluate|demonstrate|show)\\b"
+      - "\\b(statistically\\s+)?significant\\b"
+      - "\\bp\\s*[<≤]\\s*0\\.(?:0[1-5]|05)\\b"
+      - "\\b(increase|decrease|improve|reduce)[sd]?\\b"
+      - "\\baccuracy\\b\\s*\\d{2,3}(\\.\\d+)?\\s?%\\b"
+    # Лексикон методов/моделей/алгоритмов для «мягкого фильтра»
+    method_lexicon:
+      - "svm"
+      - "random forest"
+      - "logistic regression"
+      - "xgboost"
+      - "pca"
+      - "k-means"
+      - "cnn"
+      - "transformer"
+      - "eegnet"
+      - "resnet"
+      - "unet"
+    # Минимальный вес секции для отбора gap-предложений
+    min_section_weight: 0.5
+
+  # Настройки линковки внутри статьи (S1 близостная + S2 фильтрация)
+  linking:
+    window_sentences: 2     # сколько предложений смотреть вперёд/назад для prox-ребер
+    max_neighbours: 2       # максимум кандидатов на каждое правило линковки
+    # Базовые «намерения» линковки из S1 (S2 затем валидирует):
+    patterns:
+      - from: "Technique"
+        to: "Experiment"
+        type: "uses"
+      - from: "Dataset"
+        to: "Experiment"
+        type: "feeds"
+      - from: "Experiment"
+        to: "Result"
+        type: "produces"
+      - from: "Result"
+        to: "Hypothesis"
+        type: "supports_or_refutes"   # S2 уточнит по полярности
+      - from: "Result"
+        to: "Analysis"
+        type: "informs"
+      - from: "Analysis"
+        to: "Conclusion"
+        type: "summarizes"
+      - from: "Input Fact"
+        to: "Hypothesis"
+        type: "informs"
+
+# ------------------------------------------------------------------------------
+# Авто-дообучение (S1.5 AutoRule): когда звать LLM и куда сохранять YAML правил
+# ------------------------------------------------------------------------------
+auto_learn:
+  enable: true
+  trigger:
+    min_node_types: 2
+    min_edges: 1
+    fallback_if_zero_nodes: true
+  review:
+    mode: "auto-approve-if-sane"  # либо "manual"
+    sanity_limits:
+      max_regex_len: 320
+      max_new_rules_per_doc: 6
+      forbidden_tokens: ["(?R)", "(?0)", "(?1)", "(?s).*?\\1"]  # защита от рекурсии/катастроф
+  storage:
+    dir: "rules_learned"          # сюда пишем сгенерированные YAML
+
+# ------------------------------------------------------------------------------
+# Необязательные синонимы/шаблоны для развёртывания паттернов (мягкий DSL)
+# Если rule имеет expand: true — @placeholder разворачивается в альтернативы.
+# ------------------------------------------------------------------------------
+synonyms:
+  supports_verb: ["demonstrate(?:s|d)?", "show(?:s|ed)?", "indicat(?:es|ed|e)"]
+  result_words: ["increase(?:s|d)?", "decrease(?:s|d)?", "improv(?:e|es|ed)", "reduc(?:e|es|ed)"]
+  propose_verb: ["propos(?:e|es|ed)", "introduc(?:e|es|ed)", "present(?:s|ed)"]
+  test_verb: ["test(?:s|ed)?", "evaluat(?:e|es|ed)"]
+
+# ------------------------------------------------------------------------------
+# Правила извлечения (elements) — универсальные + лёгкие доменные (пример)
+# type ДОЛЖЕН быть одним из 8 канонических; S2 всё равно нормализует.
+# ------------------------------------------------------------------------------
 elements:
 
-  # ---------- GENERIC / THEORY ----------
-  - id: generic/Hypothesis/propose_model
-    type: Hypothesis
-    sections: [Abstract, Introduction, Discussion, Conclusion, Body, Unknown]
-    weight: 0.9
-    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|introduce|present|advance|consider|examine|explore|hypothesi[sz]e)\\b.{0,200}?\\b(model|framework|hypothesis)\\b"
+  # ====== INPUT FACT ==========================================================
+  - id: "generic/InputFact/assumption_known"
+    type: "Input Fact"
+    weight: 0.66
+    sections: ["Introduction","Background","Body","Unknown"]
+    pattern: "\\b(it\\s+is\\s+(well\\s+)?known|we\\s+assume|assumption)\\b.{0,160}"
+    negatives: []
+    captures: []
 
-  - id: generic/Method/advection_diffusion
-    type: Method
-    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model, Modeling]
-    weight: 0.9
-    pattern: "(?is)\\b(advection[\\s\\-–]?diffusion|brownian\\s+motion|random\\s+walk|gaussian\\s+distribution|binomial\\s+(?:model|distribution))\\b"
+  - id: "generic/InputFact/dataset_property"
+    type: "Input Fact"
+    weight: 0.64
+    sections: ["Introduction","Methods","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(ground\\s+truth|gold\\s+standard|baseline)\\b.{0,120}"
+    negatives: []
+    captures: []
 
-  - id: generic/Method/fit_equation
-    type: Method
-    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model]
-    weight: 0.8
-    pattern: "(?is)\\b(we\\s+fit|fitted\\s+to|fits?\\s+to)\\b.{0,160}?\\b(equation|model)\\b"
+  # ====== HYPOTHESIS ==========================================================
+  - id: "generic/Hypothesis/propose_model"
+    type: "Hypothesis"
+    weight: 0.72
+    sections: ["Introduction","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b@propose_verb\\b.{0,140}?\\b(model|framework|hypothesis)\\b"
+    expand: true
+    negatives:
+      - "\\b(not|no)\\s+(evidence|support)\\b"
+    captures: ["verb","object"]
 
-  - id: generic/Result/fit_quality
-    type: Result
-    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 0.85
-    pattern: "(?is)\\b(fits?\\s+(?:reasonably\\s+)?well|goodness\\s+of\\s+fit|matches?\\s+the\\s+data|demonstrates?\\s+that|predicts?\\s+that)\\b"
+  - id: "generic/Hypothesis/predicts_effect"
+    type: "Hypothesis"
+    weight: 0.68
+    sections: ["Introduction","Body","Unknown"]
+    pattern: "\\b(hypothesi[sz]e|predict(?:s|ed)?)\\b.{0,140}"
+    negatives: []
+    captures: ["verb"]
 
-  - id: generic/Result/entropy_increases
-    type: Result
-    sections: [Results, "Results and Discussion", Discussion, Abstract, Body, Unknown]
-    weight: 0.9
-    pattern: "(?is)\\b(entropy)\\b.{0,80}?\\b(increase|increases|increasing|grows|growing)\\b.{0,120}?\\b(time|t)\\b"
-
-  # ---------- GENERIC / BIOMED ----------
-  - id: generic/Result/p_value
-    type: Result
-    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 1.0
-    pattern: "(?i)\\bp\\s*[<≤=]\\s*0?\\.0*\\d+"
-
-  - id: generic/Result/percent_delta
-    type: Result
-    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 0.9
-    pattern: "(?is)\\b(?:increase|decrease|improve|reduce|boost|drop)s?\\b.{0,40}?\\b\\d+(?:\\.\\d+)?\\s*%\\b|\\b\\d+(?:\\.\\d+)?\\s*%\\b.{0,40}?\\b(?:increase|decrease|improve|reduce|boost|drop)s?\\b"
-
-  # ---------- BCI (пример доменного слоя) ----------
-  - id: bci/Hypothesis/mi_vs_rest
-    type: Hypothesis
-    sections: [Abstract, Introduction, Discussion, Conclusions, Body, Unknown]
-    weight: 0.95
-    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|investigate|explore|examine)\\b.{0,200}?\\b(motor\\s+imagery|MI)\\b.{0,120}?\\b(vs\\.?|versus|against)\\s+rest\\b"
-
-  - id: bci/Method/CSP_FBCSP_SVM_EEGNet
-    type: Method
-    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Body, Unknown]
-    weight: 0.95
-    pattern: "(?i)\\b(CSP|FBCSP|EEGNet|SVM\\b[^\\n\\.]{0,100}\\b(RBF|kernel)|bandpass\\s*(?:4\\s*[-–]\\s*40|8\\s*[-–]\\s*30)\\s*hz)\\b"
-
-  - id: bci/Experiment/mi_rest_vs_lr
-    type: Experiment
-    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", FigureCaption, Body, Unknown]
-    weight: 0.9
-    pattern: "(?is)\\b(MI\\s*[:\\-]?\\s*Rest|movement\\s+vs\\.?\\s+rest)\\b.{0,200}?\\b(compared\\s+to|vs\\.?|versus)\\b.{0,120}?\\b(left\\s*[:\\-]?\\s*right|L\\s*[:\\-]?\\s*R)\\b"
-
-  - id: bci/Result/mi_rest_better
-    type: Result
-    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 0.95
-    pattern: "(?is)\\b(MI\\s*[:\\-]?\\s*Rest|movement\\s+vs\\.?\\s+rest)\\b.{0,160}?\\b(better|higher|improved)\\s+(?:performance|accuracy)\\b"
+  - id: "generic/Hypothesis/obtain_model_predicts"
+    type: "Hypothesis"
+    weight: 0.72
+    sections: [ "Introduction","Body","Unknown" ]
+    pattern: "\\bwe\\s+obtain\\s+(?:a\\s+)?model\\b.{0,80}?\\bthat\\s+predicts\\b"
+    captures: [ ]
+    negatives: [ ]
 
   - id: theory/Hypothesis/propose_framework
     type: Hypothesis
@@ -149,60 +185,186 @@ elements:
     weight: 0.9
     pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|introduce|present|advance|consider|explore|examine)\\b.{0,200}?\\b(model|framework|approach)\\b"
 
-  - id: theory/Method/eigendecomposition_stability
-    type: Method
-    sections: [ Methods, "Materials and methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model ]
-    weight: 0.9
-    pattern: "(?is)\\b(eigen\\-?(?:decomposition|analysis|directions?)|stability\\s+analysis|natural\\s+variables\\s+z\\w?)\\b"
-
-  - id: theory/Method/linear_regression_pca_bootstrap
-    type: Method
-    sections: [ Methods, "Materials and methods", Results, "Results and Discussion", Discussion, Body, Unknown ]
-    weight: 0.85
-    pattern: "(?is)\\b(linear\\s+regression|PCA|principal\\s+component\\s+analysis|bootstrapping|z\\-tests?)\\b"
-
-  - id: theory/Experiment/SATSA_dataset
-    type: Experiment
-    sections: [ Methods, "Materials and methods", Data, Results, "Results and Discussion", Body, Unknown ]
-    weight: 0.85
-    pattern: "(?is)\\b(SATSA|Swedish\\s+Adoption/Twin\\s+Study\\s+of\\s+Aging|N\\s*=\\s*845|Li\\s+et\\s+al\\.)\\b"
-
-  - id: theory/Result/physioage_central_node
-    type: Result
-    sections: [ Results, "Results and Discussion", Abstract, Discussion, Body, Unknown ]
+  - id: bci/Hypothesis/mi_vs_rest
+    type: Hypothesis
+    sections: [ Abstract, Introduction, Discussion, Conclusions, Body, Unknown ]
     weight: 0.95
-    pattern: "(?is)\\b(PhysioAge)\\b.{0,160}?\\b(central\\s+node|dominant\\s+node|driver|driving)\\b"
+    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|investigate|explore|examine)\\b.{0,200}?\\b(motor\\s+imagery|MI)\\b.{0,120}?\\b(vs\\.?|versus|against)\\s+rest\\b"
 
-  - id: theory/Result/slow_eigendirections_timescales
-    type: Result
-    sections: [ Results, "Results and Discussion", Discussion, Abstract, Body, Unknown ]
+  - id: generic/Hypothesis/propose_model
+    type: Hypothesis
+    sections: [ Abstract, Introduction, Discussion, Conclusion, Body, Unknown ]
     weight: 0.9
-    pattern: "(?is)\\b(eigen(?:values|\\-directions?)|\\blambda\\b|timescales?)\\b.{0,200}?(?:127\\s*years?|44\\s*years?)"
-
-  - id: theory/Result/fullw_beats
-    type: Result
-    sections: [ Results, "Results and Discussion", Discussion, Abstract, Body, Unknown ]
-    weight: 0.85
-    pattern: "(?is)\\b(FullW)\\b.{0,140}?\\b(better|higher\\s+AUC|lower\\s+(?:RMSE|MAE))\\b"
+    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|introduce|present|advance|consider|examine|explore|hypothesi[sz]e)\\b.{0,200}?\\b(model|framework|hypothesis)\\b"
 
 
-relations:
-  - id: produces
-    from: Experiment
-    to: Result
-    rule: "same_section OR shared_figure"
+  # ====== EXPERIMENT ==========================================================
+  - id: "generic/Experiment/perform_test"
+    type: "Experiment"
+    weight: 0.72
+    sections: ["Methods","Materials and Methods","Methodology","Body","FigureCaption"]
+    pattern: "\\b@test_verb\\b.{0,160}?(experiment|study|trial|evaluation)\\b"
+    expand: true
+    negatives: []
+    captures: ["verb","noun"]
 
-  - id: uses
-    from: [Experiment, Result]
-    to: Method
-    rule: "sentence_window<=2 OR same_paragraph"
+  - id: "generic/Experiment/protocol"
+    type: "Experiment"
+    weight: 0.70
+    sections: ["Methods","Materials and Methods","Methodology","Body"]
+    pattern: "\\bwe\\s+(conducted|performed|ran|carried\\s+out)\\b.{0,180}"
+    negatives: []
+    captures: ["verb"]
 
-  - id: supports
-    from: [Result, Conclusion]
-    to: Hypothesis
-    rule: "polarity==positive AND proximity<=2"
+  # ====== TECHNIQUE (бывш. Method) ===========================================
+  - id: "generic/Technique/algo_mention"
+    type: "Technique"
+    weight: 0.74
+    sections: ["Methods","Materials and Methods","Body","FigureCaption"]
+    pattern: "\\b(using|with)\\b.{0,40}?\\b(svm|random\\s+forest|logistic\\s+regression|xgboost|pca|k\\-means|cnn|transformer|resnet|unet)\\b"
+    negatives: []
+    captures: ["prep","algo"]
 
-  - id: refutes
-    from: [Result, Conclusion]
-    to: Hypothesis
-    rule: "polarity==negative AND proximity<=2"
+  - id: "generic/Technique/hyperparams"
+    type: "Technique"
+    weight: 0.64
+    sections: ["Methods","Materials and Methods","Body","FigureCaption","TableCaption"]
+    pattern: "\\b(learning\\s+rate|batch\\s+size|epoch\\b|kernel\\s+size|window\\s+length)\\b.{0,60}"
+    negatives: []
+    captures: []
+
+  # ====== RESULT ==============================================================
+  - id: "generic/Result/quant_change"
+    type: "Result"
+    weight: 0.78
+    sections: ["Results","Results and Discussion","FigureCaption","TableCaption","Body"]
+    pattern: "\\b@result_words\\b.{0,100}?(\\d+(?:\\.\\d+)?\\s?%|\\bby\\b\\s?\\d+(?:\\.\\d+)?)"
+    expand: true
+    negatives:
+      - "\\bnot\\s+significant\\b"
+      - "\\bns\\b"
+    captures: ["delta"]
+
+  - id: "generic/Result/significance_p"
+    type: "Result"
+    weight: 0.76
+    sections: ["Results","Results and Discussion","FigureCaption","TableCaption","Body"]
+    pattern: "\\bp\\s*[<≤]\\s*0\\.(?:0[1-5]|05)\\b"
+    negatives: []
+    captures: ["p_value"]
+
+  - id: "generic/Result/accuracy_metric"
+    type: "Result"
+    weight: 0.74
+    sections: ["Results","Results and Discussion","FigureCaption","TableCaption","Body"]
+    pattern: "\\b(accuracy|f1\\-score|precision|recall|auc)\\b.{0,40}?\\d{2,3}(?:\\.\\d+)?\\s?%"
+    negatives: []
+    captures: ["metric"]
+
+  - id: "generic/Result/percent_worse_improve_pair"
+    type: "Result"
+    weight: 0.80
+    sections: [ "Results","Results and Discussion","Body","FigureCaption","TableCaption","Materials and Methods" ]
+    # Пример: "Individuals worsened in 60.0% of measurements (they improved in 40.0% of measurements)"
+    pattern: "(?is)\\bindividuals?\\b.{0,40}?\\b(worsen(?:ed|s|ing)|declin(?:ed|es)|improv(?:ed|es))\\b.{0,60}?\\bin\\s+(\\d{1,3}(?:\\s*\\.\\s*\\n?\\s*\\d+)?)\\s?%\\s+of\\s+measurements\\b.{0,120}?\\(\\s*they\\s+improv(?:ed|es)?\\s+in\\s+(\\d{1,3}(?:\\s*\\.\\s*\\n?\\s*\\d+)?)\\s?%\\s+of\\s+measurements\\s*\\)"
+    captures: [ "verb1","pct_worse","pct_improve" ]
+    negatives: [ ]
+
+  - id: "generic/Result/percent_in_measurements_single"
+    type: "Result"
+    weight: 0.70   # ↓ пониже, чем у pair
+    sections: [ "Results","Results and Discussion","Body","FigureCaption","TableCaption","Materials and Methods" ]
+    # one-shot: запретим кейсы с ближайшей парной конструкцией
+    pattern: >
+      (?is)
+      \b(worsen(?:ed|s|ing)|declin(?:ed|es)|improv(?:ed|es))\b
+      .{0,60}?
+      \bin\s+(\\d{1,3}(?:\s*\.\s*\n?\s*\d+)?)\s?%\s+of\s+measurements\b
+      (?!
+        [^)]{0,150}                    # NEG1: поблизости
+        \d{1,3}(?:\s*\.\s*\n?\s*\d+)?\s?%\s+of\s+measurements\b
+      )
+      (?!
+        [^()]{0,10}\(                   # NEG2: сразу за фрагментом открывается скобка
+        [^)]{0,180}
+        \d{1,3}(?:\s*\.\s*\n?\s*\d+)?\s?%\s+of\s+measurements
+        [^)]* \)
+      )
+    captures: [ "verb","pct" ]
+    negatives: [ ]
+
+  # ====== DATASET =============================================================
+  - id: "generic/Dataset/named_benchmark"
+    type: "Dataset"
+    weight: 0.72
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(mnist|cifar\\-10|cifar\\-100|imagenet|coco|kitti|ucf101|physionet)\\b"
+    negatives: []
+    captures: ["name"]
+
+  - id: "generic/Dataset/own_data"
+    type: "Dataset"
+    weight: 0.66
+    sections: [ "Methods","Materials and Methods","Body","Unknown","FigureCaption","TableCaption" ]
+    # БЕЗ "measurements"!
+    pattern: "\\b(dataset|data\\s*set|corpus|cohort|sample|recordings)\\b.{0,80}?(\\d{2,}[,\\d]*|participants|subjects)"
+    captures: [ "noun","size_hint" ]
+    negatives: [ ]
+
+
+  # ====== ANALYSIS ============================================================
+  - id: "generic/Analysis/stat_test"
+    type: "Analysis"
+    weight: 0.70
+    sections: ["Methods","Results","Body","FigureCaption","TableCaption"]
+    pattern: "\\b(t\\-test|anova|manova|wilcoxon|kruskal\\-wallis|bonferroni)\\b"
+    negatives: []
+    captures: ["test"]
+
+  - id: "generic/Analysis/correlation"
+    type: "Analysis"
+    weight: 0.68
+    sections: ["Results","Analysis","Body","FigureCaption","TableCaption"]
+    pattern: "\\bcorrelat(?:ion|e[ds]?)\\b.{0,40}?\\b(r|pearson|spearman)\\b"
+    negatives: []
+    captures: ["kind"]
+
+  # ====== CONCLUSION ==========================================================
+  - id: "generic/Conclusion/conclude"
+    type: "Conclusion"
+    weight: 0.72
+    sections: ["Conclusion","Conclusions","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+findings\\s+suggest)\\b.{0,200}"
+    negatives: []
+    captures: ["lead"]
+
+  - id: "generic/Conclusion/limitations_future"
+    type: "Conclusion"
+    weight: 0.60
+    sections: ["Conclusion","Conclusions","Discussion","Body","Unknown"]
+    pattern: "\\b(limitation|future\\s+work|further\\s+research)\\b.{0,160}"
+    negatives: []
+    captures: []
+
+# ------------------------------------------------------------------------------
+# Доменные блоки — пример BCI (можно подключать/выключать)
+# ------------------------------------------------------------------------------
+domains:
+  bci:
+    enabled: true
+    elements:
+      - id: "bci/Technique/csp_fbcsp"
+        type: "Technique"
+        weight: 0.76
+        sections: ["Methods","Body","FigureCaption"]
+        pattern: "\\b(csp|fbcsp)\\b"
+        negatives: []
+        captures: ["algo"]
+
+      - id: "bci/Dataset/mi_paradigm"
+        type: "Dataset"
+        weight: 0.70
+        sections: ["Methods","Results","Body","FigureCaption","TableCaption"]
+        pattern: "\\bmotor\\s+imagery\\b|\\bmi\\b.{0,80}?\\b(left|right|rest)\\b"
+        negatives: []
+        captures: ["paradigm"]

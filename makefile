@@ -6,7 +6,10 @@ run:
 # GROBID: http://localhost:8070
 # Neo4j: http://localhost:7474  (логин: neo4j / testtest)
 
-rebuild:
+rebuild-all:
 	docker compose down -v
 	docker compose up -d --build
 
+rebuild-app:
+	docker compose build worker web
+	docker compose up -d worker web

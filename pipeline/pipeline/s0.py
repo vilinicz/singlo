@@ -81,19 +81,25 @@ def _is_section_heading(line: str) -> Optional[str]:
     return None
 
 
-def _normalize_text(s: str) -> str:
-    if not s:
-        return s
-    # убрать мягкие переносы и экзотические дефисы
-    s = s.replace("\u00ad", "")  # soft hyphen
-    s = s.replace("\u2010", "-").replace("\u2011", "-").replace("\u2012", "-").replace("\u2013", "-").replace("\u2014",
-                                                                                                              "-")
-    # склейка переносов внутри слов вида "advec-\ntion" -> "advection"
-    s = re.sub(r"(\w)-\n(\w)", r"\1\2", s)
-    # привести множественные пробелы/переводы строк
-    s = re.sub(r"[ \t]+", " ", s)
-    s = re.sub(r"\n{2,}", "\n", s)
-    return s
+RE_SOFT_HYPHEN_BREAK = re.compile(r'(\w)[\-­]\n(\w)')  # перенос со сливанием слов
+RE_LINE_BREAK_IN_NUMBER = re.compile(r'(\d)\s*\n\s*(\d)')  # разрыв числа переносом строки
+RE_LINE_BREAK_AFTER_PAREN = re.compile(r'\)\s*\n\s*(\d)')  # ") \n60" → ") 60"
+RE_MULTI_SPACES = re.compile(r'[ \t]{2,}')
+
+
+def _normalize_text(text: str) -> str:
+    t = text.replace('\r\n', '\n').replace('\r', '\n')
+    # 1) "advec-\ntion" → "advection"
+    t = RE_SOFT_HYPHEN_BREAK.sub(r'\1\2', t)
+    # 2) "40.\n0%" → "40.0%"
+    t = RE_LINE_BREAK_IN_NUMBER.sub(r'\1.\2', t)
+    # 3) ") \n60" → ") 60"
+    t = RE_LINE_BREAK_AFTER_PAREN.sub(r') \1', t)
+    # 4) схлопываем одиночные переносы внутри абзаца в пробел
+    t = re.sub(r'(?<!\n)\n(?!\n)', ' ', t)
+    # 5) лишние пробелы
+    t = RE_MULTI_SPACES.sub(' ', t)
+    return t
 
 
 def _collect_captions(lines: List[str], page_no: int) -> List[Caption]:

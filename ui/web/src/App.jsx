@@ -157,38 +157,51 @@ export default function App() {
     async function loadGraph(idOverride) {
         const id = idOverride || docId;
         if (!id) return;
+
         try {
             const {data} = await axios.get(`${API}/graph/${encodeURIComponent(id)}`);
 
             // --- helpers ---
-            const t = (s, n = 90) => (s && s.length > n ? s.slice(0, n).trim() + "…" : s || "");
+            const t = (s, n = 120) => (s && s.length > n ? s.slice(0, n).trim() + "…" : s || "");
             const byId = new Map();
 
-            // --- nodes ---
+            // --- prepare nodes (use preset positions from S2) ---
             const elements = [];
             for (const n of data.nodes || []) {
                 const label = `${n.type}${n.text ? ": " + t(n.text) : ""}`;
-                const el = {
+                elements.push({
                     data: {
                         id: n.id,
                         label,
                         type: n.type,
                         text: n.text || "",
                         conf: n.conf ?? 0,
+                        col: n.data?.col ?? null,
+                        row: n.data?.row ?? null,
                     },
-                };
-                elements.push(el);
+                    position: n.position || undefined, // preset layout
+                    selectable: true,
+                    grabbable: false,
+                });
                 byId.set(n.id, true);
             }
 
-            // --- edges: фильтр по уверенности и ограничение фан-аута ---
-            const rawEdges = (data.edges || []).filter(e => (e.conf ?? 0) >= 0.62);
+            // --- edges: filter by confidence and cap fan-out ---
+            const EDGE_CONF_MIN = 0.62;
+            const MAX_FAN_OUT = 3;
             const outCount = {};
             const prunedEdges = [];
-            for (const e of rawEdges) {
+
+            for (const e of (data.edges || [])) {
+                const conf = typeof e.conf === "number" ? e.conf : 0;
+                if (conf < EDGE_CONF_MIN) continue;
                 if (!byId.has(e.from) || !byId.has(e.to)) continue;
-                outCount[e.from] = (outCount[e.from] || 0) + 1;
-                if (outCount[e.from] <= 3) prunedEdges.push(e); // не более 3 исходящих на source
+
+                const k = e.from;
+                const cnt = outCount[k] ?? 0;
+                if (cnt >= MAX_FAN_OUT) continue;
+                outCount[k] = cnt + 1;
+                prunedEdges.push(e);
             }
 
             for (const e of prunedEdges) {
@@ -197,32 +210,128 @@ export default function App() {
                         id: `${e.from}->${e.to}:${e.type}`,
                         source: e.from,
                         target: e.to,
-                        type: e.type,
+                        type: e.type,     // supports/refutes/produces/uses/feeds/used_by/informs/summarizes
                         conf: e.conf ?? 0,
                     },
+                    selectable: true,
                 });
             }
 
-            // --- render cytoscape ---
+            // --- mount to Cytoscape ---
             const cy = cyRef.current;
             if (!cy) return;
+
+            // harden container against infinite width growth
+            const container = cy.container();
+            if (container) {
+                container.style.minWidth = "0";
+                container.style.maxWidth = "100%";
+                container.style.overflow = "hidden";
+            }
 
             cy.batch(() => {
                 cy.elements().remove();
                 cy.add(elements);
             });
 
-            // устойчивый layout для плотных графов
-            cy.layout({
-                name: "concentric",
-                concentric: n => n.degree(),
-                levelWidth: () => 2,
-                animate: false,
-                fit: true,
-                padding: 20,
-            }).run();
+            // update style to 8 canonical types (optional override)
+            cy.style().fromJson([
+                // nodes by type
+                {selector: "node[type = 'Input Fact']", style: {"background-color": "#b8c1ec"}},
+                {selector: "node[type = 'Hypothesis']", style: {"background-color": "#ffd166"}},
+                {selector: "node[type = 'Experiment']", style: {"background-color": "#ef476f"}},
+                {selector: "node[type = 'Technique']", style: {"background-color": "#06d6a0"}},
+                {selector: "node[type = 'Result']", style: {"background-color": "#118ab2"}},
+                {selector: "node[type = 'Dataset']", style: {"background-color": "#c77dff"}},
+                {selector: "node[type = 'Analysis']", style: {"background-color": "#73d2de"}},
+                {selector: "node[type = 'Conclusion']", style: {"background-color": "#83c5be"}},
+                // base node styling
+                {
+                    selector: "node",
+                    style: {
+                        "label": "data(label)",
+                        "text-wrap": "wrap",
+                        "text-max-width": "220px",
+                        "font-size": "12px",
+                        "text-halign": "center",
+                        "text-valign": "center",
+                        "shape": "round-rectangle",
+                        "padding": "8px",
+                        "border-width": 1,
+                        "border-color": "#222",
+                        "width": "label",
+                        "height": "label",
+                    }
+                },
+                // edges by relation
+                {
+                    selector: "edge[type = 'supports']",
+                    style: {"line-color": "#16a34a", "target-arrow-color": "#16a34a", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'refutes']",
+                    style: {"line-color": "#ef4444", "target-arrow-color": "#ef4444", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'produces']",
+                    style: {"line-color": "#2563eb", "target-arrow-color": "#2563eb", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'uses']",
+                    style: {"line-color": "#6b7280", "target-arrow-color": "#6b7280", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'feeds']",
+                    style: {"line-color": "#64748b", "target-arrow-color": "#64748b", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'used_by']",
+                    style: {"line-color": "#94a3b8", "target-arrow-color": "#94a3b8", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'informs']",
+                    style: {"line-color": "#0ea5e9", "target-arrow-color": "#0ea5e9", "target-arrow-shape": "triangle"}
+                },
+                {
+                    selector: "edge[type = 'summarizes']",
+                    style: {"line-color": "#a855f7", "target-arrow-color": "#a855f7", "target-arrow-shape": "triangle"}
+                },
+                // base edge styling
+                {
+                    selector: "edge",
+                    style: {
+                        "width": 2,
+                        "curve-style": "straight",
+                        "opacity": (ele) => Math.min(1, Math.max(0.4, (ele.data("conf") ?? 0.4))),
+                        "label": "data(type)",
+                        "font-size": "10px",
+                        "text-rotation": "autorotate",
+                        "text-margin-y": -2
+                    }
+                },
+                {selector: "node:selected", style: {"border-width": 2, "border-color": "#000"}},
+                {selector: "edge:selected", style: {"line-color": "#000", "target-arrow-color": "#000", "width": 2}},
+            ]).update();
 
-            // простой просмотр узла
+            // render with preset (fixed columns from S2 positions)
+            cy.layout({name: "preset", fit: true, padding: 24}).run();
+
+            // ensure it fits and doesn't creep on resize
+            const fitOnce = () => {
+                try {
+                    cy.fit(undefined, 40);
+                } catch {
+                }
+            };
+            fitOnce();
+
+            const ro = new ResizeObserver(() => {
+                cy.resize();
+                fitOnce();
+            });
+            if (container) ro.observe(container);
+
+            // node click: quick preview
             cy.off("tap", "node");
             cy.on("tap", "node", (ev) => {
                 const d = ev.target.data();
@@ -268,8 +377,16 @@ export default function App() {
     }
 
     return (
-        <div style={{fontFamily: "system-ui", padding: 12, display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, maxWidth: "100vw", overflowX: "hidden"}}>
-            <div style={{ minWidth: 0 }}>
+        <div style={{
+            fontFamily: "system-ui",
+            padding: 12,
+            display: "grid",
+            gridTemplateColumns: "360px 1fr",
+            gap: 16,
+            maxWidth: "100vw",
+            overflowX: "hidden"
+        }}>
+            <div style={{minWidth: 0}}>
                 <h2>Singularis Demo</h2>
                 <div style={{marginBottom: 8}}>
                     <label>Doc ID:&nbsp;</label>
@@ -378,9 +495,15 @@ export default function App() {
                 </div>
             </div>
 
-            <div style={{ minWidth: 0 }}>
+            <div style={{minWidth: 0}}>
                 <h3>Graph</h3>
-                <div id="cy" style={{width: "100%",  maxWidth: "100%", height: "78vh", border: "1px solid #ddd", borderRadius: 8}}/>
+                <div id="cy" style={{
+                    width: "100%",
+                    maxWidth: "100%",
+                    height: "78vh",
+                    border: "1px solid #ddd",
+                    borderRadius: 8
+                }}/>
             </div>
         </div>
     );
