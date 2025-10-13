@@ -30,6 +30,35 @@ def run_s2(export_dir: str) -> Dict[str, Any]:
 
     # можно пересчитать conf/thresholds, дорисовать связи и т.п.
 
+    types = {}
+    for n in nodes:
+        types.setdefault(n["type"], []).append(n)
+
+    def add_edge(a, b, etype, conf=0.6, hint="s2_fallback"):
+        edges.append({
+            "from": a["id"], "to": b["id"], "type": etype,
+            "prov": {"section": a.get("prov", {}).get("section"), "hint": hint},
+            "conf": round(conf, 3)
+        })
+
+    if not edges:
+        # supports/refutes для Result -> Hypothesis
+        hyps = types.get("Hypothesis", [])
+        ress = types.get("Result", [])
+        if hyps and ress:
+            for r in ress[:2]:
+                for h in hyps[:1]:
+                    add_edge(r, h, "supports")
+
+        # uses для Method -> Result
+        meths = types.get("Method", [])
+        if meths and ress:
+            for m in meths[:2]:
+                for r in ress[:2]:
+                    add_edge(m, r, "uses")
+
+
+
     final_graph = {"doc_id": base.get("doc_id"), "nodes": nodes, "edges": edges}
     final.write_text(json.dumps(final_graph, ensure_ascii=False, indent=2))
 

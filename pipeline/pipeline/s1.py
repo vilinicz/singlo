@@ -1,254 +1,258 @@
-# pipeline/pipeline/s1.py
-"""
-S1 — Rule-Based Extraction (MVP)
---------------------------------
-Берёт S0-вывод (s0.json) и rules/common.yaml, извлекает узлы/связи
-без LLM. Полярность (supports/refutes) определяется упрощённо по regex.
-
-"""
-
+# pipeline/s1.py
 from __future__ import annotations
-import json
-import re
+import json, re, yaml
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Pattern, Set, Tuple
-
-import yaml
-
-# ------------------------- Rules model -------------------------
+from typing import List, Dict, Any, Optional
 
 
+# ---------- Rule model ----------
 @dataclass
 class Rule:
     id: str
     type: str
-    sections: Set[str]
+    sections: set
     weight: float
-    regex: Pattern
-    negatives: List[Pattern]
+    regex: re.Pattern
+    negatives: List[re.Pattern]
     captures: List[str]
 
 
-def _rx(p: str) -> Pattern:
-    return re.compile(p, flags=re.I | re.M)
+# ---------- Utils ----------
+def _norm(s: str) -> str:
+    return (s or "").strip().lower()
 
 
+def _section_match(sname: str, rule_sections: set) -> bool:
+    """Мягкое сопоставление секций: равенство или подстрока в обе стороны."""
+    if not rule_sections:
+        return True
+    s = _norm(sname)
+    for rs in rule_sections:
+        r = _norm(str(rs))
+        if r == s or r in s or s in r:
+            return True
+    return False
+
+
+def _contains_hedge(text: str, hedge_words: set) -> bool:
+    t = _norm(text)
+    return any(h in t for h in hedge_words)
+
+
+def _polarity_from_text(text: str) -> str:
+    t = (text or "").lower()
+    neg = ["no evidence", "did not", "does not", "fail to", "fails to", "not significant", "ns", "decrease in", "decreased", "reduced"]
+    pos = ["significant", "improved", "increase", "increased", "higher", "better", "enhanced",
+           "fits well", "goodness of fit", "matches the data", "demonstrate that", "we show that"]
+    if any(p in t for p in pos):
+        return "positive"
+    if any(n in t for n in neg):
+        return "negative"
+    return "neutral"
+
+
+def _make_node_id(doc_id: str, ntype: str, idx: int) -> str:
+    return f"{doc_id}:{ntype}:{idx:04d}"
+
+
+# ---------- Load rules with validation ----------
 def load_rules(path: str):
     cfg = yaml.safe_load(Path(path).read_text())
     if not isinstance(cfg, dict):
         raise ValueError(f"Rules file is not a mapping: {path}")
 
     meta = cfg.get("meta", {}) or {}
-    hedge_words = set((cfg.get("hedging") or {}).get("words", []) or [])
-    raw_elements = cfg.get("elements") or []
-    if not isinstance(raw_elements, list):
+    hedges = set((cfg.get("hedging") or {}).get("words", []) or [])
+    raw = cfg.get("elements") or []
+    if not isinstance(raw, list):
         raise ValueError(f"'elements' must be a list in {path}")
 
-    rules = []
-    for idx, r in enumerate(raw_elements):
+    rules: List[Rule] = []
+    for i, r in enumerate(raw):
         if not isinstance(r, dict):
-            raise ValueError(f"elements[{idx}] is not a mapping in {path}")
+            raise ValueError(f"elements[{i}] is not a mapping in {path}")
         try:
             rid = r["id"]
             rtype = r["type"]
-            pattern = r["pattern"]
+            patt = r["pattern"]
         except KeyError as ke:
-            raise ValueError(f"Missing key {ke} in elements[{idx}] (id={r.get('id')}) in {path}") from None
-
+            raise ValueError(f"Missing key {ke} in elements[{i}] (id={r.get('id')}) in {path}")
         sections = set(r.get("sections", []))
         weight = float(r.get("weight", 0.5))
-        negatives = [re.compile(p, re.I | re.M) for p in r.get("negatives", [])]
+        negatives = [re.compile(p, re.I | re.M | re.S) for p in r.get("negatives", [])]
         captures = r.get("captures", [])
-
         rules.append(Rule(
-            id=rid,
-            type=rtype,
-            sections=sections,
-            weight=weight,
-            regex=re.compile(pattern, re.I | re.M),
-            negatives=negatives,
-            captures=captures
+            id=rid, type=rtype, sections=sections, weight=weight,
+            regex=re.compile(patt, re.I | re.M | re.S),
+            negatives=negatives, captures=captures
         ))
 
     relations = cfg.get("relations", []) or []
-    return meta, hedge_words, rules, relations
+    return meta, hedges, rules, relations
 
 
-
-# ------------------------- Helpers -------------------------
-
-
-def section_weight(meta: Dict[str, Any], name: str) -> float:
-    return float(meta.get("section_weights", {}).get(name, 0.5))
-
-
-def hedging_penalty(text: str, hedges: Set[str]) -> float:
-    t = text.lower()
-    hits = sum(1 for w in hedges if w in t)
-    # Каждая hedge-лексема слегка понижает уверенность:
-    return 0.15 * hits
-
-
-def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    seen, out = set(), []
-    for n in nodes:
-        key = (n["type"], n["text"].lower().strip(), n["prov"]["section"])
-        if key in seen:
+# ---------- Matching ----------
+def _yield_matches(text: str, rule: Rule):
+    for m in rule.regex.finditer(text):
+        span = (m.start(), m.end())
+        frag = text[span[0]:span[1]]
+        # negatives?
+        if any(neg.search(frag) for neg in rule.negatives):
             continue
-        seen.add(key)
-        out.append(n)
-    return out
+        yield frag, span, m
 
+SENT_BOUND = re.compile(r'[.!?;]\s+|\n+')
 
-# Простой детектор отрицательной полярности (без spaCy/negspacy)
-NEG_PAT = re.compile(
-    r"(?i)\b("
-    r"no|not|did\s+not|does\s+not|failed\s+to|without|lack\s+of|"
-    r"insignificant|non[-\s]?significant|"
-    r"contrary\s+to|inconsistent\s+with|"
-    r"\bns\b|not\s+significant"
-    r")\b"
-)
+def expand_to_sentence(text: str, span: tuple[int,int], max_len: int = 320) -> str:
+    s, e = span
+    # влево до ближайшей границы
+    left = max(text.rfind('. ', 0, s), text.rfind('? ', 0, s), text.rfind('! ', 0, s), text.rfind('; ', 0, s), text.rfind('\n', 0, s))
+    left = 0 if left == -1 else left + 2 if text[left:left+2] in ('. ','? ', '! ', '; ') else left + 1
+    # вправо до ближайшей границы
+    right_candidates = [text.find(ch, e) for ch in ('.','?','!',';','\n') if text.find(ch, e) != -1]
+    right = min(right_candidates) + 1 if right_candidates else len(text)
+    frag = text[left:right].strip()
+    if len(frag) > max_len:
+        frag = frag[:max_len].rsplit(' ',1)[0] + '…'
+    return frag
 
-
-def set_polarity(node: Dict[str, Any]) -> Dict[str, Any]:
-    """Бинарная полярность для Result/Conclusion на основе regex."""
-    if node["type"] not in ("Result", "Conclusion"):
-        return node
-
-    txt = node["text"].lower()
-    neg = bool(NEG_PAT.search(txt))
-
-    # Локальные эвристики для частых формулировок:
-    # "not increase" → negative; "not decrease" → positive (эффект в «правильную» сторону не подтверждён)
-    if "increase" in txt and re.search(r"(?i)\bnot\b.{0,12}\bincrease", txt):
-        neg = True
-    if "decrease" in txt and re.search(r"(?i)\bnot\b.{0,12}\bdecrease", txt):
-        # "did not decrease" — значит «снижения нет» → нет положительного исхода
-        neg = True
-
-    node["polarity"] = "negative" if neg else "positive"
-    return node
-
-
-# ------------------------- Core matching -------------------------
-
-
-def match_rules(
-    doc_id: str,
-    sections: List[Dict[str, str]],
-    captions: Optional[List[Dict[str, str]]],
-    meta: Dict[str, Any],
-    hedges: Set[str],
-    rules: List[Rule],
-) -> List[Dict[str, Any]]:
+def match_rules(doc_id: str,
+                sections: List[Dict[str, Any]],
+                captions: List[Dict[str, Any]],
+                meta: Dict[str, Any],
+                hedge_words: set,
+                rules: List[Rule]) -> List[Dict[str, Any]]:
+    section_weights = {_norm(k): v for k, v in (meta.get("section_weights") or {}).items()}
     nodes: List[Dict[str, Any]] = []
+    idx = 0
 
-    # Виртуальные секции для caption’ов, чтобы правила для Results могли матчить подписи
-    fig_text = "\n".join([c["text"] for c in (captions or []) if c.get("id", "").lower().startswith("fig")])
-    tab_text = "\n".join([c["text"] for c in (captions or []) if c.get("id", "").lower().startswith("table")])
-    virtual_sections = []
-    if fig_text.strip():
-        virtual_sections.append({"name": "FigureCaption", "text": fig_text})
-    if tab_text.strip():
-        virtual_sections.append({"name": "TableCaption", "text": tab_text})
+    # helper to compute confidence
+    def conf_for(rule: Rule, sec_name: str, text: str) -> float:
+        w_rule = rule.weight
+        w_sec = section_weights.get(_norm(sec_name), 0.6)
+        pen = 0.1 if _contains_hedge(text, hedge_words) else 0.0
+        base = w_rule * w_sec - pen
+        return max(0.0, min(1.0, base))
 
-    for sec in (sections or []) + virtual_sections:
-        sname, text = sec.get("name", "Unknown"), sec.get("text", "")
+    # 1) sections
+    for sec in sections:
+        sname = sec.get("name", "Unknown")
+        if not any(_section_match(sname, r.sections) for r in rules):
+            # нет ни одного правила, куда секция подходит — но не фильтруем;
+            pass
+        text = sec.get("text", "")
         if not text:
             continue
 
         for rule in rules:
-            if rule.sections and sname not in rule.sections:
+            if not _section_match(sname, rule.sections):
                 continue
-
-            for m in rule.regex.finditer(text):
-                span = (m.start(), m.end())
-                frag = text[span[0] : span[1]]
-
-                # негативные шаблоны правила
-                if any(neg.search(frag) for neg in rule.negatives):
-                    continue
-
-                conf = rule.weight * section_weight(meta, sname)
-                conf -= hedging_penalty(frag, hedges)
-                conf = max(0.0, min(1.0, conf))
-
-                node = {
-                    "id": f"{doc_id}:{rule.type}:{len(nodes)+1:03d}",
+            for frag, span, m in _yield_matches(text, rule):
+                idx += 1
+                nodes.append({
+                    "id": _make_node_id(doc_id, rule.type, idx),
                     "type": rule.type,
-                    "text": frag.strip(),
-                    "attrs": {},
-                    "prov": {"section": sname, "char": [span[0], span[1]], "rule": rule.id},
-                    "conf": round(conf, 3),
-                }
-                nodes.append(node)
+                    "label": rule.id,
+                    "text": expand_to_sentence(text, span).strip(),
+                    "conf": round(conf_for(rule, sname, frag), 3),
+                    "polarity": _polarity_from_text(frag),
+                    "prov": {
+                        "section": sname,
+                        "span": [int(span[0]), int(span[1])]
+                    }
+                })
 
-    # Полярность только для Result/Conclusion
-    nodes = [set_polarity(n) if n["type"] in ("Result", "Conclusion") else n for n in nodes]
-    # Дедуп
-    nodes = dedup_nodes(nodes)
+    # 2) captions as strong sections
+    for cap in captions:
+        sname = "FigureCaption" if str(cap.get("id", "")).lower().startswith("figure") else "TableCaption"
+        text = cap.get("text", "")
+        if not text:
+            continue
+        for rule in rules:
+            if not _section_match(sname, rule.sections):
+                continue
+            for frag, span, m in _yield_matches(text, rule):
+                idx += 1
+                nodes.append({
+                    "id": _make_node_id(doc_id, rule.type, idx),
+                    "type": rule.type,
+                    "label": rule.id,
+                    "text": expand_to_sentence(text, span).strip(),
+                    "conf": round(conf_for(rule, sname, frag), 3),
+                    "polarity": _polarity_from_text(frag),
+                    "prov": {
+                        "section": sname,
+                        "caption_id": cap.get("id")
+                    }
+                })
+
     return nodes
 
 
+# ---------- Linking (intra-paper) ----------
 def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Простая внутри-документная линковка:
-    - Experiment -> Result : produces (same_section)
-    - Method -> Experiment/Result : uses (section_context)
-    - Result -> Hypothesis : supports/refutes (по polarity)
-    """
     edges: List[Dict[str, Any]] = []
+    # naive proximity by order
     by_type: Dict[str, List[Dict[str, Any]]] = {}
     for n in nodes:
         by_type.setdefault(n["type"], []).append(n)
 
-    def add_edge(a, b, etype, conf=0.65, hint="near"):
-        edges.append(
-            {
-                "from": a["id"],
-                "to": b["id"],
-                "type": etype,
-                "prov": {"section": a["prov"]["section"], "hint": hint},
-                "conf": round(conf, 3),
-            }
-        )
+    seen = set()
 
-    # produces: Experiment -> Result (в одной секции)
-    for e in by_type.get("Experiment", []):
-        for r in by_type.get("Result", []):
-            if e["prov"]["section"] == r["prov"]["section"]:
-                add_edge(e, r, "produces", conf=0.75, hint="same_section")
+    def add(frm, to, etype, conf=0.6, hint="rule"):
+        key = (frm["id"], to["id"], etype)
+        if key in seen: return
+        seen.add(key)
+        edges.append({
+            "from": frm["id"], "to": to["id"], "type": etype,
+            "conf": round(conf, 3),
+            "prov": {"hint": hint, "from_section": frm["prov"].get("section"), "to_section": to["prov"].get("section")}
+        })
 
-    # uses: Method -> Experiment/Result
+    def _order_by_proximity(a, bs):
+        # по секции и по расстоянию span, если доступно
+        def dist(b):
+            sa = a.get("prov", {}).get("span", [0, 0])[0]
+            sb = b.get("prov", {}).get("span", [0, 0])[0]
+            same = 0 if a["prov"].get("section") == b["prov"].get("section") else 100000
+            return same + abs(sa - sb)
+
+        return sorted(bs, key=dist)
+
+    # Method -> Result/Experiment (только ближайшие 2)
     for m in by_type.get("Method", []):
-        for t in by_type.get("Experiment", []) + by_type.get("Result", []):
-            if m["prov"]["section"] in ("Methods", "Results"):
-                add_edge(m, t, "uses", conf=0.6, hint="section_context")
+        neigh_r = _order_by_proximity(m, by_type.get("Result", []))[:2]
+        neigh_e = _order_by_proximity(m, by_type.get("Experiment", []))[:1]
+        for r in neigh_r:
+            add(m, r, "uses", conf=0.64, hint="prox")
+        for e in neigh_e:
+            add(m, e, "uses", conf=0.62, hint="prox")
 
-    # supports/refutes: Result -> Hypothesis
+    # Result -> Hypothesis (только ближайшая 1–2)
     for r in by_type.get("Result", []):
-        for h in by_type.get("Hypothesis", []):
-            et = "refutes" if r.get("polarity") == "negative" else "supports"
-            add_edge(r, h, et, conf=0.65, hint="basic_polarity")
+        neigh_h = _order_by_proximity(r, by_type.get("Hypothesis", []))[:2]
+        for h in neigh_h:
+            et = "supports" if r.get("polarity") != "negative" else "refutes"
+            add(r, h, et, conf=0.63, hint="prox")
 
     return edges
 
 
-# ------------------------- Public API -------------------------
-
-
+# ---------- Runner ----------
 def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
     meta, hedge_words, rule_objs, relations = load_rules(rules_path)
     s0 = json.loads(Path(s0_path).read_text())
+    # doc_id — из s0.json (он у тебя теперь = имени директории)
     doc_id = s0.get("doc_id") or Path(s0_path).parent.name
 
     sections = s0.get("sections", [])
     captions = s0.get("captions", [])
 
-    # --- кандидаты ДО порогов (для отладки) ---  # NEW
+    # кандидаты
     candidates = match_rules(doc_id, sections, captions, meta, hedge_words, rule_objs)
 
+    # фильтры по порогам
     node_thr = float(meta.get("conf_thresholds", {}).get("node", 0.55))
     nodes = [n for n in candidates if n["conf"] >= node_thr]
 
@@ -256,11 +260,14 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
     edge_thr = float(meta.get("conf_thresholds", {}).get("edge", 0.6))
     edges = [e for e in edges if e["conf"] >= edge_thr]
 
-    out = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
-    out_dir = Path(out_path).parent
-    (out_dir / "s1_graph.json").write_text(json.dumps(out, ensure_ascii=False, indent=2))
+    # сохраняем как s1_graph.json (итоговый graph.json пишет S2)
+    outp = Path(out_path)
+    out_dir = outp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    s1_graph = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
+    (out_dir / "s1_graph.json").write_text(json.dumps(s1_graph, ensure_ascii=False, indent=2))
 
-    # --- s1_debug.json ---  # NEW
+    # отладка
     debug = {
         "doc_id": doc_id,
         "summary": {
@@ -269,12 +276,22 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
             "edges_after_threshold": len(edges),
             "node_threshold": node_thr,
             "edge_threshold": edge_thr,
-            "section_names": list({s.get("name","Unknown") for s in sections}),
+            "section_names": list({s.get("name", "Unknown") for s in sections}),
         },
         "samples": {
             "candidates_head": candidates[:20],
         }
     }
-    debug_path = out_dir / "s1_debug.json"
-    debug_path.write_text(json.dumps(debug, ensure_ascii=False, indent=2))
-    return out
+    (out_dir / "s1_debug.json").write_text(json.dumps(debug, ensure_ascii=False, indent=2))
+    return s1_graph
+
+
+if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--s0", required=True)
+    ap.add_argument("--rules", required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+    run_s1(args.s0, args.rules, args.out)

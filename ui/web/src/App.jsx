@@ -159,26 +159,80 @@ export default function App() {
         if (!id) return;
         try {
             const {data} = await axios.get(`${API}/graph/${encodeURIComponent(id)}`);
+
+            // --- helpers ---
+            const t = (s, n = 90) => (s && s.length > n ? s.slice(0, n).trim() + "…" : s || "");
+            const byId = new Map();
+
+            // --- nodes ---
             const elements = [];
             for (const n of data.nodes || []) {
-                elements.push({data: {id: n.id, label: n.type, type: n.type, text: n.text}});
+                const label = `${n.type}${n.text ? ": " + t(n.text) : ""}`;
+                const el = {
+                    data: {
+                        id: n.id,
+                        label,
+                        type: n.type,
+                        text: n.text || "",
+                        conf: n.conf ?? 0,
+                    },
+                };
+                elements.push(el);
+                byId.set(n.id, true);
             }
-            for (const e of data.edges || []) {
-                elements.push({data: {id: `${e.from}->${e.to}:${e.type}`, source: e.from, target: e.to, type: e.type}});
+
+            // --- edges: фильтр по уверенности и ограничение фан-аута ---
+            const rawEdges = (data.edges || []).filter(e => (e.conf ?? 0) >= 0.62);
+            const outCount = {};
+            const prunedEdges = [];
+            for (const e of rawEdges) {
+                if (!byId.has(e.from) || !byId.has(e.to)) continue;
+                outCount[e.from] = (outCount[e.from] || 0) + 1;
+                if (outCount[e.from] <= 3) prunedEdges.push(e); // не более 3 исходящих на source
             }
+
+            for (const e of prunedEdges) {
+                elements.push({
+                    data: {
+                        id: `${e.from}->${e.to}:${e.type}`,
+                        source: e.from,
+                        target: e.to,
+                        type: e.type,
+                        conf: e.conf ?? 0,
+                    },
+                });
+            }
+
+            // --- render cytoscape ---
             const cy = cyRef.current;
-            cy.elements().remove();
-            cy.add(elements);
-            cy.layout({name: "cose", animate: false}).run();
+            if (!cy) return;
+
+            cy.batch(() => {
+                cy.elements().remove();
+                cy.add(elements);
+            });
+
+            // устойчивый layout для плотных графов
+            cy.layout({
+                name: "concentric",
+                concentric: n => n.degree(),
+                levelWidth: () => 2,
+                animate: false,
+                fit: true,
+                padding: 20,
+            }).run();
+
+            // простой просмотр узла
             cy.off("tap", "node");
             cy.on("tap", "node", (ev) => {
                 const d = ev.target.data();
-                alert(`${d.id}\n${d.type}\n\n${d.text || ""}`);
+                alert(`${d.type}\n\n${d.text || "(no text)"}\n\nconf=${(d.conf ?? 0).toFixed(2)}\n${d.id}`);
             });
         } catch (e) {
-            console.error("loadGraph failed", e); // 👈 не молчим
+            console.error("loadGraph failed", e);
         }
     }
+
 
     useEffect(() => {
         if (!polling) return;
@@ -214,8 +268,8 @@ export default function App() {
     }
 
     return (
-        <div style={{fontFamily: "system-ui", padding: 12, display: "grid", gridTemplateColumns: "360px 1fr", gap: 16}}>
-            <div>
+        <div style={{fontFamily: "system-ui", padding: 12, display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, maxWidth: "100vw", overflowX: "hidden"}}>
+            <div style={{ minWidth: 0 }}>
                 <h2>Singularis Demo</h2>
                 <div style={{marginBottom: 8}}>
                     <label>Doc ID:&nbsp;</label>
@@ -324,9 +378,9 @@ export default function App() {
                 </div>
             </div>
 
-            <div>
+            <div style={{ minWidth: 0 }}>
                 <h3>Graph</h3>
-                <div id="cy" style={{width: "100%", height: "78vh", border: "1px solid #ddd", borderRadius: 8}}/>
+                <div id="cy" style={{width: "100%",  maxWidth: "100%", height: "78vh", border: "1px solid #ddd", borderRadius: 8}}/>
             </div>
         </div>
     );

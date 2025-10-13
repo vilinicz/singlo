@@ -1,68 +1,160 @@
 meta:
-  version: "0.1"
+  version: "0.2"
   section_weights:
-    Abstract: 0.5
-    Introduction: 0.6
-    Methods: 0.6
+    Abstract: 0.6
+    Introduction: 0.8
+    Background: 0.7
+    Methods: 0.8
+    "Materials and Methods": 0.8
+    "Materials & Methods": 0.8
+    Model: 0.85
+    Modeling: 0.85
+    Evaluation: 0.9
     Results: 1.0
-    Discussion: 0.7
-    Conclusion: 0.7
-    FigureCaption: 0.9
-    TableCaption: 0.9
+    "Results and Discussion": 1.0
+    Discussion: 0.9
+    Conclusion: 0.9
+    Conclusions: 0.9
+    Related Work: 0.6
+    Limitations: 0.6
+    FigureCaption: 0.95
+    TableCaption: 0.95
     Body: 0.6
     Unknown: 0.5
   conf_thresholds:
     node: 0.55
     edge: 0.60
 
-elements:
-  - id: common/Hypothesis/hypothesize
-    type: Hypothesis
-    sections: [Introduction, Discussion, Abstract, Body, Unknown]
-    weight: 0.6
-    pattern: "(?i)\\b(we|this (?:study|work|paper))\\s+(?:hypothesi[sz]e|propose|predict|suggest)\\b[^\\.\\n]{10,300}"
-    negatives:
-      - "(?i)have been (?:hypothesized|suggested)"   # пересказ чужой гипотезы
-
-  - id: common/Experiment/treated_vs_control
-    type: Experiment
-    sections: [Methods, Results, Body, Unknown]
-    weight: 0.9
-    pattern: "(?i)\\b(treated|exposed|administered|injected|trained)\\b[^\\.\\n]{0,200}?(?:vs\\.?|compared\\s+to|control|baseline)\\b[^\\.\\n]{0,200}"
-
-  - id: common/Experiment/treated_vs_control
-    type: Experiment
-    sections: [ Methods, Results, Body, Unknown ]
-    weight: 0.9
-    pattern: "(?i)\\b(treat(?:ed|ment)?|expos(?:e|ed|ure)|administered|injected|trained|applied)\\b[^\\.\\n]{0,300}?(?:vs\\.?|versus|compared\\s+to|control|baseline)\\b[^\\.\\n]{0,300}"
-
-  - id: common/Result/p_value
-    type: Result
-    sections: [Results, FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 1.0
-    pattern: "(?i)\\bp\\s*[<>=]\\s*0?\\.\\d+"
-
-  - id: common/Result/percent_delta
-    type: Result
-    sections: [Results, FigureCaption, TableCaption, Abstract, Body, Unknown]
-    weight: 0.9
-    pattern: "(?i)\\b(?:increase|decrease)[sd]?\\s+by\\s+\\d+(?:\\.\\d+)?\\s*%|\\d+(?:\\.\\d+)?\\s*%\\s*(?:increase|decrease)"
-
-  - id: common/Result/significant
-    type: Result
-    sections: [Results, FigureCaption, TableCaption, Body, Unknown]
-    weight: 0.8
-    pattern: "(?i)\\b(significant(?:ly)?)\\b[^\\.\\n]{0,160}"
-
-  - id: common/Method/used
-    type: Method
-    sections: [ Methods, Results, Body, Unknown ]
-    weight: 0.5
-    pattern: "(?i)\\b(we\\s+(?:used|applied|employed|implemented)|using|with)\\b[^\\.\\n]{10,300}\\b(assay|protocol|kit|algorithm|pipeline|model|dataset|procedure|method)\\b"
-
-
 hedging:
-  words: ["may","might","could","possibly","likely","suggest","appears","seems","trend","not significant","ns","trend toward"]
+  words:
+    - may
+    - might
+    - could
+    - possibly
+    - likely
+    - appears
+    - seems
+    - suggest
+    - suggest that
+    - trend
+    - not significant
+    - ns
+    - approximately
+    - around
+
+elements:
+
+  # ---------- GENERIC / THEORY ----------
+  - id: generic/Hypothesis/propose_model
+    type: Hypothesis
+    sections: [Abstract, Introduction, Discussion, Conclusion, Body, Unknown]
+    weight: 0.9
+    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|introduce|present|advance|consider|examine|explore|hypothesi[sz]e)\\b.{0,200}?\\b(model|framework|hypothesis)\\b"
+
+  - id: generic/Method/advection_diffusion
+    type: Method
+    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model, Modeling]
+    weight: 0.9
+    pattern: "(?is)\\b(advection[\\s\\-–]?diffusion|brownian\\s+motion|random\\s+walk|gaussian\\s+distribution|binomial\\s+(?:model|distribution))\\b"
+
+  - id: generic/Method/fit_equation
+    type: Method
+    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model]
+    weight: 0.8
+    pattern: "(?is)\\b(we\\s+fit|fitted\\s+to|fits?\\s+to)\\b.{0,160}?\\b(equation|model)\\b"
+
+  - id: generic/Result/fit_quality
+    type: Result
+    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
+    weight: 0.85
+    pattern: "(?is)\\b(fits?\\s+(?:reasonably\\s+)?well|goodness\\s+of\\s+fit|matches?\\s+the\\s+data|demonstrates?\\s+that|predicts?\\s+that)\\b"
+
+  - id: generic/Result/entropy_increases
+    type: Result
+    sections: [Results, "Results and Discussion", Discussion, Abstract, Body, Unknown]
+    weight: 0.9
+    pattern: "(?is)\\b(entropy)\\b.{0,80}?\\b(increase|increases|increasing|grows|growing)\\b.{0,120}?\\b(time|t)\\b"
+
+  # ---------- GENERIC / BIOMED ----------
+  - id: generic/Result/p_value
+    type: Result
+    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
+    weight: 1.0
+    pattern: "(?i)\\bp\\s*[<≤=]\\s*0?\\.0*\\d+"
+
+  - id: generic/Result/percent_delta
+    type: Result
+    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
+    weight: 0.9
+    pattern: "(?is)\\b(?:increase|decrease|improve|reduce|boost|drop)s?\\b.{0,40}?\\b\\d+(?:\\.\\d+)?\\s*%\\b|\\b\\d+(?:\\.\\d+)?\\s*%\\b.{0,40}?\\b(?:increase|decrease|improve|reduce|boost|drop)s?\\b"
+
+  # ---------- BCI (пример доменного слоя) ----------
+  - id: bci/Hypothesis/mi_vs_rest
+    type: Hypothesis
+    sections: [Abstract, Introduction, Discussion, Conclusions, Body, Unknown]
+    weight: 0.95
+    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|investigate|explore|examine)\\b.{0,200}?\\b(motor\\s+imagery|MI)\\b.{0,120}?\\b(vs\\.?|versus|against)\\s+rest\\b"
+
+  - id: bci/Method/CSP_FBCSP_SVM_EEGNet
+    type: Method
+    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", Body, Unknown]
+    weight: 0.95
+    pattern: "(?i)\\b(CSP|FBCSP|EEGNet|SVM\\b[^\\n\\.]{0,100}\\b(RBF|kernel)|bandpass\\s*(?:4\\s*[-–]\\s*40|8\\s*[-–]\\s*30)\\s*hz)\\b"
+
+  - id: bci/Experiment/mi_rest_vs_lr
+    type: Experiment
+    sections: [Methods, "Materials and Methods", Results, "Results and Discussion", FigureCaption, Body, Unknown]
+    weight: 0.9
+    pattern: "(?is)\\b(MI\\s*[:\\-]?\\s*Rest|movement\\s+vs\\.?\\s+rest)\\b.{0,200}?\\b(compared\\s+to|vs\\.?|versus)\\b.{0,120}?\\b(left\\s*[:\\-]?\\s*right|L\\s*[:\\-]?\\s*R)\\b"
+
+  - id: bci/Result/mi_rest_better
+    type: Result
+    sections: [Results, "Results and Discussion", FigureCaption, TableCaption, Abstract, Body, Unknown]
+    weight: 0.95
+    pattern: "(?is)\\b(MI\\s*[:\\-]?\\s*Rest|movement\\s+vs\\.?\\s+rest)\\b.{0,160}?\\b(better|higher|improved)\\s+(?:performance|accuracy)\\b"
+
+  - id: theory/Hypothesis/propose_framework
+    type: Hypothesis
+    sections: [ Abstract, Introduction, Discussion, Conclusion, Body, Unknown ]
+    weight: 0.9
+    pattern: "(?is)\\b(we|this\\s+(?:study|work|paper))\\s+(?:propose|introduce|present|advance|consider|explore|examine)\\b.{0,200}?\\b(model|framework|approach)\\b"
+
+  - id: theory/Method/eigendecomposition_stability
+    type: Method
+    sections: [ Methods, "Materials and methods", Results, "Results and Discussion", Discussion, Body, Unknown, Model ]
+    weight: 0.9
+    pattern: "(?is)\\b(eigen\\-?(?:decomposition|analysis|directions?)|stability\\s+analysis|natural\\s+variables\\s+z\\w?)\\b"
+
+  - id: theory/Method/linear_regression_pca_bootstrap
+    type: Method
+    sections: [ Methods, "Materials and methods", Results, "Results and Discussion", Discussion, Body, Unknown ]
+    weight: 0.85
+    pattern: "(?is)\\b(linear\\s+regression|PCA|principal\\s+component\\s+analysis|bootstrapping|z\\-tests?)\\b"
+
+  - id: theory/Experiment/SATSA_dataset
+    type: Experiment
+    sections: [ Methods, "Materials and methods", Data, Results, "Results and Discussion", Body, Unknown ]
+    weight: 0.85
+    pattern: "(?is)\\b(SATSA|Swedish\\s+Adoption/Twin\\s+Study\\s+of\\s+Aging|N\\s*=\\s*845|Li\\s+et\\s+al\\.)\\b"
+
+  - id: theory/Result/physioage_central_node
+    type: Result
+    sections: [ Results, "Results and Discussion", Abstract, Discussion, Body, Unknown ]
+    weight: 0.95
+    pattern: "(?is)\\b(PhysioAge)\\b.{0,160}?\\b(central\\s+node|dominant\\s+node|driver|driving)\\b"
+
+  - id: theory/Result/slow_eigendirections_timescales
+    type: Result
+    sections: [ Results, "Results and Discussion", Discussion, Abstract, Body, Unknown ]
+    weight: 0.9
+    pattern: "(?is)\\b(eigen(?:values|\\-directions?)|\\blambda\\b|timescales?)\\b.{0,200}?(?:127\\s*years?|44\\s*years?)"
+
+  - id: theory/Result/fullw_beats
+    type: Result
+    sections: [ Results, "Results and Discussion", Discussion, Abstract, Body, Unknown ]
+    weight: 0.85
+    pattern: "(?is)\\b(FullW)\\b.{0,140}?\\b(better|higher\\s+AUC|lower\\s+(?:RMSE|MAE))\\b"
+
 
 relations:
   - id: produces
@@ -78,9 +170,9 @@ relations:
   - id: supports
     from: [Result, Conclusion]
     to: Hypothesis
-    rule: "polarity==positive AND entity_overlap>=1"
+    rule: "polarity==positive AND proximity<=2"
 
   - id: refutes
     from: [Result, Conclusion]
     to: Hypothesis
-    rule: "polarity==negative AND entity_overlap>=1"
+    rule: "polarity==negative AND proximity<=2"
