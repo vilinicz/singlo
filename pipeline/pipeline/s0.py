@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-import fitz  # PyMuPDF
+import pymupdf
 
 # --------- Регексы для детектора секций/капшенов ---------
 
@@ -23,9 +23,20 @@ SECTION_PAT = re.compile(
 )
 ALLCAPS_SECTION_PAT = re.compile(r"^[A-Z][A-Z\s\-]{3,}$")
 
-FIG_PAT = re.compile(r"^\s*(Figure|Fig\.)\s*([A-Za-z]?\d+[A-Za-z]?)\s*[:\-]?\s*(.*)$", re.I)
-TAB_PAT = re.compile(r"^\s*(Table|Tab\.|TABLE)\s*([A-Za-z]?\d+[A-Za-z]?)?\s*[:\-]?\s*(.*)$", re.I)
-TAB_ROMAN_PAT = re.compile(r"^\s*TABLE\s+([IVXLC]+)\s*[:\-]?\s*(.*)$", re.I)
+CAPTION_PAT = re.compile(
+    r"""
+    ^\s*
+    (?P<label>fig(?:\.|ure)?|table|tab\.)
+    \s*
+    (?P<num>[A-Za-z0-9]+(?:[.\-][A-Za-z0-9]+)*)?
+    \s*
+    (?P<punct>[:.\-–—])
+    \s*
+    (?P<body>.*)
+    $
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
 # --------- DocID helpers ---------
 
@@ -121,11 +132,22 @@ def _normalize_text(text: str) -> str:
 
 # --------- Вытаскиваем строки/капшены со страницы ---------
 
-def _extract_page_lines(page: fitz.Page) -> List[str]:
+def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
+    """Определяем, является ли строка началом подписи и возвращаем (kind, num, body)."""
+    m = CAPTION_PAT.match(line or "")
+    if not m:
+        return None
+    label = m.group("label").lower()
+    kind = "Figure" if label.startswith("fig") else "Table"
+    num = (m.group("num") or "").strip()
+    tail = (m.group("body") or "").strip()
+    return kind, num, tail
+
+def _extract_page_lines(page: pymupdf.Page) -> List[str]:
     return page.get_text("text").splitlines()
 
 
-def _extract_blocks_sample(page: fitz.Page, limit: int = 5) -> List[Dict[str, Any]]:
+def _extract_blocks_sample(page: pymupdf.Page, limit: int = 5) -> List[Dict[str, Any]]:
     blocks = []
     for b in page.get_text("blocks")[:limit]:
         x0, y0, x1, y1, text, *_ = b
@@ -155,52 +177,39 @@ def _is_section_heading(line: str) -> Optional[str]:
     return None
 
 
-def _collect_captions(lines: List[str], page_no: int) -> List[Caption]:
+def _collect_captions_from_blocks(blocks: List[tuple], page_no: int) -> List[Caption]:
+    """Ограничиваем подписи одним текстовым блоком, чтобы не захватывать основной текст."""
     caps: List[Caption] = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        m_fig = FIG_PAT.match(line)
-        m_tab = TAB_PAT.match(line)
-        m_tab_roman = TAB_ROMAN_PAT.match(line)
+    for block in blocks:
+        if not block or len(block) < 5:
+            continue
+        raw_text = (block[4] or "").strip()
+        if not raw_text:
+            continue
+        lines = raw_text.splitlines()
+        i = 0
+        while i < len(lines):
+            line = (lines[i] or "").strip()
+            cap_head = _match_caption(line)
+            if not cap_head:
+                i += 1
+                continue
 
-        if m_tab_roman:
-            num = m_tab_roman.group(1)
-            tail = m_tab_roman.group(2).strip()
+            kind, num, tail = cap_head
+            cap_id = f"{kind}{num}" if num else kind
             buf = [tail] if tail else []
             j = i + 1
             while j < len(lines):
                 nxt = (lines[j] or "").strip()
                 if not nxt:
                     break
-                if FIG_PAT.match(nxt) or TAB_PAT.match(nxt) or TAB_ROMAN_PAT.match(nxt) or _is_section_heading(nxt):
+                if _match_caption(nxt) or _is_section_heading(nxt):
                     break
-                buf.append(nxt);
+                buf.append(nxt)
                 j += 1
-            caps.append(Caption(kind="Table", id=f"Table{num}", page=page_no, text=" ".join(buf).strip()))
-            i = j;
-            continue
 
-        if m_fig or m_tab:
-            kind = "Figure" if m_fig else "Table"
-            m = m_fig or m_tab
-            num = (m.group(2) or "").strip()
-            tail = (m.group(3) or "").strip()
-            buf = [tail] if tail else []
-            j = i + 1
-            while j < len(lines):
-                nxt = (lines[j] or "").strip()
-                if not nxt:
-                    break
-                if FIG_PAT.match(nxt) or TAB_PAT.match(nxt) or _is_section_heading(nxt):
-                    break
-                buf.append(nxt);
-                j += 1
-            caps.append(Caption(kind=kind, id=f"{kind}{num}", page=page_no, text=" ".join(buf).strip()))
-            i = j;
-            continue
-
-        i += 1
+            caps.append(Caption(kind=kind, id=cap_id, page=page_no, text=" ".join(buf).strip()))
+            i = j
     return caps
 
 
@@ -215,7 +224,7 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
 
     # 0) эвристика заголовка/авторов с 1-й страницы
     def _extract_title_and_authors(doc_obj):
@@ -250,7 +259,7 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
     for pno in range(len(doc)):
         page = doc[pno]
         lines = _extract_page_lines(page)
-        caps = _collect_captions(lines, pno + 1)
+        caps = _collect_captions_from_blocks(page.get_text("blocks"), pno + 1)
         all_captions.extend(caps)
         pages.append({
             "page": pno + 1,
@@ -299,14 +308,20 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
 
     # 3) приводим капшены
     captions = []
+    seen_caps = set()
     for c in all_captions:
         if not c.text:
             continue
+        norm_text = _normalize_text(c.text)
+        key = (c.id, norm_text, c.page)
+        if key in seen_caps:
+            continue
+        seen_caps.add(key)
         captions.append({
             "id": c.id,
             "kind": c.kind,
             "page": c.page,
-            "text": _normalize_text(c.text)
+            "text": norm_text
         })
     tables = [{"id": cap["id"], "page": cap["page"], "caption": cap["text"]}
               for cap in captions if cap["kind"] == "Table"]
