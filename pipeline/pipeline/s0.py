@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-import fitz  # PyMuPDF
+import pymupdf
 
 # --------- Регексы для детектора секций/капшенов ---------
 
@@ -143,11 +143,11 @@ def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
     tail = (m.group("body") or "").strip()
     return kind, num, tail
 
-def _extract_page_lines(page: fitz.Page) -> List[str]:
+def _extract_page_lines(page: pymupdf.Page) -> List[str]:
     return page.get_text("text").splitlines()
 
 
-def _extract_blocks_sample(page: fitz.Page, limit: int = 5) -> List[Dict[str, Any]]:
+def _extract_blocks_sample(page: pymupdf.Page, limit: int = 5) -> List[Dict[str, Any]]:
     blocks = []
     for b in page.get_text("blocks")[:limit]:
         x0, y0, x1, y1, text, *_ = b
@@ -177,31 +177,39 @@ def _is_section_heading(line: str) -> Optional[str]:
     return None
 
 
-def _collect_captions(lines: List[str], page_no: int) -> List[Caption]:
+def _collect_captions_from_blocks(blocks: List[tuple], page_no: int) -> List[Caption]:
+    """Ограничиваем подписи одним текстовым блоком, чтобы не захватывать основной текст."""
     caps: List[Caption] = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        cap_head = _match_caption(line)
-        if cap_head:
+    for block in blocks:
+        if not block or len(block) < 5:
+            continue
+        raw_text = (block[4] or "").strip()
+        if not raw_text:
+            continue
+        lines = raw_text.splitlines()
+        i = 0
+        while i < len(lines):
+            line = (lines[i] or "").strip()
+            cap_head = _match_caption(line)
+            if not cap_head:
+                i += 1
+                continue
+
             kind, num, tail = cap_head
             cap_id = f"{kind}{num}" if num else kind
             buf = [tail] if tail else []
             j = i + 1
             while j < len(lines):
-                nxt_raw = lines[j]
-                nxt = (nxt_raw or "").strip()
+                nxt = (lines[j] or "").strip()
                 if not nxt:
                     break
-                if _match_caption(nxt_raw) or _is_section_heading(nxt):
+                if _match_caption(nxt) or _is_section_heading(nxt):
                     break
                 buf.append(nxt)
                 j += 1
+
             caps.append(Caption(kind=kind, id=cap_id, page=page_no, text=" ".join(buf).strip()))
             i = j
-            continue
-
-        i += 1
     return caps
 
 
@@ -216,7 +224,7 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
 
     # 0) эвристика заголовка/авторов с 1-й страницы
     def _extract_title_and_authors(doc_obj):
@@ -251,7 +259,7 @@ def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
     for pno in range(len(doc)):
         page = doc[pno]
         lines = _extract_page_lines(page)
-        caps = _collect_captions(lines, pno + 1)
+        caps = _collect_captions_from_blocks(page.get_text("blocks"), pno + 1)
         all_captions.extend(caps)
         pages.append({
             "page": pno + 1,
