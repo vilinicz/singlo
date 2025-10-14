@@ -1,0 +1,18 @@
+id: "biomed"
+version: "0.1.0"
+must: []
+should:
+  - ["randomized", 0.6]
+  - ["cohort",     0.7]
+  - ["patients",   0.6]
+  - ["trial",      0.5]
+  - ["p<",         0.6]
+  - ["confidence interval", 0.5]
+negative:
+  - ["imageNet", 0.6]
+  - ["EEGNet",   0.6]
+subthemes:
+  - id: "genetics"
+    should:
+      - ["SNP", 0.6]
+      - ["GWAS", 0.7]

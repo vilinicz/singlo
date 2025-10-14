@@ -1,0 +1,24 @@
+# Мини-схема для rules.yaml (похожа на ваш common.yaml)
+type: object
+required: [version, elements]
+properties:
+  version: { type: string }
+  elements:
+    type: array
+    items:
+      type: object
+      required: [id, type, weight, sections, pattern]
+      properties:
+        id:       { type: string }
+        type:     { type: string, enum: ["Input Fact","Hypothesis","Experiment","Technique","Result","Dataset","Analysis","Conclusion"] }
+        weight:   { type: number }
+        sections:
+          type: array
+          items: { type: string }
+        pattern:  { type: string }
+        negatives:
+          type: array
+          items: { type: string }
+        captures:
+          type: array
+          items: { type: string }

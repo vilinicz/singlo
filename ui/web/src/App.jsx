@@ -148,6 +148,8 @@ export default function App() {
     const [s0Preview, setS0Preview] = useState(null);
     const [graphPreview, setGraphPreview] = useState(null);
     const [s2Preview, setS2Preview] = useState(null);
+    const [themes, setThemes] = useState([]);
+    const [themeSel, setThemeSel] = useState("auto"); // "auto" | "biomed" | ...
 
     // init cytoscape
     useEffect(() => {
@@ -234,9 +236,11 @@ export default function App() {
         const form = new FormData();
         form.append("file", file);
 
-        const {data} = await axios.post(`${API}/parse`, form, {
-            headers: {"Content-Type": "multipart/form-data"},
-        });
+        const {data} = await axios.post(
+            `${API}/parse?theme=${encodeURIComponent(themeSel)}`,
+            form,
+            {headers: {"Content-Type": "multipart/form-data"}}
+        );
 
         const id = data?.doc_id;
         if (!id) {
@@ -529,6 +533,17 @@ export default function App() {
         }
     }
 
+    useEffect(() => {
+        (async () => {
+            try {
+                const {data} = await axios.get(`${API}/themes`);
+                setThemes(data.themes || []);
+            } catch (e) {
+                console.error("load themes failed", e);
+                setThemes([]);
+            }
+        })();
+    }, []);
 
     useEffect(() => {
         if (!polling) return;
@@ -580,6 +595,17 @@ export default function App() {
                     <input value={docId} onChange={(e) => setDocId(e.target.value)} placeholder="auto after Parse"
                            style={{width: "220px"}}/>
                 </div>
+                <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Theme:</label>
+                    <select
+                        value={themeSel}
+                        onChange={(e) => setThemeSel(e.target.value)}
+                        className="border rounded px-2 py-1 text-sm"
+                    >
+                        <option value="auto">Auto (recommended)</option>
+                        {themes.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
                 <div style={{marginBottom: 8}}>
                     <input type="file" accept="application/pdf" disabled={status?.state === "running"}
                            onChange={(e) => onPickFile(e.target.files?.[0] || null)}/>
@@ -591,6 +617,19 @@ export default function App() {
                         : null
                     }
                     <button onClick={() => setPolling(true)} style={{marginLeft: 8}}>Refresh status</button>
+                    <button
+                        onClick={async () => {
+                            if (!docId) {
+                                alert("Set Doc ID");
+                                return;
+                            }
+                            await axios.post(`${API}/extract?doc_id=${encodeURIComponent(docId)}&theme=${encodeURIComponent(themeSel)}`);
+                            setPolling(true);
+                        }}
+                        style={{marginLeft: 8}}
+                    >
+                        Extract (S1+S2)
+                    </button>
                 </div>
 
                 <div style={{margin: "12px 0"}}>

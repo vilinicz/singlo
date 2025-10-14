@@ -1,0 +1,30 @@
+id: "shared-lexicon"
+version: "0.1.0"
+abbr:
+  - ["electroencephalography", "EEG"]
+  - ["functional magnetic resonance imaging", "fMRI"]
+  - ["confidence interval", "CI"]
+  - ["hazard ratio", "HR"]
+  - ["odds ratio", "OR"]
+hedges:
+  - may
+  - might
+  - likely
+  - appears
+  - suggest
+  - tends to
+  - возможно
+  - вероятно
+units:
+  - "%"
+  - "Hz"
+  - "ms"
+  - "mm"
+  - "°C"
+  - "kg"
+  - "p<"
+synonyms:
+  - ["experiment", ["trial","study arm","protocol"]]
+  - ["technique",  ["method","procedure","approach"]]
+  - ["result",     ["finding","observation","outcome"]]
+  - ["dataset",    ["cohort","sample","corpus"]]

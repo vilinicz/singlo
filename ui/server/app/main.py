@@ -7,9 +7,16 @@ import redis
 from uuid import uuid4
 import re
 from rq import Queue
+from typing import Optional, List
+from pipeline.themes_router import preload as themes_preload
 
 # -------------------- App --------------------
 app = FastAPI(title="Singularis API", version="0.1")
+
+# ---------- Themes registry (preload once) ----------
+RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")
+THEMES_DIR = os.getenv("THEMES_DIR", str(Path(RULES_BASE_DIR) / "themes"))
+THEME_REGISTRY = themes_preload(THEMES_DIR)  # быстрый реестр + инвертированный индекс
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,33 +33,39 @@ RULES_PATH = os.getenv("S1_RULES_PATH", "/app/rules/common.yaml")
 def _r():
     return redis.from_url(REDIS_URL)
 
+
 def _status_key(doc_id):
     return f"status:{doc_id}"
+
 
 # -------------------- Models --------------------
 class ParseResp(BaseModel):
     doc_id: str
     s0_path: str
 
+
 # -------------------- Routes --------------------
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+
 @app.post("/extract")
-def extract_graph(doc_id: str):
+def extract_graph(doc_id: str, theme: str = Query(default="auto")):
     """
     Кладём задачу в очередь RQ; прогресс смотри через /status/{doc_id}
     """
     q = Queue("singularis", connection=_r())
-    job = q.enqueue("pipeline.worker.run_pipeline", doc_id, job_timeout=600)
+    job = q.enqueue("pipeline.worker.run_pipeline", doc_id, theme, job_timeout=600)
     # сразу инициализируем статус, чтобы фронт видел прогресс
     _r().hset(_status_key(doc_id), mapping={
         "state": "queued",
         "stage": "queued",
-        "started_at": time.time()
+        "started_at": time.time(),
+        "theme": theme
     })
     return {"job_id": job.id, "status": job.get_status()}
+
 
 @app.get("/status/{doc_id}")
 def status(doc_id: str):
@@ -60,23 +73,26 @@ def status(doc_id: str):
     data = r.hgetall(_status_key(doc_id))
     if not data:
         raise HTTPException(404, "no status for doc")
-    out = {k.decode(): (v.decode() if isinstance(v,(bytes,bytearray)) else v) for k,v in data.items()}
-    for k in ("stages","artifacts"):
+    out = {k.decode(): (v.decode() if isinstance(v, (bytes, bytearray)) else v) for k, v in data.items()}
+    for k in ("stages", "artifacts"):
         if k in out:
-            try: out[k] = json.loads(out[k])
-            except: pass
+            try:
+                out[k] = json.loads(out[k])
+            except:
+                pass
     if "started_at" in out and "ended_at" in out:
         out["duration_ms"] = int((float(out["ended_at"]) - float(out["started_at"])) * 1000)
     return out
+
 
 @app.get("/preview/{doc_id}/{artifact}")
 def preview(doc_id: str, artifact: str):
     # куда и какой файл смотреть
     mapping = {
-        "s0":   (DATA_DIR,   "s0.json"),
-        "graph":(EXPORT_DIR, "graph.json"),
-        "s1":   (EXPORT_DIR, "s1_debug.json"),
-        "s2":   (EXPORT_DIR, "s2_debug.json"),
+        "s0": (DATA_DIR, "s0.json"),
+        "graph": (EXPORT_DIR, "graph.json"),
+        "s1": (EXPORT_DIR, "s1_debug.json"),
+        "s2": (EXPORT_DIR, "s2_debug.json"),
     }
     if artifact not in mapping:
         raise HTTPException(404, f"unknown artifact '{artifact}'")
@@ -99,14 +115,17 @@ def get_graph(doc_id: str):
         raise HTTPException(404, f"graph not found for {doc_id}")
     return json.loads(gpath.read_text())
 
+
 def _slugify(name: str) -> str:
     slug = re.sub(r'[^a-zA-Z0-9_-]+', '-', name).strip('-').lower()
     return slug or 'doc'
 
+
 @app.post("/parse", response_model=ParseResp)
 async def parse_pdf(
-    doc_id: str | None = Query(default=None),
-    file: UploadFile = File(...)
+        doc_id: str | None = Query(default=None),
+        file: UploadFile = File(...),
+        theme: str = Query(default="auto")  # <--- добавили
 ):
     """
     Принимаем PDF, генерируем doc_id, сохраняем input.pdf и
@@ -131,9 +150,16 @@ async def parse_pdf(
         "stage": "queued",
         "started_at": time.time(),
         "stages": json.dumps([]),
-        "artifacts": json.dumps({})
+        "artifacts": json.dumps({}),
+        "theme": theme  # <--- пишем для прозрачности
     })
     q = Queue("singularis", connection=r)
-    q.enqueue("pipeline.worker.run_pipeline", doc_id, job_timeout=900)
+    # ВАЖНО: worker должен принимать theme как второй аргумент (см. ниже про worker)
+    q.enqueue("pipeline.worker.run_pipeline", doc_id, theme, job_timeout=900)
 
     return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
+
+
+@app.get("/themes")
+def list_themes():
+    return {"themes": sorted(THEME_REGISTRY.themes.keys())}

@@ -1,0 +1,13 @@
+id: "bci"
+version: "0.1.0"
+must: []
+should:
+  - ["EEG", 0.8]
+  - ["CSP", 0.7]
+  - ["FBCSP", 0.7]
+  - ["motor imagery", 0.7]
+  - ["MI", 0.4]
+  - ["EEGNet", 0.7]
+negative:
+  - ["patients", 0.4]
+  - ["clinical", 0.4]

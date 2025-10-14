@@ -6,6 +6,8 @@ import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+from pipeline.themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
+
 
 # ---------- Rule model ----------
 @dataclass
@@ -18,9 +20,11 @@ class Rule:
     negatives: List[re.Pattern]
     captures: List[str]
 
+
 # ---------- Utils ----------
 def _norm(s: str) -> str:
     return (s or "").strip().lower()
+
 
 def _section_match(sname: str, rule_sections: set) -> bool:
     """Мягкое сопоставление секций: равенство или подстрока в обе стороны."""
@@ -33,9 +37,11 @@ def _section_match(sname: str, rule_sections: set) -> bool:
             return True
     return False
 
+
 def _contains_hedge(text: str, hedge_words: set) -> bool:
     t = _norm(text)
     return any(h in t for h in hedge_words)
+
 
 def _polarity_from_text(text: str) -> str:
     t = (text or "").lower()
@@ -55,8 +61,10 @@ def _polarity_from_text(text: str) -> str:
         return "negative"
     return "neutral"
 
+
 def _make_node_id(doc_id: str, ntype: str, idx: int) -> str:
     return f"{doc_id}:{ntype}:{idx:04d}"
+
 
 # ---------- Load rules with validation ----------
 def load_rules(path: str):
@@ -98,6 +106,42 @@ def load_rules(path: str):
     relations = cfg.get("relations", []) or []
     return meta, hedge_words, rules, relations
 
+
+def _merge_dict_add(dst: Dict[str, float], src: Dict[str, float]):
+    for k, v in (src or {}).items():
+        try:
+            dst[k] = float(v) if k not in dst else max(float(dst[k]), float(v))
+        except Exception:
+            continue
+
+
+def load_rules_merged(paths: List[str]) -> Tuple[Dict[str, Any], set, List[Rule], List[Dict[str, Any]]]:
+    """
+    Загружает несколько YAML-файлов с правилами и аккуратно МЕРДЖИТ:
+      - meta: section_weights (max), conf_boosts (max), hedging.words (union)
+      - elements: конкатенация (Rule[]) — дубли id допустимы, но их лучше избегать линтером
+      - relations: конкатенация
+    """
+    merged_meta: Dict[str, Any] = {"section_weights": {}, "conf_boosts": {}}
+    hedges_all: set = set()
+    all_rules: List[Rule] = []
+    all_rel: List[Dict[str, Any]] = []
+
+    for p in paths:
+        meta, hedge_words, rules, relations = load_rules(p)
+        # meta.section_weights
+        _merge_dict_add(merged_meta.setdefault("section_weights", {}), meta.get("section_weights") or {})
+        # meta.conf_boosts
+        _merge_dict_add(merged_meta.setdefault("conf_boosts", {}), meta.get("conf_boosts") or {})
+        # hedges
+        hedges_all |= set(hedge_words or [])
+        # elements & relations
+        all_rules.extend(rules or [])
+        all_rel.extend(relations or [])
+
+    return merged_meta, hedges_all, all_rules, all_rel
+
+
 # ---------- Matching ----------
 def _yield_matches(text: str, rule: Rule):
     for m in rule.regex.finditer(text):
@@ -108,10 +152,12 @@ def _yield_matches(text: str, rule: Rule):
             continue
         yield frag, span, m
 
+
 # --- Sentence expansion (robust to 60.0 and line breaks) ---
 SENT_END = re.compile(r'[.!?]')
-DOT_IN_NUMBER = re.compile(r'(\d)\.(\d)')          # 60.0 — не конец
-HARD_BREAK = re.compile(r'(\n{2,}|[\r])')          # абзац
+DOT_IN_NUMBER = re.compile(r'(\d)\.(\d)')  # 60.0 — не конец
+HARD_BREAK = re.compile(r'(\n{2,}|[\r])')  # абзац
+
 
 def expand_to_sentence_robust(text: str, span: Tuple[int, int], max_len: int = 600) -> str:
     n = len(text)
@@ -147,6 +193,7 @@ def expand_to_sentence_robust(text: str, span: Tuple[int, int], max_len: int = 6
     frag = text[l:r].strip()
     return frag
 
+
 # --- Number/percent tidy (fix '% of' spacing safely) ---
 def tidy_numbers_and_percents(frag: str) -> str:
     # "40 . 0" → "40.0"
@@ -158,6 +205,7 @@ def tidy_numbers_and_percents(frag: str) -> str:
     # нормализуем множественные пробелы
     frag = re.sub(r'[ \t]{2,}', ' ', frag)
     return frag.strip()
+
 
 def match_rules(doc_id: str,
                 sections: List[Dict[str, Any]],
@@ -244,6 +292,7 @@ def match_rules(doc_id: str,
                 })
     return nodes
 
+
 # ---------- Post-match utilities (safe prov handling) ----------
 def _collect_provs(n: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Собирает провенансы в унифицированном виде [{'section':..., 'span':[s,e]}, ...]."""
@@ -277,6 +326,7 @@ def _collect_provs(n: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     return provs
 
+
 def _span_and_section(n: Dict[str, Any]) -> Tuple[str, Tuple[int, int]]:
     """Возвращает ('section', (start, end)); если пров несколько — охватывающий интервал."""
     provs = _collect_provs(n)
@@ -287,12 +337,14 @@ def _span_and_section(n: Dict[str, Any]) -> Tuple[str, Tuple[int, int]]:
     ends = [p["span"][1] for p in provs]
     return sec, (min(starts), max(ends))
 
+
 def _iou(a: Dict[str, Any], b: Dict[str, Any]) -> float:
     _, (s1, e1) = _span_and_section(a)
     _, (s2, e2) = _span_and_section(b)
     inter = max(0, min(e1, e2) - max(s1, s2))
     uni = (e1 - s1) + (e2 - s2) - inter
     return inter / uni if uni > 0 else 0.0
+
 
 def suppress_overlaps(cands: List[Dict[str, Any]], iou_thr: float = 0.45) -> List[Dict[str, Any]]:
     """
@@ -302,6 +354,7 @@ def suppress_overlaps(cands: List[Dict[str, Any]], iou_thr: float = 0.45) -> Lis
       - затем больший conf.
     Безопасно работает при prov=dict|list и наличии prov_multi.
     """
+
     def sort_key(n):
         sec, (s, _) = _span_and_section(n)
         return (sec or "Unknown", int(s or 0))
@@ -343,8 +396,10 @@ def suppress_overlaps(cands: List[Dict[str, Any]], iou_thr: float = 0.45) -> Lis
             kept.append(n)
     return kept
 
+
 def merge_fragment_nodes(nodes: List[Dict[str, Any]], max_gap: int = 24) -> List[Dict[str, Any]]:
     """Склейка соседних фрагментов одного правила/типа в пределах max_gap по спанам."""
+
     def sort_key(n):
         sec, (s, _) = _span_and_section(n)
         return (n.get("type") or "", n.get("label") or "", sec or "Unknown", int(s or 0))
@@ -353,14 +408,15 @@ def merge_fragment_nodes(nodes: List[Dict[str, Any]], max_gap: int = 24) -> List
     out: List[Dict[str, Any]] = []
     i = 0
     while i < len(nodes):
-        cur = dict(nodes[i]); i += 1
+        cur = dict(nodes[i]);
+        i += 1
         cur_sec, (cur_s, cur_e) = _span_and_section(cur)
         while i < len(nodes):
             nxt = nodes[i]
             same = (
-                nxt.get("type") == cur.get("type")
-                and (nxt.get("label") == cur.get("label"))
-                and _span_and_section(nxt)[0] == cur_sec
+                    nxt.get("type") == cur.get("type")
+                    and (nxt.get("label") == cur.get("label"))
+                    and _span_and_section(nxt)[0] == cur_sec
             )
             nxt_s, nxt_e = _span_and_section(nxt)[1]
             near = nxt_s - cur_e <= max_gap
@@ -376,11 +432,14 @@ def merge_fragment_nodes(nodes: List[Dict[str, Any]], max_gap: int = 24) -> List
         out.append(cur)
     return out
 
+
 def drop_nested_overlaps(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Удаляет узлы, полностью вложенные в другие (при равном типе + не короче текст)."""
+
     def sort_key(n):
         _, (s, e) = _span_and_section(n)
         return (int(s or 0), -int(e or 0))
+
     nodes = sorted(nodes, key=sort_key)
     keep: List[Dict[str, Any]] = []
     for n in nodes:
@@ -397,6 +456,7 @@ def drop_nested_overlaps(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             keep.append(n)
     return keep
 
+
 # ---------- Linking (intra-paper) ----------
 def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     edges: List[Dict[str, Any]] = []
@@ -405,6 +465,7 @@ def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) 
         by_type.setdefault(n["type"], []).append(n)
 
     seen = set()
+
     def add(frm, to, etype, conf=0.6, hint="rule"):
         key = (frm["id"], to["id"], etype)
         if key in seen:
@@ -427,10 +488,12 @@ def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) 
     def _order_by_proximity(a, bs):
         # по секции и расстоянию начала спана
         a_sec, (sa, _) = _span_and_section(a)
+
         def dist(b):
             b_sec, (sb, _) = _span_and_section(b)
             same = 0 if a_sec == b_sec else 100000
             return same + abs((sa or 0) - (sb or 0))
+
         return sorted(bs, key=dist)
 
     # Technique/Method -> Result/Experiment
@@ -478,19 +541,23 @@ def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) 
 
     return edges
 
+
 # ---------- Gaps (S1.5 seeds) ----------
 _SENT_MIN = 40
 _SENT_MAX = 400
 _SENT_SPLIT = re.compile(r'[^.!?\n]{40,400}[.!?]')
+
 
 def _split_sentences(text: str):
     """Быстрая нарезка на псевдо-предложения по длине и финальной пунктуации."""
     for m in _SENT_SPLIT.finditer(text or ""):
         yield m.group(0).strip()
 
+
 def _compile_seed_regexes(meta: Dict[str, Any]):
     pats = (meta.get("seeds", {}) or {}).get("regexes", []) or []
     return [re.compile(p, re.I | re.S) for p in pats]
+
 
 def _looks_like_seed(sent: str, seed_res: List[re.Pattern]) -> bool:
     t = sent or ""
@@ -498,10 +565,12 @@ def _looks_like_seed(sent: str, seed_res: List[re.Pattern]) -> bool:
         return False
     return any(r.search(t) for r in seed_res)
 
+
 def _has_lexicon(sent: str, meta: Dict[str, Any]) -> bool:
     lex = (meta.get("seeds", {}) or {}).get("method_lexicon", []) or []
     t = _norm(sent)
     return any(w in t for w in lex)
+
 
 def gather_gaps(sections: List[Dict[str, Any]], meta: Dict[str, Any], max_gaps: int = 50) -> List[Dict[str, str]]:
     """Возвращает список {section, text} — предложения-кандидаты, похожие на элементы, но не пойманные правилами."""
@@ -526,8 +595,19 @@ def gather_gaps(sections: List[Dict[str, Any]], meta: Dict[str, Any], max_gaps: 
                         return out
     return out
 
+
+def _safe_preload(themes_root: str | Path) -> ThemeRegistry:
+    try:
+        return themes_preload(themes_root)
+    except Exception:
+        return ThemeRegistry(Path(themes_root), {}, {})
+
+
 # ---------- Runner ----------
-def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
+def run_s1(s0_path: str, rules_path: str, out_path: str, *,
+           themes_root: str = "/app/rules/themes",
+           theme_override: Optional[List[str]] = None,
+           theme_registry: Optional[ThemeRegistry] = None) -> Dict[str, Any]:
     """
     1) грузит s0.json и rules (common.yaml + learned packs);
     2) матч правил по секциям/капшенам -> кандидаты узлов;
@@ -543,8 +623,27 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
     sections = s0.get("sections", []) or []
     captions = s0.get("captions", []) or []
 
-    # --- Загрузка правил и meta ---
-    meta, hedge_words, rule_objs, relations = load_rules(rules_path)
+    # --- Тематический роутинг ---
+    registry = theme_registry if theme_registry is not None else _safe_preload(themes_root)
+    chosen = route_themes(
+        s0, registry=registry,
+        global_topk=2, stop_threshold=1.8,
+        override=theme_override
+    )
+
+    files = select_rule_files(
+        themes_root=themes_root,
+        chosen=chosen,
+        common_path=rules_path  # ← ЯВНО говорим, где общий
+    )
+    rule_files: List[str] = [str(p) for p in files["rules"]]
+    if rules_path and Path(rules_path).exists():
+        # совместимость: добавляем старый общий rules_path последним (или наоборот)
+        if str(rules_path) not in rule_files:
+            rule_files.insert(0, str(rules_path))
+
+    # --- Загрузка и мердж правил ---
+    meta, hedge_words, rule_objs, relations = load_rules_merged(rule_files)
 
     # --- Кандидаты узлов по правилам ---
     candidates = match_rules(
@@ -583,6 +682,8 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
         "edges": edges
     }
 
+    theme_dbg = [{"name": t.name, "score": t.score, "threshold": t.threshold} for t in chosen]
+
     # --- Отладочная сводка ---
     debug = {
         "doc_id": doc_id,
@@ -598,7 +699,8 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
         "samples": {
             "candidates_head": candidates[:20],
             "gaps_head": gaps[:20]
-        }
+        },
+        "theme_routing": theme_dbg,
     }
 
     # --- Запись артефактов ---
@@ -610,8 +712,10 @@ def run_s1(s0_path: str, rules_path: str, out_path: str) -> Dict[str, Any]:
 
     return s1_graph
 
+
 if __name__ == "__main__":
     import argparse
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--s0", required=True)
     ap.add_argument("--rules", required=True)

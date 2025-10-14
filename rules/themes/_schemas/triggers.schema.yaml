@@ -1,0 +1,37 @@
+# Мини-схема для triggers.yaml
+type: object
+required: [id, version, must, should, negative]
+properties:
+  id: { type: string }
+  version: { type: string }
+  must:
+    type: array
+    items: { type: string }
+  should:
+    type: array
+    items:
+      type: array
+      items:
+        - { type: string }    # token
+        - { type: number }    # weight
+  negative:
+    type: array
+    items:
+      type: array
+      items:
+        - { type: string }    # token
+        - { type: number }    # penalty
+  subthemes:
+    type: array
+    items:
+      type: object
+      required: [id, should]
+      properties:
+        id: { type: string }
+        should:
+          type: array
+          items:
+            type: array
+            items:
+              - { type: string }
+              - { type: number }

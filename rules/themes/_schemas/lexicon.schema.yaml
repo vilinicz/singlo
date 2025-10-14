@@ -1,0 +1,24 @@
+# Мини-схема для lexicon.yaml
+type: object
+required: [abbr, hedges, units, synonyms]
+properties:
+  abbr:
+    type: array
+    items:
+      type: array
+      items:
+        - { type: string }  # long form (regex ок)
+        - { type: string }  # short
+  hedges:
+    type: array
+    items: { type: string }
+  units:
+    type: array
+    items: { type: string }
+  synonyms:
+    type: array
+    items:
+      type: array
+      items:
+        - { type: string }  # canonical
+        - { type: array, items: { type: string } } # variants
