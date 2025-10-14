@@ -286,3 +286,109 @@ def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
             score -= wt
 
     return (score, True)
+
+# -------- verbose scoring for debugging (exported) --------
+
+def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
+    """
+    Подробно считает скор темы и возвращает matched-триггеры.
+    Возвращает:
+      {
+        "score": float,
+        "passed_must": bool,
+        "matched": [
+           {"kind":"should","mode":"plain","token":"cohort","weight":1.1},
+           {"kind":"negative","mode":"regex","token":"eigen(value|vector)","weight":1.0},
+           ...
+        ],
+        "unmet_must": ["..."],                # если must не прошли
+        "top_triggers": [ ... ]               # отсортированные matched по |weight|, сначала should, затем negative
+      }
+    """
+    out = {"score": 0.0, "passed_must": True, "matched": [], "unmet_must": [], "top_triggers": []}
+
+    # must
+    for tok in (trg.must or []):
+        if _looks_regex(tok):
+            try:
+                ok = re.search(tok, text, re.IGNORECASE | re.MULTILINE) is not None
+            except re.error:
+                ok = False
+        else:
+            ok = (tok.lower() in text)
+        if not ok:
+            out["passed_must"] = False
+            out["unmet_must"].append(tok)
+
+    # если must завалены, дальше всё равно посчитаем — полезно для отладки
+    score = 0.0
+
+    # should plain
+    for tok, wt in (trg.should_plain or []):
+        if tok in text:
+            score += wt
+            out["matched"].append({"kind": "should", "mode": "plain", "token": tok, "weight": wt})
+
+    # negative plain
+    for tok, wt in (trg.neg_plain or []):
+        if tok in text:
+            score -= wt
+            out["matched"].append({"kind": "negative", "mode": "plain", "token": tok, "weight": wt})
+
+    # should regex
+    for rx, wt in (trg.should_regex or []):
+        if _contains_regex(rx, text):
+            score += wt
+            out["matched"].append({"kind": "should", "mode": "regex", "token": rx.pattern, "weight": wt})
+
+    # negative regex
+    for rx, wt in (trg.neg_regex or []):
+        if _contains_regex(rx, text):
+            score -= wt
+            out["matched"].append({"kind": "negative", "mode": "regex", "token": rx.pattern, "weight": wt})
+
+    # топ-триггеры: сначала should по весу, потом negative по весу
+    shoulds = [m for m in out["matched"] if m["kind"] == "should"]
+    negs   = [m for m in out["matched"] if m["kind"] == "negative"]
+    shoulds.sort(key=lambda m: float(m["weight"]), reverse=True)
+    negs.sort(key=lambda m: float(m["weight"]), reverse=True)
+    out["top_triggers"] = shoulds[:8] + negs[:8]
+
+    out["score"] = float(score)
+    return out
+
+
+def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[ThemeScore]) -> List[Dict[str, Any]]:
+    """
+    Возвращает подробный блок для s1_debug:
+    [
+      {
+        "name": "biomed",
+        "score": 2.7,
+        "threshold": 1.6,
+        "chosen": true,
+        "top_triggers": [...],
+        "unmet_must": [...],
+        "matched_count": 5
+      },
+      ...
+    ]
+    """
+    text = build_showcase_text(s0)
+    out = []
+    for t in (chosen or []):
+        trg = registry.themes.get(t.name)
+        if not trg:
+            out.append({"name": t.name, "score": t.score, "threshold": t.threshold, "chosen": t.chosen})
+            continue
+        det = score_theme_detail_verbose(text, trg)
+        out.append({
+            "name": t.name,
+            "score": t.score,
+            "threshold": t.threshold,
+            "chosen": t.chosen,
+            "top_triggers": det.get("top_triggers", []),
+            "unmet_must": det.get("unmet_must", []),
+            "matched_count": len(det.get("matched", [])),
+        })
+    return out

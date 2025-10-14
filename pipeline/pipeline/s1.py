@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from pipeline.themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
+from pipeline.themes_router import explain_themes_for_debug, build_showcase_text
 
 
 # ---------- Rule model ----------
@@ -705,7 +706,8 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
         "edges": edges
     }
 
-    theme_dbg = [{"name": t.name, "score": t.score, "threshold": t.threshold} for t in chosen]
+    # подробный блок по темам: скор, выбранность, топ-триггеры
+    theme_dbg = explain_themes_for_debug(s0, registry, chosen)
 
     # --- Отладочная сводка ---
     debug = {"doc_id": doc_id, "summary": {
