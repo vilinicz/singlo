@@ -631,19 +631,42 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
         override=theme_override
     )
 
+    # --- выбрать файлы правил/лексиконов по выбранным темам ---
     files = select_rule_files(
-        themes_root=themes_root,
+        themes_root=themes_root,  # напр. "/app/rules/themes"
         chosen=chosen,
-        common_path=rules_path  # ← ЯВНО говорим, где общий
+        common_path=rules_path  # напр. "/app/rules/common.yaml"
     )
-    rule_files: List[str] = [str(p) for p in files["rules"]]
-    if rules_path and Path(rules_path).exists():
-        # совместимость: добавляем старый общий rules_path последним (или наоборот)
-        if str(rules_path) not in rule_files:
-            rule_files.insert(0, str(rules_path))
 
-    # --- Загрузка и мердж правил ---
+    rule_files = [str(p) for p in files.get("rules", [])]
+    lexicon_files = [str(p) for p in files.get("lexicons", [])]
+
+    # --- мерж правил из нескольких файлов ---
     meta, hedge_words, rule_objs, relations = load_rules_merged(rule_files)
+
+    # --- домножаем веса тематических правил на theme_score ---
+    _apply_theme_weight_mix(rule_objs, chosen)
+
+    # --- подмешиваем shared-lexicon и тематические лексиконы ---
+    abbr_map = {}
+    synonyms = set()
+    hedge_extra = set()
+
+    for lp in lexicon_files:
+        lx = load_lexicon_yaml(lp)
+        for short, long in lx["abbr"]:
+            if isinstance(short, str) and isinstance(long, str):
+                abbr_map[short.lower()] = long
+        for a, b in lx["synonyms"]:
+            if isinstance(a, str) and isinstance(b, str):
+                synonyms.add(tuple(sorted([a.lower(), b.lower()])))
+        for w in lx["hedging_extra"]:
+            if isinstance(w, str):
+                hedge_extra.add(w.lower())
+
+    # hedging = из правил + из лексиконов
+    hedge_words = set(hedge_words or [])
+    hedge_words |= hedge_extra
 
     # --- Кандидаты узлов по правилам ---
     candidates = match_rules(
@@ -685,23 +708,18 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
     theme_dbg = [{"name": t.name, "score": t.score, "threshold": t.threshold} for t in chosen]
 
     # --- Отладочная сводка ---
-    debug = {
-        "doc_id": doc_id,
-        "summary": {
-            "candidates_total": len(candidates),
-            "nodes_after_threshold": len(nodes),
-            "edges_after_threshold": len(edges),
-            "node_threshold": node_thr,
-            "edge_threshold": edge_thr,
-            "section_names": list({(s.get("name") or "Unknown") for s in sections}),
-            "gap_count": len(gaps)
-        },
-        "samples": {
-            "candidates_head": candidates[:20],
-            "gaps_head": gaps[:20]
-        },
-        "theme_routing": theme_dbg,
-    }
+    debug = {"doc_id": doc_id, "summary": {
+        "candidates_total": len(candidates),
+        "nodes_after_threshold": len(nodes),
+        "edges_after_threshold": len(edges),
+        "node_threshold": node_thr,
+        "edge_threshold": edge_thr,
+        "section_names": list({(s.get("name") or "Unknown") for s in sections}),
+        "gap_count": len(gaps)
+    }, "samples": {
+        "candidates_head": candidates[:20],
+        "gaps_head": gaps[:20]
+    }, "theme_routing": theme_dbg, "rules_loaded": rule_files, "lexicons_loaded": lexicon_files}
 
     # --- Запись артефактов ---
     outp = Path(out_path)
@@ -722,3 +740,31 @@ if __name__ == "__main__":
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     run_s1(args.s0, args.rules, args.out)
+
+
+def load_lexicon_yaml(path: str) -> dict:
+    d = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    return {
+        "abbr": d.get("abbr", []) or [],
+        "synonyms": d.get("synonyms", []) or [],
+        "hedging_extra": d.get("hedging_extra", []) or [],
+    }
+
+
+def _clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
+
+def _apply_theme_weight_mix(rule_objs: List[Rule], chosen_themes) -> None:
+    """Домножаем rule.weight для правил, чьи id начинаются с '<theme>/'."""
+    # name -> score
+    tmap = {t.name: float(t.score) for t in (chosen_themes or [])}
+    if not tmap:
+        return
+    for r in rule_objs:
+        rid = r.id or ""
+        for tname, score in tmap.items():
+            if rid.startswith(f"{tname}/"):
+                scale = _clamp(1.0 + 0.12 * score, 0.85, 1.45)
+                r.weight = float(round(r.weight * scale, 6))
+                break

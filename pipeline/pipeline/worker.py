@@ -89,14 +89,6 @@ def _finish_status(doc_id, ok=True, err_msg=None):
 
 
 # -------- Темы: глобальный реестр (preload once per process) --------
-THEMES_DIR = os.getenv("THEMES_DIR", "/app/themes")
-try:
-    THEME_REGISTRY = themes_preload(THEMES_DIR)
-except Exception:
-    # Не валим воркер, если тем нет — S1 сможет работать только с common.yaml
-    THEME_REGISTRY = None
-
-
 def _parse_theme_override(theme_str: Optional[str]) -> Optional[List[str]]:
     """
     "auto" | None -> None
