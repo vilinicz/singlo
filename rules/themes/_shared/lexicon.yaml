@@ -9,11 +9,15 @@ abbr:
   - MAE
   - RMSE
   - R2
-  - NLP
-  - ML
-  - DL
-  - CNN
-  - RNN
+  - SOTA
+  - KPI
+  - API
+  - CPU
+  - GPU
+  - JSON
+  - XML
+  - Fig.
+  - Tab.
 hedges:
   - may
   - might
@@ -27,30 +31,46 @@ hedges:
   - tends to
   - roughly
   - around
+  - in part
+  - to some extent
 units:
   - mm
   - cm
   - m
+  - km
   - kg
+  - g
+  - mg
   - ms
   - s
+  - min
+  - h
   - Hz
   - kHz
   - MHz
+  - GHz
   - N
   - Pa
   - mol
-  - %
+  - K
+  - "°C"
+  - L
+  - mL
+  - "%"
 synonyms:
-  -
-    from: method
-    to: technique
-  -
-    from: results
-    to: findings
-  -
-    from: figure
-    to: illustration
-  -
-    from: table
-    to: dataset
+  - {from: method, to: technique}
+  - {from: result, to: finding}
+  - {from: analysis, to: examination}
+  - {from: model, to: framework}
+  - {from: experiment, to: trial}
+  - {from: significant, to: notable}
+  - {from: increase, to: rise}
+  - {from: decrease, to: reduction}
+  - {from: effect, to: impact}
+  - {from: evidence, to: support}
+  - {from: dataset, to: corpus}
+  - {from: figure, to: illustration}
+  - {from: table, to: tabulation}
+  - {from: objective, to: goal}
+  - {from: conclusion, to: finding}
+  - {from: technique, to: approach}
