@@ -87,7 +87,7 @@ def run_pipeline(doc_id: str):
         if not s0_path.exists():
             if not pdf_path.exists():
                 raise FileNotFoundError(f"PDF not found: {pdf_path}")
-            build_s0(str(pdf_path), str(data_dir))
+            build_s0(str(pdf_path), str(data_dir), use_latex=False)
         _push_stage(doc_id, "S0", t0, notes="real S0")
         _set_artifact(doc_id, "s0", str(s0_path))
 
