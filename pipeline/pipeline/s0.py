@@ -1,67 +1,61 @@
-# pipeline/s0.py
 from __future__ import annotations
-import re
-import json
+
 import hashlib
-from dataclasses import dataclass
+import json
+import re
+import shutil
+import tarfile
+import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import pymupdf
 
-# --------- Регексы для детектора секций/капшенов ---------
-
-SECTION_PAT = re.compile(
-    r"""(?ix) ^
-        (?: \d+\.?\s+ | [ivxl]+\.\s+ )?         
-        (abstract|introduction|background|
-         materials\s+and\s+methods|materials\s*&\s*methods|methods|method|
-         results?\s+and\s+discussion|results?|discussion|
-         conclusions?|conclusion|
-         references|acknowledg(e)?ments|related\s+work|limitations)
-        \s* $
-    """
+from .parsers import (
+    extract_title_and_authors,
+    parse_latex_sources,
+    parse_pdf_document,
 )
-ALLCAPS_SECTION_PAT = re.compile(r"^[A-Z][A-Z\s\-]{3,}$")
-
-CAPTION_PAT = re.compile(
-    r"""
-    ^\s*
-    (?P<label>fig(?:\.|ure)?|table|tab\.)
-    \s*
-    (?P<num>[A-Za-z0-9]+(?:[.\-][A-Za-z0-9]+)*)?
-    \s*
-    (?P<punct>[:.\-–—])
-    \s*
-    (?P<body>.*)
-    $
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
-
-# --------- DocID helpers ---------
+from .parsers.utils import slugify
 
 JUNK_TITLE_PAT = re.compile(r'^(title|untitled|document)\b', re.I)
 JUNK_PRODUCER_PAT = re.compile(r'(microsoft\s+word|adobe\s+pdf|libreoffice|pages)\b', re.I)
-ARXIV_RE = re.compile(r'\b(\d{4}\.\d{5})(v\d+)?\b', re.I)
+ARXIV_CANONICAL_RE = re.compile(r'arxiv\s*[:/ ]\s*(\d{4}\.\d{4,5})(v\d+)?', re.I)
+ARXIV_URL_RE = re.compile(r'arxiv\.org/(?:abs|pdf|format)/(\d{4}\.\d{4,5})(v\d+)?', re.I)
+ARXIV_RE = re.compile(r'\b(\d{4}\.\d{4,5})(v\d+)?\b', re.I)
 
-
-def _slug(s: str) -> str:
-    s = (s or "").strip().lower()
-    s = re.sub(r'[^a-z0-9]+', '-', s)
-    s = re.sub(r'-{2,}', '-', s).strip('-')
-    return s or 'doc'
-
-
-def _looks_junky(s: str) -> bool:
-    if not s:
+def _looks_junky(value: str) -> bool:
+    if not value:
         return True
-    s = s.strip()
-    return bool(JUNK_TITLE_PAT.match(s) or JUNK_PRODUCER_PAT.search(s))
+    value = value.strip()
+    return bool(JUNK_TITLE_PAT.match(value) or JUNK_PRODUCER_PAT.search(value))
+
+
+def _is_valid_arxiv_id(candidate: str) -> bool:
+    if not candidate or "." not in candidate:
+        return False
+    prefix, _ = candidate.split(".", 1)
+    if len(prefix) != 4 or not prefix.isdigit():
+        return False
+    month = int(prefix[2:])
+    return 1 <= month <= 12
 
 
 def _extract_arxiv_id_from_text(text: str) -> Optional[str]:
-    m = ARXIV_RE.search(text or "")
-    return (m.group(1) + (m.group(2) or "")) if m else None
+    txt = text or ""
+    for patt in (ARXIV_CANONICAL_RE, ARXIV_URL_RE):
+        match = patt.search(txt)
+        if match:
+            candidate = match.group(1)
+            if _is_valid_arxiv_id(candidate):
+                return candidate + (match.group(2) or "")
+    for match in ARXIV_RE.finditer(txt):
+        candidate = match.group(1)
+        if _is_valid_arxiv_id(candidate):
+            return candidate + (match.group(2) or "")
+    return None
 
 
 def _guess_arxiv_id(source_pdf: str, first_page_text: str, metadata: dict) -> Optional[str]:
@@ -77,308 +71,203 @@ def _guess_arxiv_id(source_pdf: str, first_page_text: str, metadata: dict) -> Op
     return None
 
 
-def _safe_doc_id(s0: dict, s0_path: str, first_page_text: str = "") -> str:
+def _safe_doc_id(s0: Dict[str, Any], out_dir: Path, first_page_text: str = "") -> str:
     meta = s0.get("metadata") or {}
     src = s0.get("source_pdf") or ""
     raw_id = (s0.get("doc_id") or "").strip()
 
-    # Если уже есть адекватный doc_id — только «причесать»
     if raw_id and not _looks_junky(raw_id):
-        return _slug(raw_id)
+        return slugify(raw_id)
 
-    # 1) arXiv
     arx = _guess_arxiv_id(src, first_page_text, meta)
     if arx:
-        return _slug(arx)
-    # 2) имя PDF
+        return slugify(arx)
     if src:
-        return _slug(Path(src).stem)
-    # 3) имя рабочей директории
-    stem = Path(s0_path).parent.name
-    if stem:
-        return _slug(stem)
-    # 4) короткий хэш
-    return 'doc-' + hashlib.md5(s0_path.encode('utf-8')).hexdigest()[:8]
+        return slugify(Path(src).stem)
+    if out_dir.name:
+        return slugify(out_dir.name)
+    return 'doc-' + hashlib.md5(str(out_dir).encode('utf-8')).hexdigest()[:8]
 
 
-# --------- Модель подписи ---------
-
-@dataclass
-class Caption:
-    kind: str  # Figure / Table
-    id: str  # "Figure2" / "Table I"
-    page: int
-    text: str
-
-
-# --------- Нормализация текста ---------
-
-RE_SOFT_HYPHEN_BREAK = re.compile(r'(\w)[\-­]\n(\w)')  # advec-\ntion → advection
-RE_LINE_BREAK_IN_NUMBER = re.compile(r'(\d)\s*\n\s*(\d)')  # 40.\n0 → 40.0
-RE_LINE_BREAK_AFTER_PAREN = re.compile(r'\)\s*\n\s*(\d)')  # ") \n60" → ") 60"
-RE_MULTI_SPACES = re.compile(r'[ \t]{2,}')
-
-
-def _normalize_text(text: str) -> str:
-    t = (text or "").replace('\r\n', '\n').replace('\r', '\n')
-    t = RE_SOFT_HYPHEN_BREAK.sub(r'\1\2', t)
-    t = RE_LINE_BREAK_IN_NUMBER.sub(r'\1.\2', t)
-    t = RE_LINE_BREAK_AFTER_PAREN.sub(r') \1', t)
-    # одиночные переносы внутри абзаца → пробел
-    t = re.sub(r'(?<!\n)\n(?!\n)', ' ', t)
-    t = RE_MULTI_SPACES.sub(' ', t)
-    return t.strip()
-
-
-# --------- Вытаскиваем строки/капшены со страницы ---------
-
-def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
-    """Определяем, является ли строка началом подписи и возвращаем (kind, num, body)."""
-    m = CAPTION_PAT.match(line or "")
-    if not m:
+def _extract_arxiv_id_from_metadata(meta: Dict[str, Any]) -> Optional[str]:
+    if not isinstance(meta, dict):
         return None
-    label = m.group("label").lower()
-    kind = "Figure" if label.startswith("fig") else "Table"
-    num = (m.group("num") or "").strip()
-    tail = (m.group("body") or "").strip()
-    return kind, num, tail
-
-def _extract_page_lines(page: pymupdf.Page) -> List[str]:
-    return page.get_text("text").splitlines()
-
-
-def _extract_blocks_sample(page: pymupdf.Page, limit: int = 5) -> List[Dict[str, Any]]:
-    blocks = []
-    for b in page.get_text("blocks")[:limit]:
-        x0, y0, x1, y1, text, *_ = b
-        if not (text or "").strip():
-            continue
-        blocks.append({
-            "bbox": [round(float(x0), 1), round(float(y0), 1), round(float(x1), 1), round(float(y1), 1)],
-            "text_preview": text.strip().replace("\n", " ")[:160]
-        })
-    return blocks
-
-
-def _is_section_heading(line: str) -> Optional[str]:
-    raw = (line or "").strip()
-    if not raw:
-        return None
-    m = SECTION_PAT.match(raw)
-    if m:
-        return m.group(1).capitalize()
-    if ALLCAPS_SECTION_PAT.match(raw) and len(raw.split()) <= 5:
-        word = raw.lower()
-        for c in ["abstract", "introduction", "methods", "materials and methods",
-                  "results", "discussion", "conclusions", "conclusion",
-                  "supplementary", "appendix", "acknowledgements", "acknowledgments"]:
-            if c.replace(" ", "") in word.replace(" ", ""):
-                return c.title()
+    for key in ("arxiv_id", "identifier", "subject", "keywords", "title"):
+        value = meta.get(key)
+        if isinstance(value, str):
+            found = _extract_arxiv_id_from_text(value)
+            if found:
+                return found
     return None
 
 
-def _collect_captions_from_blocks(blocks: List[tuple], page_no: int) -> List[Caption]:
-    """Ограничиваем подписи одним текстовым блоком, чтобы не захватывать основной текст."""
-    caps: List[Caption] = []
-    for block in blocks:
-        if not block or len(block) < 5:
+def _find_arxiv_id(pdf_path: str, doc: pymupdf.Document, first_page_text: str) -> Optional[str]:
+    meta = doc.metadata or {}
+    arx = _extract_arxiv_id_from_metadata(meta)
+    if arx:
+        return arx
+
+    candidates: list[str] = []
+    for idx in range(min(len(doc), 5)):
+        try:
+            page = doc[idx]
+        except Exception:
             continue
-        raw_text = (block[4] or "").strip()
-        if not raw_text:
-            continue
-        lines = raw_text.splitlines()
-        i = 0
-        while i < len(lines):
-            line = (lines[i] or "").strip()
-            cap_head = _match_caption(line)
-            if not cap_head:
-                i += 1
+        candidates.append(page.get_text("text") or "")
+        try:
+            for block in page.get_text("blocks"):
+                if not block or len(block) < 5:
+                    continue
+                candidates.append(block[4] or "")
+        except Exception:
+            pass
+    candidates.append(first_page_text or "")
+    candidates.append(Path(pdf_path).stem)
+
+    for text in candidates:
+        arx = _extract_arxiv_id_from_text(text or "")
+        if arx:
+            return arx
+    return None
+
+
+def _safe_tar_extract(tar: tarfile.TarFile, dest: Path) -> None:
+    dest = dest.resolve()
+    for member in tar.getmembers():
+        member_path = (dest / member.name).resolve()
+        if not str(member_path).startswith(str(dest)):
+            raise ValueError(f"Blocked unsafe tar member: {member.name}")
+    tar.extractall(dest)
+
+
+def _download_arxiv_source(arxiv_id: str, cache_dir: Path) -> Optional[Path]:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    target_dir = cache_dir / slugify(arxiv_id)
+    if target_dir.exists() and any(target_dir.iterdir()):
+        return target_dir
+
+    def _url_candidates(arxiv: str):
+        if "v" in arxiv and arxiv.rsplit("v", 1)[-1].isdigit():
+            bare = arxiv.split("v", 1)[0]
+            yield f"https://arxiv.org/e-print/{arxiv}"
+            yield f"https://arxiv.org/src/{arxiv}"
+            yield f"https://arxiv.org/e-print/{bare}"
+            yield f"https://arxiv.org/src/{bare}"
+        else:
+            yield f"https://arxiv.org/e-print/{arxiv}"
+            yield f"https://arxiv.org/src/{arxiv}"
+
+    for url in _url_candidates(arxiv_id):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "singlo-pipeline/1.0"})
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = resp.read()
+        except urllib.error.HTTPError as err:
+            if err.code in (403, 404):
+                continue
+            return None
+        except urllib.error.URLError:
+            return None
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_tar = Path(tmp_dir) / "src.tar"
+            tmp_tar.write_bytes(data)
+            extract_root = Path(tmp_dir) / "src"
+            extract_root.mkdir(parents=True, exist_ok=True)
+            try:
+                with tarfile.open(tmp_tar, mode="r:*") as tarf:
+                    _safe_tar_extract(tarf, extract_root)
+            except (tarfile.TarError, ValueError):
                 continue
 
-            kind, num, tail = cap_head
-            cap_id = f"{kind}{num}" if num else kind
-            buf = [tail] if tail else []
-            j = i + 1
-            while j < len(lines):
-                nxt = (lines[j] or "").strip()
-                if not nxt:
-                    break
-                if _match_caption(nxt) or _is_section_heading(nxt):
-                    break
-                buf.append(nxt)
-                j += 1
-
-            caps.append(Caption(kind=kind, id=cap_id, page=page_no, text=" ".join(buf).strip()))
-            i = j
-    return caps
+            if target_dir.exists():
+                shutil.rmtree(target_dir, ignore_errors=True)
+            shutil.move(str(extract_root), target_dir)
+            return target_dir
+    return None
 
 
-# --------- Главная функция S0 ---------
-
-def build_s0(pdf_path: str, out_dir: str) -> Dict[str, Any]:
-    """
-    Читает PDF и сохраняет s0.json в out_dir.
-    Возвращает словарь S0.
-    """
+def build_s0(pdf_path: str, out_dir: str, *, use_latex: bool = True) -> Dict[str, Any]:
     pdf_path = str(pdf_path)
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir_path = Path(out_dir)
+    out_dir_path.mkdir(parents=True, exist_ok=True)
 
     doc = pymupdf.open(pdf_path)
+    try:
+        page_count = len(doc)
+        first_page_text = doc[0].get_text("text") if page_count else ""
+        pdf_metadata = doc.metadata or {}
 
-    # 0) эвристика заголовка/авторов с 1-й страницы
-    def _extract_title_and_authors(doc_obj):
-        page = doc_obj[0]
-        d = page.get_text("dict")
-        spans = []
-        for b in d.get("blocks", []):
-            for l in b.get("lines", []):
-                for s in l.get("spans", []):
-                    spans.append({
-                        "text": s.get("text", "").strip(),
-                        "size": float(s.get("size", 0.0)),
-                        "y": float(l.get("bbox", [0, 0, 0, 0])[1]),
-                    })
-        spans = [s for s in spans if s["text"]]
-        if not spans:
-            return None, None
-        max_size = max(s["size"] for s in spans)
-        title_lines = [s for s in spans if s["size"] >= max_size - 0.5 and s["y"] < spans[0]["y"] + 300]
-        title = " ".join(s["text"] for s in title_lines).strip()
-        # авторы — следующий по размеру кегль
-        below_title = [s for s in spans if s["y"] > (title_lines[0]["y"] if title_lines else 0)]
-        sizes = sorted({s["size"] for s in below_title}, reverse=True)
-        second = sizes[0] if sizes else 0
-        author_lines = [s for s in below_title if abs(s["size"] - second) < 0.6]
-        authors = " ".join(s["text"] for s in author_lines).strip()
-        return (title or None), (authors or None)
+        metadata = {
+            "title": pdf_metadata.get("title") or "",
+            "author": pdf_metadata.get("author") or "",
+            "producer": pdf_metadata.get("producer") or "",
+            "creationDate": pdf_metadata.get("creationDate") or "",
+            "source_format": "pdf"
+        }
 
-    # 1) постранично собираем строки/капшены/сэмплы
-    pages = []
-    all_captions: List[Caption] = []
-    for pno in range(len(doc)):
-        page = doc[pno]
-        lines = _extract_page_lines(page)
-        caps = _collect_captions_from_blocks(page.get_text("blocks"), pno + 1)
-        all_captions.extend(caps)
-        pages.append({
-            "page": pno + 1,
-            "lines": lines,
-            "blocks_sample": _extract_blocks_sample(page)
-        })
+        arxiv_id = _find_arxiv_id(pdf_path, doc, first_page_text)
+        core_data: Optional[Dict[str, Any]] = None
 
-    # первая страница текстом — для doc_id эвристик
-    first_page_text = (doc[0].get_text("text") if len(doc) > 0 else "") or ""
+        if use_latex and arxiv_id:
+            source_cache = out_dir_path / "_arxiv_cache"
+            source_dir = _download_arxiv_source(arxiv_id, source_cache)
+            if source_dir:
+                latex_result = parse_latex_sources(arxiv_id, source_dir, pdf_metadata)
+                if latex_result:
+                    core_data = latex_result
+                    metadata.update(latex_result.get("metadata", {}))
 
-    # 2) собираем секции
-    flat: List[tuple] = []
-    for p in pages:
-        for i, ln in enumerate(p["lines"]):
-            flat.append((p["page"], i, ln))
+        if core_data is None:
+            pdf_result = parse_pdf_document(doc)
+            core_data = pdf_result
+            metadata["source_format"] = "pdf"
+            if arxiv_id:
+                metadata.setdefault("arxiv_id", arxiv_id)
+        else:
+            metadata.setdefault("source_format", "latex")
 
-    heads: List[tuple] = []
-    for idx, (pg, li, ln) in enumerate(flat):
-        name = _is_section_heading(ln)
-        if name:
-            heads.append((idx, pg, name))
+        title_guess, authors_guess = extract_title_and_authors(doc)
+        if not metadata.get("title") and title_guess:
+            metadata["title"] = title_guess
+        if (not metadata.get("author") or len(metadata.get("author", "")) < 3) and authors_guess:
+            metadata["author"] = authors_guess
 
-    sections: List[Dict[str, Any]] = []
-    if heads:
-        for i, (start_idx, start_pg, name) in enumerate(heads):
-            end_idx = heads[i + 1][0] if i + 1 < len(heads) else len(flat)
-            chunk_lines = [flat[k][2] for k in range(start_idx + 1, end_idx)]
-            text = "\n".join(chunk_lines).strip()
-            if not text:
-                continue
-            sec_pages = {flat[k][0] for k in range(start_idx, end_idx)} or {start_pg}
-            sections.append({
-                "name": name,
-                "page_start": min(sec_pages),
-                "page_end": max(sec_pages),
-                "text": _normalize_text(text)
-            })
-    else:
-        body = "\n".join([ln for _, _, ln in flat]).strip()
-        sections.append({
-            "name": "Body",
-            "page_start": 1,
-            "page_end": len(doc),
-            "text": _normalize_text(body)
-        })
+        sections_raw = core_data.get("sections", []) or []
+        sections: list[Any] = []
+        for section in sections_raw:
+            if isinstance(section, dict):
+                filtered = {k: v for k, v in section.items() if k != "sentences"}
+                sections.append(filtered)
+            else:
+                sections.append(section)
 
-    # 3) приводим капшены
-    captions = []
-    seen_caps = set()
-    for c in all_captions:
-        if not c.text:
-            continue
-        norm_text = _normalize_text(c.text)
-        key = (c.id, norm_text, c.page)
-        if key in seen_caps:
-            continue
-        seen_caps.add(key)
-        captions.append({
-            "id": c.id,
-            "kind": c.kind,
-            "page": c.page,
-            "text": norm_text
-        })
-    tables = [{"id": cap["id"], "page": cap["page"], "caption": cap["text"]}
-              for cap in captions if cap["kind"] == "Table"]
+        s0_data = {
+            "doc_id": core_data.get("suggested_doc_id") or slugify(out_dir_path.name),
+            "source_pdf": str(pdf_path),
+            "page_count": page_count,
+            "metadata": metadata,
+            "sections": sections,
+            "captions": core_data.get("captions", []),
+            "figures": core_data.get("figures", []),
+            "tables": core_data.get("tables", [])
+        }
 
-    # 4) метаданные из PDF
-    meta_pdf = doc.metadata or {}
-
-    # 5) формируем S0 (черновой doc_id поменяем ниже)
-    s0 = {
-        "doc_id": Path(out_dir).name,  # временно
-        "source_pdf": str(pdf_path),
-        "page_count": len(doc),
-        "metadata": {
-            "title": meta_pdf.get("title") or "",
-            "author": meta_pdf.get("author") or "",
-            "producer": meta_pdf.get("producer") or "",
-            "creationDate": meta_pdf.get("creationDate") or ""
-        },
-        "sections": sections,
-        "captions": [{"id": c["id"], "text": c["text"]} for c in captions],
-        "figures": [c for c in captions if c["kind"] == "Figure"],
-        "tables": tables,
-        "pages_sample": [
-            {"page": p["page"], "blocks_sample": p["blocks_sample"]}
-            for p in pages[:2]
-        ]
-    }
-
-    # 6) корректный doc_id
-    s0["doc_id"] = _safe_doc_id(s0, pdf_path, first_page_text)
-
-    # 7) эвристика заголовка/авторов с 1-й страницы (для UI), плюс arXiv в метаданные
-    title_guess, authors_guess = _extract_title_and_authors(doc)
-    meta = s0.get("metadata", {})
-    if not meta.get("title") and title_guess:
-        meta["title"] = title_guess
-    if (not meta.get("author") or len(meta["author"]) < 3) and authors_guess:
-        meta["author"] = authors_guess
-    # arXiv из имени файла (если есть)
-    m_arxiv = re.search(r'(\d{4}\.\d{4,5})(v\d+)?', Path(pdf_path).name)
-    if m_arxiv:
-        meta["arxiv_id"] = m_arxiv.group(0)
-    s0["metadata"] = meta
-
-    # 8) запись и возврат
-    (out_dir / "s0.json").write_text(json.dumps(s0, ensure_ascii=False, indent=2))
-    doc.close()
-    return s0
+        s0_data["doc_id"] = _safe_doc_id(s0_data, out_dir_path, first_page_text)
+        (out_dir_path / "s0.json").write_text(json.dumps(s0_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        return s0_data
+    finally:
+        doc.close()
 
 
-# CLI
 if __name__ == "__main__":
     import argparse
 
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--pdf", required=True, help="path to PDF")
-    ap.add_argument("--out", required=True, help="output directory for s0.json")
-    args = ap.parse_args()
-    s0 = build_s0(args.pdf, args.out)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pdf", required=True, help="path to PDF")
+    parser.add_argument("--out", required=True, help="output directory for s0.json")
+    parser.add_argument("--no-latex", action="store_true", help="disable LaTeX source parsing")
+    args = parser.parse_args()
+
+    s0 = build_s0(args.pdf, args.out, use_latex=False)
     print(f"✅ S0 saved to {Path(args.out) / 's0.json'} | sections={len(s0['sections'])} captions={len(s0['captions'])}")
