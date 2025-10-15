@@ -1,8 +1,0 @@
-id: "bci-lex"
-version: "0.1.0"
-abbr:
-  - ["electroencephalography", "EEG"]
-hedges: []
-units:  ["µV"]
-synonyms:
-  - ["technique", ["pipeline","spatial filter"]]

@@ -1,56 +1,57 @@
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Result/performance"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(throughput|latency|accuracy|energy\s+use)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|W|J)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Hypothesis/scaling-or-integration"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:expect|anticipate)\s+that\s+(integration|scaling|standardization)\s+(?:improves|reduces)\s+(overhead|latency|cost)"
-  negatives: ["no\s+impact"]
-  captures: []
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Experiment/prototype"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(prototype|pilot|bench\s+test|A/B\s+test)\b"
-  negatives: ["simulation\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Technique/systems"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(systems\s+integration|middleware|SCADA|MES|QA|QC)\b"
-  negatives: ["ad\s+hoc"]
-  captures: []
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Dataset/components-or-tests"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:components|tests|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+test"]
-  captures: ["n"]
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Analysis/reliability-or-benchmark"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(MTBF|reliability|benchmark|profiling|bottleneck)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Conclusion/standards"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(meets|complies\s+with)\s+(standard|specification)\b"
-  negatives: ["violates|fails"]
-  captures: []
-- id: "Engineering and technology / 2.11-other-engineering-and-technologies/Input Fact/reference"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(specification|standard|reference)\s+(.+?)"
-  negatives: ["draft|proposal"]
-  captures: ["value"]
+elements:
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Result/performance"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(throughput|latency|accuracy|energy\s+use)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|W|J)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Hypothesis/scaling-or-integration"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:expect|anticipate)\s+that\s+(integration|scaling|standardization)\s+(?:improves|reduces)\s+(overhead|latency|cost)'
+    negatives: ['no\s+impact']
+    captures: []
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Experiment/prototype"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(prototype|pilot|bench\s+test|A/B\s+test)\b'
+    negatives: ['simulation\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Technique/systems"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(systems\s+integration|middleware|SCADA|MES|QA|QC)\b'
+    negatives: ['ad\s+hoc']
+    captures: []
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Dataset/components-or-tests"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:components|tests|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+test']
+    captures: ["n"]
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Analysis/reliability-or-benchmark"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(MTBF|reliability|benchmark|profiling|bottleneck)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Conclusion/standards"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(meets|complies\s+with)\s+(standard|specification)\b'
+    negatives: ['violates|fails']
+    captures: []
+  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Input Fact/reference"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(specification|standard|reference)\s+(.+?)'
+    negatives: ['draft|proposal']
+    captures: ["value"]

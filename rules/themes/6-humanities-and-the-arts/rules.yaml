@@ -1,56 +1,57 @@
-- id: "Humanities and the arts/Result/identified-motif"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(analysis|examination)\s+(?:identif(ies|ied)|reveals)\s+(motif|theme|pattern|stylistic\s+feature)\b"
-  negatives: ["speculative|unclear"]
-  captures: []
-- id: "Humanities and the arts/Hypothesis/argument-claim"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+argue\s+that|we\s+propose\s+that|we\s+hypothesi[zs]e\s+that)\s+(.+?)"
-  negatives: ["mere\s+description","summary\s+only"]
-  captures: ["value"]
-- id: "Humanities and the arts/Experiment/comparative-analysis"
-  type: Experiment
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(comparative|contrastive)\s+analysis\b"
-  negatives: ["single\s+case\s+only"]
-  captures: []
-- id: "Humanities and the arts/Technique/hermeneutic-or-iconographic"
-  type: Technique
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(close\s+reading|hermeneutic|iconograph(ic|y)|discourse\s+analysis|stylistic\s+analysis)\b"
-  negatives: ["impressionistic"]
-  captures: []
-- id: "Humanities and the arts/Dataset/corpus-size"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:corpus|collection)\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:texts|manuscripts|artworks|items)\b"
-  negatives: ["single\s+work"]
-  captures: ["n"]
-- id: "Humanities and the arts/Analysis/thematic-or-stylistic"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(thematic|stylistic|narrative|iconographic)\s+analysis\b"
-  negatives: ["summary\s+only"]
-  captures: []
-- id: "Humanities and the arts/Conclusion/interpretation"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(.+?)\b"
-  negatives: ["tentative|uncertain"]
-  captures: ["value"]
-- id: "Humanities and the arts/Input Fact/source-reference"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:manuscript|chronicle|treatise|edition)\s+(.+?)"
-  negatives: ["rumor|legend"]
-  captures: ["value"]
+elements:
+  - id: "Humanities and the arts/Result/identified-motif"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(analysis|examination)\s+(?:identif(ies|ied)|reveals)\s+(motif|theme|pattern|stylistic\s+feature)\b'
+    negatives: ['speculative|unclear']
+    captures: []
+  - id: "Humanities and the arts/Hypothesis/argument-claim"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+argue\s+that|we\s+propose\s+that|we\s+hypothesi[zs]e\s+that)\s+(.+?)'
+    negatives: ['mere\s+description','summary\s+only']
+    captures: ["value"]
+  - id: "Humanities and the arts/Experiment/comparative-analysis"
+    type: Experiment
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(comparative|contrastive)\s+analysis\b'
+    negatives: ['single\s+case\s+only']
+    captures: []
+  - id: "Humanities and the arts/Technique/hermeneutic-or-iconographic"
+    type: Technique
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(close\s+reading|hermeneutic|iconograph(ic|y)|discourse\s+analysis|stylistic\s+analysis)\b'
+    negatives: ['impressionistic']
+    captures: []
+  - id: "Humanities and the arts/Dataset/corpus-size"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:corpus|collection)\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:texts|manuscripts|artworks|items)\b'
+    negatives: ['single\s+work']
+    captures: ["n"]
+  - id: "Humanities and the arts/Analysis/thematic-or-stylistic"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(thematic|stylistic|narrative|iconographic)\s+analysis\b'
+    negatives: ['summary\s+only']
+    captures: []
+  - id: "Humanities and the arts/Conclusion/interpretation"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
+    negatives: ['tentative|uncertain']
+    captures: ["value"]
+  - id: "Humanities and the arts/Input Fact/source-reference"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:manuscript|chronicle|treatise|edition)\s+(.+?)'
+    negatives: ['rumor|legend']
+    captures: ["value"]

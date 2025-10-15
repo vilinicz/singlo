@@ -1,56 +1,57 @@
-- id: "Engineering and technology / 2.3-mechanical-engineering/Result/efficiency-or-fatigue"
-  type: Result
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(efficiency|fatigue\s+life|drag|lift|heat\s+transfer)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|W/m²K|N|Ns/m|W)?"
-  negatives: ["not\\s+significant","worse"]
-  captures: ["value","unit"]
-- id: "Engineering and technology / 2.3-mechanical-engineering/Hypothesis/design-impact"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(geometry|control|cooling)\s+(?:improves|reduces)\s+(vibration|drag|temperature)"
-  negatives: ["no\s+improvement"]
-  captures: ["value"]
-- id: "Engineering and technology / 2.3-mechanical-engineering/Experiment/rig-or-tunnel"
-  type: Experiment
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(test\s+rig|wind\s+tunnel|thermal\s+loop|engine\s+bench|drop\s+test)\b"
-  negatives: ["simulation\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.3-mechanical-engineering/Technique/cfd-or-fem"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(CFD|FEM|PID\s+control|topology\s+optimization|BEM)\b"
-  negatives: ["rule\s+of\s+thumb"]
-  captures: []
-- id: "Engineering and technology / 2.3-mechanical-engineering/Dataset/specimens-or-runs"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:specimens|runs|experiments)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+run"]
-  captures: ["n"]
-- id: "Engineering and technology / 2.3-mechanical-engineering/Analysis/modal-or-thermal"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(modal\s+analysis|frequency\s+response|thermal\s+analysis|stress\s+analysis)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.3-mechanical-engineering/Conclusion/performance"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?design\s+(?:meets|improves)\s+(performance|reliability)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Engineering and technology / 2.3-mechanical-engineering/Input Fact/standard"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(ASME|ISO)\s+(?:standard|code)\s+(.+?)"
-  negatives: ["draft|proposal"]
-  captures: ["value"]
+elements:
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Result/efficiency-or-fatigue"
+    type: Result
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(efficiency|fatigue\s+life|drag|lift|heat\s+transfer)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|W/m²K|N|Ns/m|W)?'
+    negatives: ['not\\s+significant','worse']
+    captures: ["value","unit"]
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Hypothesis/design-impact"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(geometry|control|cooling)\s+(?:improves|reduces)\s+(vibration|drag|temperature)'
+    negatives: ['no\s+improvement']
+    captures: ["value"]
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Experiment/rig-or-tunnel"
+    type: Experiment
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(test\s+rig|wind\s+tunnel|thermal\s+loop|engine\s+bench|drop\s+test)\b'
+    negatives: ['simulation\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Technique/cfd-or-fem"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(CFD|FEM|PID\s+control|topology\s+optimization|BEM)\b'
+    negatives: ['rule\s+of\s+thumb']
+    captures: []
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Dataset/specimens-or-runs"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:specimens|runs|experiments)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+run']
+    captures: ["n"]
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Analysis/modal-or-thermal"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(modal\s+analysis|frequency\s+response|thermal\s+analysis|stress\s+analysis)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Conclusion/performance"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?design\s+(?:meets|improves)\s+(performance|reliability)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Engineering and technology / 2.3-mechanical-engineering/Input Fact/standard"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(ASME|ISO)\s+(?:standard|code)\s+(.+?)'
+    negatives: ['draft|proposal']
+    captures: ["value"]

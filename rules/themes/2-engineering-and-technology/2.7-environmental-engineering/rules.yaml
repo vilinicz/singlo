@@ -1,56 +1,57 @@
-- id: "Engineering and technology / 2.7-environmental-engineering/Result/removal-efficiency"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(removal\s+efficiency|reduction)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/m³)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Engineering and technology / 2.7-environmental-engineering/Hypothesis/treatment-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(treatment|process)\s+(?:reduces|removes)\s+(BOD|COD|TSS|NH4|NO3)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Engineering and technology / 2.7-environmental-engineering/Experiment/wwtp-or-pilot"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(WWTP|pilot\s+plant|reactor\s+train|biofilter|MBR)\b"
-  negatives: ["lab\s+jar\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.7-environmental-engineering/Technique/process-or-lca"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(LCA|activated\s+sludge|A2/O|MBR|Fenton|adsorption|ozonation)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.7-environmental-engineering/Dataset/samples-or-influent-effluent"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:samples|influent|effluent)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+grab"]
-  captures: ["n"]
-- id: "Engineering and technology / 2.7-environmental-engineering/Analysis/statistical-or-mass-balance"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(mass\s+balance|kinetic\s+model|regression|ANOVA)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.7-environmental-engineering/Conclusion/compliance"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(meets|complies\s+with)\s+(discharge\s+limits|regulation)\b"
-  negatives: ["exceeds|violates"]
-  captures: []
-- id: "Engineering and technology / 2.7-environmental-engineering/Input Fact/regulation"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(EPA|EU\s+directive|regulation)\b(.+?)?"
-  negatives: ["draft"]
-  captures: ["value"]
+elements:
+  - id: "Engineering and technology / 2.7-environmental-engineering/Result/removal-efficiency"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(removal\s+efficiency|reduction)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/m³)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Engineering and technology / 2.7-environmental-engineering/Hypothesis/treatment-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(treatment|process)\s+(?:reduces|removes)\s+(BOD|COD|TSS|NH4|NO3)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Engineering and technology / 2.7-environmental-engineering/Experiment/wwtp-or-pilot"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(WWTP|pilot\s+plant|reactor\s+train|biofilter|MBR)\b'
+    negatives: ['lab\s+jar\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.7-environmental-engineering/Technique/process-or-lca"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(LCA|activated\s+sludge|A2/O|MBR|Fenton|adsorption|ozonation)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.7-environmental-engineering/Dataset/samples-or-influent-effluent"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:samples|influent|effluent)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+grab']
+    captures: ["n"]
+  - id: "Engineering and technology / 2.7-environmental-engineering/Analysis/statistical-or-mass-balance"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(mass\s+balance|kinetic\s+model|regression|ANOVA)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.7-environmental-engineering/Conclusion/compliance"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(meets|complies\s+with)\s+(discharge\s+limits|regulation)\b'
+    negatives: ['exceeds|violates']
+    captures: []
+  - id: "Engineering and technology / 2.7-environmental-engineering/Input Fact/regulation"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(EPA|EU\s+directive|regulation)\b(.+?)?'
+    negatives: ['draft']
+    captures: ["value"]

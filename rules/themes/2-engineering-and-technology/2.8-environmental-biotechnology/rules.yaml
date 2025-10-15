@@ -1,56 +1,57 @@
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Result/degradation-or-removal"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(degradation|biodegradation|removal)\s+(?:of|rate)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/L|U/mL)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Hypothesis/consortium-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(consortium|enzyme|bioaugmentation)\s+(?:enhances|increases)\s+(removal|yield)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Experiment/reactor-or-assay"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(bioreactor|batch\s+assay|qPCR|HPLC|SDS[- ]PAGE)\b"
-  negatives: ["in\s+silico\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Technique/bioprocess"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(immobilization|biofilm|aeration|fed[- ]batch|chemostat)\b"
-  negatives: ["manual\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Dataset/samples-or-strains"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:samples|strains|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["n\s*=\s*1"]
-  captures: ["n"]
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Analysis/kinetic-or-omics"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(Monod|Haldane|kinetic\s+fit|metagenom(ic|e)|16S\s+rRNA)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Conclusion/performance"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(process|consortium)\s+(?:improves|achieves)\s+(removal|degradation)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Engineering and technology / 2.8-environmental-biotechnology/Input Fact/guideline-or-database"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(KEGG|UniProt|guideline)\b(.+?)?"
-  negatives: ["prediction|opinion"]
-  captures: ["value"]
+elements:
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Result/degradation-or-removal"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(degradation|biodegradation|removal)\s+(?:of|rate)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/L|U/mL)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Hypothesis/consortium-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(consortium|enzyme|bioaugmentation)\s+(?:enhances|increases)\s+(removal|yield)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Experiment/reactor-or-assay"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(bioreactor|batch\s+assay|qPCR|HPLC|SDS[- ]PAGE)\b'
+    negatives: ['in\s+silico\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Technique/bioprocess"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(immobilization|biofilm|aeration|fed[- ]batch|chemostat)\b'
+    negatives: ['manual\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Dataset/samples-or-strains"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:samples|strains|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['n\s*=\s*1']
+    captures: ["n"]
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Analysis/kinetic-or-omics"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(Monod|Haldane|kinetic\s+fit|metagenom(ic|e)|16S\s+rRNA)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Conclusion/performance"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(process|consortium)\s+(?:improves|achieves)\s+(removal|degradation)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Engineering and technology / 2.8-environmental-biotechnology/Input Fact/guideline-or-database"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(KEGG|UniProt|guideline)\b(.+?)?'
+    negatives: ['prediction|opinion']
+    captures: ["value"]

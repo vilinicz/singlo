@@ -1,56 +1,57 @@
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Result/finding-or-dating"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(finds|identifies|dates)\s+(artifact|layer|stratum)\s+(?:to|at)\s+(?P<value>\d{2,4})\s*(?P<unit>BCE|CE|cal\s+BP|yr)?"
-  negatives: ["uncertain|tentative"]
-  captures: ["value","unit"]
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Hypothesis/interpretive-claim"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+argue|we\s+propose)\s+that\s+(.+?)"
-  negatives: ["speculation|unclear"]
-  captures: ["value"]
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Experiment/excavation-or-ams"
-  type: Experiment
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(excavation|survey|AMS\s+radiocarbon|stratigraphic\s+analysis)\b"
-  negatives: ["desk\s+study\s+only"]
-  captures: []
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Technique/archaeometric-or-historiographic"
-  type: Technique
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(typology|iconography|epigraphy|historiography|GIS|provenance)\b"
-  negatives: ["impressionistic"]
-  captures: []
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Dataset/artifacts-or-sites"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:artifacts|sites|layers)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+find"]
-  captures: ["n"]
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Analysis/comparative-or-prosopography"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(comparative\s+analysis|prosopography|chronology|network)\b"
-  negatives: ["summary\s+only"]
-  captures: []
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Conclusion/interpretation"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(.+?)\b"
-  negatives: ["tentative|uncertain"]
-  captures: ["value"]
-- id: "Humanities and the arts / 6.1-history-and-archaeology/Input Fact/source-or-inscription"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(inscription|chronicle|manuscript|edition)\s+(.+?)"
-  negatives: ["legend|myth"]
-  captures: ["value"]
+elements:
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Result/finding-or-dating"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(finds|identifies|dates)\s+(artifact|layer|stratum)\s+(?:to|at)\s+(?P<value>\d{2,4})\s*(?P<unit>BCE|CE|cal\s+BP|yr)?'
+    negatives: ['uncertain|tentative']
+    captures: ["value","unit"]
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Hypothesis/interpretive-claim"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+argue|we\s+propose)\s+that\s+(.+?)'
+    negatives: ['speculation|unclear']
+    captures: ["value"]
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Experiment/excavation-or-ams"
+    type: Experiment
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(excavation|survey|AMS\s+radiocarbon|stratigraphic\s+analysis)\b'
+    negatives: ['desk\s+study\s+only']
+    captures: []
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Technique/archaeometric-or-historiographic"
+    type: Technique
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(typology|iconography|epigraphy|historiography|GIS|provenance)\b'
+    negatives: ['impressionistic']
+    captures: []
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Dataset/artifacts-or-sites"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:artifacts|sites|layers)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+find']
+    captures: ["n"]
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Analysis/comparative-or-prosopography"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(comparative\s+analysis|prosopography|chronology|network)\b'
+    negatives: ['summary\s+only']
+    captures: []
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Conclusion/interpretation"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
+    negatives: ['tentative|uncertain']
+    captures: ["value"]
+  - id: "Humanities and the arts / 6.1-history-and-archaeology/Input Fact/source-or-inscription"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(inscription|chronicle|manuscript|edition)\s+(.+?)'
+    negatives: ['legend|myth']
+    captures: ["value"]

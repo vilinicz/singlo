@@ -1,56 +1,57 @@
-- id: "Social sciences/Result/effect-on-metric"
-  type: Result
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(increase|decrease)\s+(?:in|of)\s+(GDP|employment|turnout|test\s+scores|index)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp|points|index)?"
-  negatives: ["not\\s+significant","no\\s+effect"]
-  captures: ["value","unit"]
-- id: "Social sciences/Hypothesis/policy-impact"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|expect)\s+that\s+(policy|intervention|program)\s+(?:increases|reduces)\s+(.+?)"
-  negatives: ["no\s+impact","null\s+hypothesis"]
-  captures: ["value"]
-- id: "Social sciences/Experiment/survey-or-rct"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(survey\s+experiment|field\s+experiment|RCT|natural\s+experiment)\b"
-  negatives: ["observational\s+only"]
-  captures: []
-- id: "Social sciences/Technique/econometrics"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(difference[- ]in[- ]differences|instrumental\s+variables|fixed\s+effects|SEM|OLS|IV|DiD)\b"
-  negatives: ["raw\s+comparison"]
-  captures: []
-- id: "Social sciences/Dataset/respondents-or-panel"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:respondents|households|firms|panel)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["case\s+study\s+only"]
-  captures: ["n"]
-- id: "Social sciences/Analysis/regression-or-sem"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(OLS|logit|probit|SEM|panel\s+regression|ARDL)\b"
-  negatives: ["correlation\s+only"]
-  captures: []
-- id: "Social sciences/Conclusion/policy-implications"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?policy\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Social sciences/Input Fact/law-or-regulation"
-  type: Input Fact
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:law|regulation|statute|directive)\s+(.+?)"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Social sciences/Result/effect-on-metric"
+    type: Result
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(increase|decrease)\s+(?:in|of)\s+(GDP|employment|turnout|test\s+scores|index)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp|points|index)?'
+    negatives: ['not\\s+significant','no\\s+effect']
+    captures: ["value","unit"]
+  - id: "Social sciences/Hypothesis/policy-impact"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|expect)\s+that\s+(policy|intervention|program)\s+(?:increases|reduces)\s+(.+?)'
+    negatives: ['no\s+impact','null\s+hypothesis']
+    captures: ["value"]
+  - id: "Social sciences/Experiment/survey-or-rct"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(survey\s+experiment|field\s+experiment|RCT|natural\s+experiment)\b'
+    negatives: ['observational\s+only']
+    captures: []
+  - id: "Social sciences/Technique/econometrics"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(difference[- ]in[- ]differences|instrumental\s+variables|fixed\s+effects|SEM|OLS|IV|DiD)\b'
+    negatives: ['raw\s+comparison']
+    captures: []
+  - id: "Social sciences/Dataset/respondents-or-panel"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:respondents|households|firms|panel)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['case\s+study\s+only']
+    captures: ["n"]
+  - id: "Social sciences/Analysis/regression-or-sem"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(OLS|logit|probit|SEM|panel\s+regression|ARDL)\b'
+    negatives: ['correlation\s+only']
+    captures: []
+  - id: "Social sciences/Conclusion/policy-implications"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?policy\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Social sciences/Input Fact/law-or-regulation"
+    type: Input Fact
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:law|regulation|statute|directive)\s+(.+?)'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

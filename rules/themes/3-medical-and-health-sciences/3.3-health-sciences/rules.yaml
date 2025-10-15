@@ -1,56 +1,57 @@
-- id: "Medical and health sciences / 3.3-health-sciences/Result/public-health-metric"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(prevalence|incidence|risk|QoL\s+score)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|per\s+100k|points)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Medical and health sciences / 3.3-health-sciences/Hypothesis/intervention-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(intervention|program|policy)\s+(?:reduces|increases)\s+(risk|prevalence|BMI)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Medical and health sciences / 3.3-health-sciences/Experiment/cohort-or-survey"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(cohort\s+study|case[- ]control|cross[- ]sectional|survey)\b"
-  negatives: ["case\s+report"]
-  captures: []
-- id: "Medical and health sciences / 3.3-health-sciences/Technique/epidemiology-or-scales"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(logistic\s+regression|Cox\s+model|PHQ[- ]9|GAD[- ]7|SF[- ]36)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.3-health-sciences/Dataset/participants"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "participants\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["small\s+sample"]
-  captures: ["n"]
-- id: "Medical and health sciences / 3.3-health-sciences/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(adjusted\s+odds\s+ratio|confidence\s+interval|p\s+<\s*0\\.05)\b"
-  negatives: ["unadjusted\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.3-health-sciences/Conclusion/public-health"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(intervention|policy)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Medical and health sciences / 3.3-health-sciences/Input Fact/guideline"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(WHO|CDC|guideline)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Medical and health sciences / 3.3-health-sciences/Result/public-health-metric"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(prevalence|incidence|risk|QoL\s+score)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|per\s+100k|points)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Medical and health sciences / 3.3-health-sciences/Hypothesis/intervention-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(intervention|program|policy)\s+(?:reduces|increases)\s+(risk|prevalence|BMI)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Medical and health sciences / 3.3-health-sciences/Experiment/cohort-or-survey"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(cohort\s+study|case[- ]control|cross[- ]sectional|survey)\b'
+    negatives: ['case\s+report']
+    captures: []
+  - id: "Medical and health sciences / 3.3-health-sciences/Technique/epidemiology-or-scales"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(logistic\s+regression|Cox\s+model|PHQ[- ]9|GAD[- ]7|SF[- ]36)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.3-health-sciences/Dataset/participants"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'participants\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['small\s+sample']
+    captures: ["n"]
+  - id: "Medical and health sciences / 3.3-health-sciences/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(adjusted\s+odds\s+ratio|confidence\s+interval|p\s+<\s*0\\.05)\b'
+    negatives: ['unadjusted\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.3-health-sciences/Conclusion/public-health"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(intervention|policy)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Medical and health sciences / 3.3-health-sciences/Input Fact/guideline"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(WHO|CDC|guideline)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

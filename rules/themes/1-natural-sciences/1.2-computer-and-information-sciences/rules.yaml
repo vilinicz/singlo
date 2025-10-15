@@ -1,56 +1,57 @@
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Result/accuracy-or-speed"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(achieves|reaches|improves)\s+(accuracy|F1|AUC|throughput|latency)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|req/s|QPS)?"
-  negatives: ["not\\s+significant","overfitting"]
-  captures: ["value","unit"]
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Hypothesis/assumption"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|assume)\s+that\s+(.+?)\s+(?:improves|reduces|leads\s+to)\s+(performance|accuracy|latency)"
-  negatives: ["no\s+improvement"]
-  captures: ["value"]
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Experiment/benchmark"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(evaluat(e|ion)\s+on|benchmarked\s+on)\s+(?:[A-Z][A-Za-z0-9_\-]+)\s+(?:dataset|corpus)\b"
-  negatives: ["toy|synthetic\s+only"]
-  captures: []
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Technique/model-or-algorithm"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+(?:propose|introduce|present))\s+(?:an?|a)\s+(model|algorithm|architecture|framework)\b"
-  negatives: ["baseline\s+only"]
-  captures: []
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Dataset/records"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:dataset|corpus)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|records|documents)\b"
-  negatives: ["private|unavailable"]
-  captures: ["n"]
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Analysis/ablation-or-complexity"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ablation\s+study|complexity\s+analysis|time\s+complexity\s+O\([^)]+\))\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Conclusion/generalization"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(method|model)\s+(?:generalizes|outperforms)\b"
-  negatives: ["overfit|fails\s+to\s+generalize"]
-  captures: []
-- id: "Natural sciences / 1.2-computer-and-information-sciences/Input Fact/standard-or-rfc"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:RFC|standard|specification)\s+(.+?)"
-  negatives: ["proposal|draft"]
-  captures: ["value"]
+elements:
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Result/accuracy-or-speed"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(achieves|reaches|improves)\s+(accuracy|F1|AUC|throughput|latency)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|req/s|QPS)?'
+    negatives: ['not\\s+significant','overfitting']
+    captures: ["value","unit"]
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Hypothesis/assumption"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|assume)\s+that\s+(.+?)\s+(?:improves|reduces|leads\s+to)\s+(performance|accuracy|latency)'
+    negatives: ['no\s+improvement']
+    captures: ["value"]
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Experiment/benchmark"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(evaluat(e|ion)\s+on|benchmarked\s+on)\s+(?:[A-Z][A-Za-z0-9_\-]+)\s+(?:dataset|corpus)\b'
+    negatives: ['toy|synthetic\s+only']
+    captures: []
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Technique/model-or-algorithm"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+(?:propose|introduce|present))\s+(?:an?|a)\s+(model|algorithm|architecture|framework)\b'
+    negatives: ['baseline\s+only']
+    captures: []
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Dataset/records"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:dataset|corpus)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|records|documents)\b'
+    negatives: ['private|unavailable']
+    captures: ["n"]
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Analysis/ablation-or-complexity"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ablation\s+study|complexity\s+analysis|time\s+complexity\s+O\([^)]+\))\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Conclusion/generalization"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(method|model)\s+(?:generalizes|outperforms)\b'
+    negatives: ['overfit|fails\s+to\s+generalize']
+    captures: []
+  - id: "Natural sciences / 1.2-computer-and-information-sciences/Input Fact/standard-or-rfc"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:RFC|standard|specification)\s+(.+?)'
+    negatives: ['proposal|draft']
+    captures: ["value"]

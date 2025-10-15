@@ -1,29 +1,77 @@
 abbr:
-  - CI
-  - SD
-  - SEM
-  - ANOVA
-  - SNR
-  - ROC
-  - AUC
-  - MAE
-  - RMSE
-  - R2
-  - NLP
-  - ML
-  - DL
-  - CNN
-  - RNN
-  - GDP
-  - CPI
-  - FDI
-  - OLS
-  - IV
-  - RCT
-  - GMM
-  - GIS
-  - PCA
-hedges:
+  -
+    - CI
+    - confidence interval
+  -
+    - SD
+    - standard deviation
+  -
+    - SEM
+    - structural equation modeling
+  -
+    - ANOVA
+    - analysis of variance
+  -
+    - SNR
+    - "signal-to-noise ratio"
+  -
+    - ROC
+    - receiver operating characteristic
+  -
+    - AUC
+    - area under the curve
+  -
+    - MAE
+    - mean absolute error
+  -
+    - RMSE
+    - root mean square error
+  -
+    - R2
+    - coefficient of determination
+  -
+    - NLP
+    - natural language processing
+  -
+    - ML
+    - machine learning
+  -
+    - DL
+    - deep learning
+  -
+    - CNN
+    - convolutional neural network
+  -
+    - RNN
+    - recurrent neural network
+  -
+    - GDP
+    - gross domestic product
+  -
+    - CPI
+    - consumer price index
+  -
+    - FDI
+    - FDI
+  -
+    - OLS
+    - ordinary least squares
+  -
+    - IV
+    - instrumental variables
+  -
+    - RCT
+    - randomized controlled trial
+  -
+    - GMM
+    - GMM
+  -
+    - GIS
+    - geographic information system
+  -
+    - PCA
+    - principal component analysis
+hedging_extra:
   - may
   - might
   - could
@@ -57,56 +105,56 @@ units:
   - Likert
   - years
   - km
-  - km²
-  - §
+  - kmÂ²
+  - Â§
   - art.
   - case
 synonyms:
   -
-    from: method
-    to: technique
+    - method
+    - technique
   -
-    from: result
-    to: finding
+    - result
+    - finding
   -
-    from: analysis
-    to: examination
+    - analysis
+    - examination
   -
-    from: model
-    to: framework
+    - model
+    - framework
   -
-    from: experiment
-    to: trial
+    - experiment
+    - trial
   -
-    from: significant
-    to: notable
+    - significant
+    - notable
   -
-    from: increase
-    to: rise
+    - increase
+    - rise
   -
-    from: decrease
-    to: reduction
+    - decrease
+    - reduction
   -
-    from: effect
-    to: impact
+    - effect
+    - impact
   -
-    from: evidence
-    to: support
+    - evidence
+    - support
   -
-    from: regulation
-    to: regulations
+    - regulation
+    - regulations
   -
-    from: statute
-    to: statutes
+    - statute
+    - statutes
   -
-    from: jurisdiction
-    to: jurisdictions
+    - jurisdiction
+    - jurisdictions
   -
-    from: litigation
-    to: litigations
+    - litigation
+    - litigations
   -
-    from: contract
-    to: contracts
+    - contract
+    - contracts
   -
-    from: precedent
-    to: precedents
+    - precedent
+    - precedents

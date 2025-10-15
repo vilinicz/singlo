@@ -1,7 +1,0 @@
-id: "physics-lex"
-version: "0.1.0"
-abbr: []
-hedges: ["approximately"]
-units:  ["m/s","Pa","J"]
-synonyms:
-  - ["result", ["agreement","fit quality"]]

@@ -1,56 +1,57 @@
-- id: "Natural sciences / 1.7-other-natural-sciences/Result/general-science"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(observed|identified|measured)\s+(?:a\s+)?(pattern|effect|relationship)\b"
-  negatives: ["anecdotal|speculative"]
-  captures: []
-- id: "Natural sciences / 1.7-other-natural-sciences/Hypothesis/cross-disciplinary"
-  type: Hypothesis
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:relates|applies)\s+across\s+domains"
-  negatives: ["no\s+evidence"]
-  captures: ["value"]
-- id: "Natural sciences / 1.7-other-natural-sciences/Experiment/instrumentation"
-  type: Experiment
-  weight: 0.59
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+(?:performed|conducted))\s+(measurement|experiment)\s+(?:using|with)\s+(instrument|sensor|setup)\b"
-  negatives: ["simulation\s+only"]
-  captures: []
-- id: "Natural sciences / 1.7-other-natural-sciences/Technique/methodology"
-  type: Technique
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+(?:developed|applied))\s+(?:an?|a)\s+(methodology|framework|workflow)\b"
-  negatives: ["ad\s+hoc"]
-  captures: []
-- id: "Natural sciences / 1.7-other-natural-sciences/Dataset/collection"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "collection\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:records|samples|observations)\b"
-  negatives: ["single\s+case"]
-  captures: ["n"]
-- id: "Natural sciences / 1.7-other-natural-sciences/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(regression|ANOVA|time\s+series|factor\s+analysis)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Natural sciences / 1.7-other-natural-sciences/Conclusion/general"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(.+?)\b"
-  negatives: ["tentative"]
-  captures: ["value"]
-- id: "Natural sciences / 1.7-other-natural-sciences/Input Fact/reference"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:the\s+)?(theory|model|reference)\s+(.+?)"
-  negatives: ["speculation|opinion"]
-  captures: ["value"]
+elements:
+  - id: "Natural sciences / 1.7-other-natural-sciences/Result/general-science"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(observed|identified|measured)\s+(?:a\s+)?(pattern|effect|relationship)\b'
+    negatives: ['anecdotal|speculative']
+    captures: []
+  - id: "Natural sciences / 1.7-other-natural-sciences/Hypothesis/cross-disciplinary"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:relates|applies)\s+across\s+domains'
+    negatives: ['no\s+evidence']
+    captures: ["value"]
+  - id: "Natural sciences / 1.7-other-natural-sciences/Experiment/instrumentation"
+    type: Experiment
+    weight: 0.59
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+(?:performed|conducted))\s+(measurement|experiment)\s+(?:using|with)\s+(instrument|sensor|setup)\b'
+    negatives: ['simulation\s+only']
+    captures: []
+  - id: "Natural sciences / 1.7-other-natural-sciences/Technique/methodology"
+    type: Technique
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+(?:developed|applied))\s+(?:an?|a)\s+(methodology|framework|workflow)\b'
+    negatives: ['ad\s+hoc']
+    captures: []
+  - id: "Natural sciences / 1.7-other-natural-sciences/Dataset/collection"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'collection\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:records|samples|observations)\b'
+    negatives: ['single\s+case']
+    captures: ["n"]
+  - id: "Natural sciences / 1.7-other-natural-sciences/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(regression|ANOVA|time\s+series|factor\s+analysis)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Natural sciences / 1.7-other-natural-sciences/Conclusion/general"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
+    negatives: ['tentative']
+    captures: ["value"]
+  - id: "Natural sciences / 1.7-other-natural-sciences/Input Fact/reference"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:the\s+)?(theory|model|reference)\s+(.+?)'
+    negatives: ['speculation|opinion']
+    captures: ["value"]

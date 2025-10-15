@@ -1,56 +1,57 @@
-- id: "Social sciences / 5.4-sociology/Result/index-or-rate"
-  type: Result
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(inequality\s+index|participation|crime\s+rate|mobility)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|index|per\s+100k)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Social sciences / 5.4-sociology/Hypothesis/social-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(policy|community|network)\s+(?:affects|improves|reduces)\s+(inequality|cohesion|crime)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Social sciences / 5.4-sociology/Experiment/survey-or-field"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(survey|field\s+experiment|natural\s+experiment|panel)\b"
-  negatives: ["case\s+study\s+only"]
-  captures: []
-- id: "Social sciences / 5.4-sociology/Technique/social-network-or-model"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(social\s+network\s+analysis|multilevel\s+model|agent[- ]based\s+model)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Social sciences / 5.4-sociology/Dataset/respondents-or-cases"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:respondents|cases|communities)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["small\s+sample"]
-  captures: ["n"]
-- id: "Social sciences / 5.4-sociology/Analysis/regression-or-mlm"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(logit|probit|OLS|multilevel|fixed\s+effects)\b"
-  negatives: ["correlation\s+only"]
-  captures: []
-- id: "Social sciences / 5.4-sociology/Conclusion/social-impact"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(policy|program|network)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Social sciences / 5.4-sociology/Input Fact/official"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(census|official\s+statistics|report)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Social sciences / 5.4-sociology/Result/index-or-rate"
+    type: Result
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(inequality\s+index|participation|crime\s+rate|mobility)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|index|per\s+100k)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Social sciences / 5.4-sociology/Hypothesis/social-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(policy|community|network)\s+(?:affects|improves|reduces)\s+(inequality|cohesion|crime)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Social sciences / 5.4-sociology/Experiment/survey-or-field"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(survey|field\s+experiment|natural\s+experiment|panel)\b'
+    negatives: ['case\s+study\s+only']
+    captures: []
+  - id: "Social sciences / 5.4-sociology/Technique/social-network-or-model"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(social\s+network\s+analysis|multilevel\s+model|agent[- ]based\s+model)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Social sciences / 5.4-sociology/Dataset/respondents-or-cases"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:respondents|cases|communities)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['small\s+sample']
+    captures: ["n"]
+  - id: "Social sciences / 5.4-sociology/Analysis/regression-or-mlm"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(logit|probit|OLS|multilevel|fixed\s+effects)\b'
+    negatives: ['correlation\s+only']
+    captures: []
+  - id: "Social sciences / 5.4-sociology/Conclusion/social-impact"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(policy|program|network)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Social sciences / 5.4-sociology/Input Fact/official"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(census|official\s+statistics|report)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

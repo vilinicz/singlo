@@ -1,56 +1,57 @@
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Result/titer-or-potency"
-  type: Result
-  weight: 0.64
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(titer|potency|purity)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>g/L|IU/mL|%|copies/µL)?"
-  negatives: ["low|insufficient"]
-  captures: ["value","unit"]
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Hypothesis/vector-or-process"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(vector|bioprocess|assay)\s+(?:improves|increases|reduces)\s+(yield|potency|impurity)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Experiment/bioprocess-or-assay"
-  type: Experiment
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(bioreactor|downstream|HPLC|ELISA|qPCR|CRISPR|cell\s+line)\b"
-  negatives: ["in\s+silico\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Technique/manufacturing-or-assay"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(GMP|QbD|process\s+optimization|purification|chromatography|vector\s+design)\b"
-  negatives: ["manual\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Dataset/batches-or-samples"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:batches|samples|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+batch"]
-  captures: ["n"]
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Analysis/quality-or-release"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(release\s+criteria|stability\s+study|potency\s+assay|residual\s+impurities)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Conclusion/compliance-or-efficacy"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(meets|complies\s+with)\s+(GMP|specification)|we\s+conclude\s+that\s+(?:the\s+)?product\s+(?:is\s+effective)"
-  negatives: ["fails|inconclusive"]
-  captures: []
-- id: "Medical and health sciences / 3.4-medical-biotechnology/Input Fact/regulatory"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(FDA|EMA|ICH|guideline)\b(.+?)?"
-  negatives: ["draft|proposal"]
-  captures: ["value"]
+elements:
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Result/titer-or-potency"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(titer|potency|purity)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>g/L|IU/mL|%|copies/µL)?'
+    negatives: ['low|insufficient']
+    captures: ["value","unit"]
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Hypothesis/vector-or-process"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(vector|bioprocess|assay)\s+(?:improves|increases|reduces)\s+(yield|potency|impurity)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Experiment/bioprocess-or-assay"
+    type: Experiment
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(bioreactor|downstream|HPLC|ELISA|qPCR|CRISPR|cell\s+line)\b'
+    negatives: ['in\s+silico\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Technique/manufacturing-or-assay"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(GMP|QbD|process\s+optimization|purification|chromatography|vector\s+design)\b'
+    negatives: ['manual\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Dataset/batches-or-samples"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:batches|samples|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+batch']
+    captures: ["n"]
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Analysis/quality-or-release"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(release\s+criteria|stability\s+study|potency\s+assay|residual\s+impurities)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Conclusion/compliance-or-efficacy"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(meets|complies\s+with)\s+(GMP|specification)|we\s+conclude\s+that\s+(?:the\s+)?product\s+(?:is\s+effective)'
+    negatives: ['fails|inconclusive']
+    captures: []
+  - id: "Medical and health sciences / 3.4-medical-biotechnology/Input Fact/regulatory"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(FDA|EMA|ICH|guideline)\b(.+?)?'
+    negatives: ['draft|proposal']
+    captures: ["value"]

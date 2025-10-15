@@ -1,56 +1,57 @@
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Result/clinical-outcome"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(recovery|survival|incidence)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|per\s+1000)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Hypothesis/vaccine-or-treatment"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(vaccine|treatment)\s+(?:reduces|increases)\s+(incidence|survival)"
-  negatives: ["no\s+benefit"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Experiment/clinical-or-field"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(clinical\s+trial|field\s+study|challenge\s+test|diagnostic\s+assay|ELISA|PCR)\b"
-  negatives: ["case\s+report"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Technique/diagnostic-or-epidemiology"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ELISA|PCR|serology|surveillance|contact\s+tracing)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Dataset/animals-or-cases"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:animals|cases)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["n\s*=\s*1"]
-  captures: ["n"]
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(odds\s+ratio|relative\s+risk|logistic\s+regression|Kaplan[–-]Meier)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Conclusion/health-impact"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(vaccine|treatment)\s+(?:is\s+effective|safe)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Input Fact/guideline"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(OIE|guideline|regulation)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Result/clinical-outcome"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(recovery|survival|incidence)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|per\s+1000)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Hypothesis/vaccine-or-treatment"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(vaccine|treatment)\s+(?:reduces|increases)\s+(incidence|survival)'
+    negatives: ['no\s+benefit']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Experiment/clinical-or-field"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(clinical\s+trial|field\s+study|challenge\s+test|diagnostic\s+assay|ELISA|PCR)\b'
+    negatives: ['case\s+report']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Technique/diagnostic-or-epidemiology"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ELISA|PCR|serology|surveillance|contact\s+tracing)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Dataset/animals-or-cases"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:animals|cases)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['n\s*=\s*1']
+    captures: ["n"]
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(odds\s+ratio|relative\s+risk|logistic\s+regression|Kaplan[–-]Meier)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Conclusion/health-impact"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(vaccine|treatment)\s+(?:is\s+effective|safe)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.3-veterinary-science/Input Fact/guideline"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(OIE|guideline|regulation)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

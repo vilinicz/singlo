@@ -1,56 +1,57 @@
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Result/production-or-risk"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(production|postharvest\s+loss|risk)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|t/ha|kg/ha|index)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Hypothesis/policy-or-extension"
-  type: Hypothesis
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(extension|policy|practice)\s+(?:improves|reduces)\s+(risk|loss|cost)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Experiment/survey-or-field"
-  type: Experiment
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(survey|field\s+study|monitoring|evaluation)\b"
-  negatives: ["case\s+report"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Technique/assessment-or-index"
-  type: Technique
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(LCA|risk\s+assessment|index|scoring|GIS)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Dataset/plots-or-respondents"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:plots|respondents|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+plot|small\s+sample"]
-  captures: ["n"]
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(regression|ANOVA|PCA|cluster\s+analysis)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Conclusion/impact"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(policy|practice)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Input Fact/authority"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(FAO|IPCC|guideline)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Result/production-or-risk"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(production|postharvest\s+loss|risk)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|t/ha|kg/ha|index)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Hypothesis/policy-or-extension"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(extension|policy|practice)\s+(?:improves|reduces)\s+(risk|loss|cost)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Experiment/survey-or-field"
+    type: Experiment
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(survey|field\s+study|monitoring|evaluation)\b'
+    negatives: ['case\s+report']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Technique/assessment-or-index"
+    type: Technique
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(LCA|risk\s+assessment|index|scoring|GIS)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Dataset/plots-or-respondents"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:plots|respondents|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+plot|small\s+sample']
+    captures: ["n"]
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(regression|ANOVA|PCA|cluster\s+analysis)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Conclusion/impact"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(policy|practice)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.5-other-agricultural-sciences/Input Fact/authority"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(FAO|IPCC|guideline)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

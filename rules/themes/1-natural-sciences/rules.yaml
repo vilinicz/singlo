@@ -1,56 +1,57 @@
-- id: "Natural sciences/Result/measurement-improvement"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(observed|measured|obtained)\s+(?:an?\s+)?(increase|decrease|value)\s+(?:of|in)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|K|eV|J|Pa|mol|nm|µm|Å)?"
-  negatives: ["not\\s+significant","no\\s+effect","artifact|noise"]
-  captures: ["value","unit"]
-- id: "Natural sciences/Hypothesis/relationship-proposed"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:is|are|will be)\s+(?:related|correlated|caused)"
-  negatives: ["null\s+hypothesis","no\s+relation"]
-  captures: ["value"]
-- id: "Natural sciences/Experiment/instrument-based"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:conducted|performed)\s+(?:an?|the)?\s*(experiment|measurement|observation)\s+(?:using|with)\s+(?:NMR|XRD|AFM|Raman|DFT|PCA|spectroscop[a-z]*)"
-  negatives: ["simulation\s+only","no\s+measurement"]
-  captures: []
-- id: "Natural sciences/Technique/specific-method"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:used|applied|developed)\s+(?:DFT|PCA|SVD|NMR|XRD|spectroscopy|microscopy)\b"
-  negatives: ["baseline\s+only","trivial\s+method"]
-  captures: []
-- id: "Natural sciences/Dataset/samples-collected"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:dataset|corpus|collection)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|observations|records|specimens)"
-  negatives: ["synthetic\s+only"]
-  captures: ["n"]
-- id: "Natural sciences/Analysis/statistical-or-computational"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+(?:performed|conducted)\s+)?(?:statistical|computational)\s+analysis\b.*(?:ANOVA|regression|PCA|SVD)"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Natural sciences/Conclusion/phenomenon"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(.+?)\b"
-  negatives: ["inconclusive","not\s+significant"]
-  captures: ["value"]
-- id: "Natural sciences/Input Fact/law-or-principle"
-  type: Input Fact
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:the\s+)?(?:law|principle|theorem|model)\s+of\s+(.+?)"
-  negatives: ["myth|legend"]
-  captures: ["value"]
+elements:
+  - id: "Natural sciences/Result/measurement-improvement"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(observed|measured|obtained)\s+(?:an?\s+)?(increase|decrease|value)\s+(?:of|in)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|K|eV|J|Pa|mol|nm|µm|Å)?'
+    negatives: ['not\\s+significant','no\\s+effect','artifact|noise']
+    captures: ["value","unit"]
+  - id: "Natural sciences/Hypothesis/relationship-proposed"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:is|are|will be)\s+(?:related|correlated|caused)'
+    negatives: ['null\s+hypothesis','no\s+relation']
+    captures: ["value"]
+  - id: "Natural sciences/Experiment/instrument-based"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:conducted|performed)\s+(?:an?|the)?\s*(experiment|measurement|observation)\s+(?:using|with)\s+(?:NMR|XRD|AFM|Raman|DFT|PCA|spectroscop[a-z]*)'
+    negatives: ['simulation\s+only','no\s+measurement']
+    captures: []
+  - id: "Natural sciences/Technique/specific-method"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:used|applied|developed)\s+(?:DFT|PCA|SVD|NMR|XRD|spectroscopy|microscopy)\b'
+    negatives: ['baseline\s+only','trivial\s+method']
+    captures: []
+  - id: "Natural sciences/Dataset/samples-collected"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:dataset|corpus|collection)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|observations|records|specimens)'
+    negatives: ['synthetic\s+only']
+    captures: ["n"]
+  - id: "Natural sciences/Analysis/statistical-or-computational"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+(?:performed|conducted)\s+)?(?:statistical|computational)\s+analysis\b.*(?:ANOVA|regression|PCA|SVD)'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Natural sciences/Conclusion/phenomenon"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
+    negatives: ['inconclusive','not\s+significant']
+    captures: ["value"]
+  - id: "Natural sciences/Input Fact/law-or-principle"
+    type: Input Fact
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:the\s+)?(?:law|principle|theorem|model)\s+of\s+(.+?)'
+    negatives: ['myth|legend']
+    captures: ["value"]

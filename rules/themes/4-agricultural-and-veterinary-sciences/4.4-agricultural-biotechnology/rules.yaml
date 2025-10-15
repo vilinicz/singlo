@@ -1,56 +1,57 @@
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Result/trait-or-yield"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(trait|yield|resistance)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|score|index)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Hypothesis/gm-or-marker"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(transgenic|CRISPR|marker[- ]assisted)\s+(?:improves|confers)\s+(resistance|yield)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Experiment/assay"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(QTL\s+mapping|PCR|qPCR|ELISA|greenhouse|field\s+trial)\b"
-  negatives: ["in\s+silico\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Technique/breeding-or-editing"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(marker[- ]assisted\s+selection|CRISPR|genome\s+editing|transformation)\b"
-  negatives: ["manual\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Dataset/lines-or-plots"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:lines|families|plots)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["n\s*=\s*1"]
-  captures: ["n"]
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Analysis/association-or-omics"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(GWAS|association\s+mapping|RNA[- ]seq|differential\s+expression)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Conclusion/trait"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(edit|marker|transgene)\s+(?:confers|improves)\s+(trait|yield)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Input Fact/database-or-guideline"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(SNP\s+database|FAO|guideline)\b(.+?)?"
-  negatives: ["opinion|prediction"]
-  captures: ["value"]
+elements:
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Result/trait-or-yield"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(trait|yield|resistance)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|score|index)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Hypothesis/gm-or-marker"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(transgenic|CRISPR|marker[- ]assisted)\s+(?:improves|confers)\s+(resistance|yield)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Experiment/assay"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(QTL\s+mapping|PCR|qPCR|ELISA|greenhouse|field\s+trial)\b'
+    negatives: ['in\s+silico\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Technique/breeding-or-editing"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(marker[- ]assisted\s+selection|CRISPR|genome\s+editing|transformation)\b'
+    negatives: ['manual\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Dataset/lines-or-plots"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:lines|families|plots)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['n\s*=\s*1']
+    captures: ["n"]
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Analysis/association-or-omics"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(GWAS|association\s+mapping|RNA[- ]seq|differential\s+expression)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Conclusion/trait"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(edit|marker|transgene)\s+(?:confers|improves)\s+(trait|yield)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Agricultural and veterinary sciences / 4.4-agricultural-biotechnology/Input Fact/database-or-guideline"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(SNP\s+database|FAO|guideline)\b(.+?)?'
+    negatives: ['opinion|prediction']
+    captures: ["value"]

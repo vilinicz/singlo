@@ -1,56 +1,57 @@
-- id: "Engineering and technology/Result/performance-metrics"
-  type: Result
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(achieved|improved|reached)\s+(?:an?\s+)?(efficiency|strength|throughput|accuracy)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|MPa|kW|W|V|A|Hz|rpm)?"
-  negatives: ["not\\s+significant","degraded|worse"]
-  captures: ["value","unit"]
-- id: "Engineering and technology/Hypothesis/design-improves"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|anticipate)\s+that\s+(?:the\s+)?design\s+(?:improves|enhances|reduces)\s+(.+?)"
-  negatives: ["no\s+improvement","unchanged"]
-  captures: ["value"]
-- id: "Engineering and technology/Experiment/bench-or-wind-tunnel"
-  type: Experiment
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(bench(?:mark| test)|wind\s+tunnel|load\s+test|prototype\s+test|hardware\s+in\s+the\s+loop)\b"
-  negatives: ["simulation\s+only"]
-  captures: []
-- id: "Engineering and technology/Technique/engineering-method"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(CAD|CFD|FEM|PLC|FPGA|VLSI|PID|SCADA)\b"
-  negatives: ["manual\s+only","rule\s+of\s+thumb"]
-  captures: []
-- id: "Engineering and technology/Dataset/test-cases"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:dataset|suite|set)\s+(?:contains|includes)\s+(?P<n>\\d{2,})\s+(?:test\s+cases|components|runs|samples)"
-  negatives: ["synthetic\s+only"]
-  captures: ["n"]
-- id: "Engineering and technology/Analysis/stress-or-fem"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(stress[- ]strain|FEM\s+results|modal\s+analysis|frequency\s+response)\b"
-  negatives: ["qualitative\s+only"]
-  captures: []
-- id: "Engineering and technology/Conclusion/standards"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(meets|complies\s+with)\s+(ISO|ASTM|IEEE|IEC)\b"
-  negatives: ["fails\s+to\s+meet"]
-  captures: []
-- id: "Engineering and technology/Input Fact/specification"
-  type: Input Fact
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(ISO|ASTM|IEC|IEEE)\s+(?:standard|specification)\s+(.+?)"
-  negatives: ["draft|proposal"]
-  captures: ["value"]
+elements:
+  - id: "Engineering and technology/Result/performance-metrics"
+    type: Result
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(achieved|improved|reached)\s+(?:an?\s+)?(efficiency|strength|throughput|accuracy)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|MPa|kW|W|V|A|Hz|rpm)?'
+    negatives: ['not\\s+significant','degraded|worse']
+    captures: ["value","unit"]
+  - id: "Engineering and technology/Hypothesis/design-improves"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|anticipate)\s+that\s+(?:the\s+)?design\s+(?:improves|enhances|reduces)\s+(.+?)'
+    negatives: ['no\s+improvement','unchanged']
+    captures: ["value"]
+  - id: "Engineering and technology/Experiment/bench-or-wind-tunnel"
+    type: Experiment
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(bench(?:mark| test)|wind\s+tunnel|load\s+test|prototype\s+test|hardware\s+in\s+the\s+loop)\b'
+    negatives: ['simulation\s+only']
+    captures: []
+  - id: "Engineering and technology/Technique/engineering-method"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(CAD|CFD|FEM|PLC|FPGA|VLSI|PID|SCADA)\b'
+    negatives: ['manual\s+only','rule\s+of\s+thumb']
+    captures: []
+  - id: "Engineering and technology/Dataset/test-cases"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:dataset|suite|set)\s+(?:contains|includes)\s+(?P<n>\\d{2,})\s+(?:test\s+cases|components|runs|samples)'
+    negatives: ['synthetic\s+only']
+    captures: ["n"]
+  - id: "Engineering and technology/Analysis/stress-or-fem"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(stress[- ]strain|FEM\s+results|modal\s+analysis|frequency\s+response)\b'
+    negatives: ['qualitative\s+only']
+    captures: []
+  - id: "Engineering and technology/Conclusion/standards"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(meets|complies\s+with)\s+(ISO|ASTM|IEEE|IEC)\b'
+    negatives: ['fails\s+to\s+meet']
+    captures: []
+  - id: "Engineering and technology/Input Fact/specification"
+    type: Input Fact
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(ISO|ASTM|IEC|IEEE)\s+(?:standard|specification)\s+(.+?)'
+    negatives: ['draft|proposal']
+    captures: ["value"]

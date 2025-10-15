@@ -1,56 +1,57 @@
-- id: "Agricultural and veterinary sciences/Result/yield-and-health"
-  type: Result
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(increase|decrease)\s+(?:in|of)\s+(yield|milk\s+production|weight\s+gain|survival)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|t/ha|kg/ha|L/day|kg|%)?"
-  negatives: ["not\\s+significant","no\\s+change"]
-  captures: ["value","unit"]
-- id: "Agricultural and veterinary sciences/Hypothesis/management-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|expect)\s+that\s+(irrigation|fertili[zs]ation|feed|breed(?:ing)?)\s+(?:improves|increases|reduces)\s+(.+?)"
-  negatives: ["no\s+effect","unchanged"]
-  captures: ["value"]
-- id: "Agricultural and veterinary sciences/Experiment/field-or-plot"
-  type: Experiment
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(field\s+trial|plot\s+experiment|randomi[sz]ed\s+block\s+design|pasture\s+trial)\b"
-  negatives: ["greenhouse\s+only|lab\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences/Technique/agri-technique"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(irrigation|silviculture|marker[- ]assisted|AI\s+breeding|QTL\s+mapping|NDVI)\b"
-  negatives: ["traditional\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences/Dataset/plots-or-animals"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:plots|animals|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+case"]
-  captures: ["n"]
-- id: "Agricultural and veterinary sciences/Analysis/anova-or-mixed"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ANOVA|mixed[- ]effects|linear\s+mixed\s+model|GLM)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Agricultural and veterinary sciences/Conclusion/production-impact"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:management|treatment|variety)\s+(?:improves|reduces)\s+(yield|health)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Agricultural and veterinary sciences/Input Fact/fao-or-guideline"
-  type: Input Fact
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(FAO|guideline|standard)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Agricultural and veterinary sciences/Result/yield-and-health"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(increase|decrease)\s+(?:in|of)\s+(yield|milk\s+production|weight\s+gain|survival)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|t/ha|kg/ha|L/day|kg|%)?'
+    negatives: ['not\\s+significant','no\\s+change']
+    captures: ["value","unit"]
+  - id: "Agricultural and veterinary sciences/Hypothesis/management-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|expect)\s+that\s+(irrigation|fertili[zs]ation|feed|breed(?:ing)?)\s+(?:improves|increases|reduces)\s+(.+?)'
+    negatives: ['no\s+effect','unchanged']
+    captures: ["value"]
+  - id: "Agricultural and veterinary sciences/Experiment/field-or-plot"
+    type: Experiment
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(field\s+trial|plot\s+experiment|randomi[sz]ed\s+block\s+design|pasture\s+trial)\b'
+    negatives: ['greenhouse\s+only|lab\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences/Technique/agri-technique"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(irrigation|silviculture|marker[- ]assisted|AI\s+breeding|QTL\s+mapping|NDVI)\b'
+    negatives: ['traditional\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences/Dataset/plots-or-animals"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:plots|animals|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+case']
+    captures: ["n"]
+  - id: "Agricultural and veterinary sciences/Analysis/anova-or-mixed"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ANOVA|mixed[- ]effects|linear\s+mixed\s+model|GLM)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Agricultural and veterinary sciences/Conclusion/production-impact"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:management|treatment|variety)\s+(?:improves|reduces)\s+(yield|health)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Agricultural and veterinary sciences/Input Fact/fao-or-guideline"
+    type: Input Fact
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(FAO|guideline|standard)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]
