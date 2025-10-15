@@ -8,7 +8,11 @@ from uuid import uuid4
 import re
 from rq import Queue
 from typing import Optional, List
-from pipeline.themes_router import preload as themes_preload
+# Import themes router from the mounted pipeline package.
+# In the API container, the repository's `./pipeline` directory is mounted at `/app/pipeline`,
+# and the actual Python package lives under `/app/pipeline/pipeline`.
+# Hence the absolute module path here is `pipeline.pipeline.themes_router`.
+from pipeline.pipeline.themes_router import preload as themes_preload
 
 # -------------------- App --------------------
 app = FastAPI(title="Singularis API", version="0.1")
