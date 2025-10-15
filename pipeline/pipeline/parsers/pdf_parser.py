@@ -44,6 +44,24 @@ INLINE_HEADING_RE = re.compile(
 )
 
 
+def _looks_like_heading(text: str) -> bool:
+    stripped = (text or "").strip()
+    if not stripped:
+        return False
+    if len(stripped) > 80:
+        return False
+    if re.search(r'[.!?;:,]$', stripped):
+        return False
+    if re.match(r'^[A-Z]\.$', stripped):
+        return True
+    words = stripped.split()
+    if not words:
+        return False
+    if len(words) <= 6 and all(w.isupper() or (w[0].isupper() and w[1:].islower()) for w in words):
+        return True
+    return False
+
+
 @dataclass
 class CaptionData:
     id: str
@@ -156,46 +174,43 @@ def _assign_nearest_image_bbox(caption_bbox: List[float],
 
 
 def _extract_pdf_page_struct(page: pymupdf.Page, page_no: int) -> Dict[str, Any]:
-    text_data = page.get_text("dict") or {}
-    raw_data = page.get_text("rawdict") or {}
-    text_blocks = text_data.get("blocks", []) if isinstance(text_data, dict) else []
-    raw_blocks = raw_data.get("blocks", []) if isinstance(raw_data, dict) else []
-
+    raw_blocks = page.get_text("blocks") or []
     lines: List[Dict[str, Any]] = []
     image_blocks: List[Dict[str, Any]] = []
 
-    for block_idx, block in enumerate(text_blocks):
-        bbox = block.get("bbox") or [0, 0, 0, 0]
-        bbox = [round(float(x), 2) for x in bbox]
-        for line in block.get("lines", []):
-            spans = line.get("spans", [])
-            text = "".join(span.get("text", "") for span in spans).strip()
-            if not text:
-                continue
-            lbbox = line.get("bbox") or bbox
-            lbbox = [round(float(x), 2) for x in lbbox]
-            lines.append({
-                "text": text,
-                "bbox": lbbox,
+    for block_idx, block in enumerate(raw_blocks):
+        if not block or len(block) < 5:
+            continue
+        x0, y0, x1, y1, text = block[:5]
+        block_type = int(block[6]) if len(block) > 6 else 0
+        bbox = [round(float(x0), 2), round(float(y0), 2), round(float(x1), 2), round(float(y1), 2)]
+
+        if block_type == 1:
+            image_blocks.append({
                 "block_index": block_idx,
+                "bbox": bbox,
+                "used": False,
                 "page": page_no
             })
-
-    for block_idx, block in enumerate(raw_blocks):
-        if block.get("type", 0) != 1:
             continue
-        bbox = block.get("bbox") or [0, 0, 0, 0]
-        bbox = [round(float(x), 2) for x in bbox]
-        image_blocks.append({
-            "block_index": block_idx,
-            "bbox": bbox,
-            "used": False,
-            "page": page_no
-        })
+
+        if not (text or "").strip():
+            continue
+
+        for line in (text or "").splitlines():
+            line_text = line.strip()
+            if not line_text:
+                continue
+            lines.append({
+                "text": line_text,
+                "bbox": bbox,
+                "block_index": block_idx,
+                "page": page_no,
+                "is_heading": _looks_like_heading(line_text)
+            })
 
     return {
-        "text_blocks": text_blocks,
-        "raw_blocks": raw_blocks,
+        "text_blocks": raw_blocks,
         "lines": lines,
         "image_blocks": image_blocks
     }
@@ -231,30 +246,21 @@ def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             return
 
         text_parts: List[str] = []
-        provenance: List[Dict[str, Any]] = []
         page_numbers: List[int] = []
-        offset = 0
 
-        for idx, chunk in enumerate(chunks):
+        for chunk in chunks:
             chunk_text = chunk.get("text", "").strip()
             if not chunk_text:
                 continue
-            start = offset
             if text_parts:
                 text_parts.append(" ")
-                offset += 1
             text_parts.append(chunk_text)
-            offset += len(chunk_text)
-            provenance.append({
-                "source": "pdf",
-                "page": chunk.get("page"),
-                "bbox": chunk.get("bbox"),
-                "offset": [start, offset]
-            })
-            page_numbers.append(chunk.get("page"))
+            page = chunk.get("page")
+            if page is not None:
+                page_numbers.append(page)
 
-        text = "".join(text_parts)
-        if not text.strip():
+        text = "".join(text_parts).strip()
+        if not text:
             return
 
         sections.append({
@@ -262,7 +268,6 @@ def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "text": text,
             "page_start": min(page_numbers) if page_numbers else None,
             "page_end": max(page_numbers) if page_numbers else None,
-            "provenance": provenance
         })
 
     current: Optional[Dict[str, Any]] = None
@@ -286,6 +291,9 @@ def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 current["chunks"].append({**entry, "text": remainder})
             continue
 
+        if entry.get("is_heading"):
+            continue
+
         if current is None:
             current = {"name": "FrontMatter", "chunks": []}
         current.setdefault("chunks", []).append(entry)
@@ -293,45 +301,53 @@ def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     finalize(current)
 
     if not sections:
-        text = "\n".join(entry.get("text", "") for entry in lines if entry.get("text"))
-        sections.append({
-            "name": "Body",
-            "text": text,
-            "page_start": lines[0]["page"] if lines else None,
-            "page_end": lines[-1]["page"] if lines else None,
-            "provenance": [
-                {
-                    "source": "pdf",
-                    "page": entry.get("page"),
-                    "bbox": entry.get("bbox"),
-                    "offset": [0, len(entry.get("text", ""))]
-                }
-                for entry in lines
-            ]
-        })
+        text_parts: List[str] = []
+        page_numbers: List[int] = []
+        for entry in lines:
+            chunk_text = entry.get("text", "").strip()
+            if not chunk_text:
+                continue
+            if text_parts:
+                text_parts.append(" ")
+            text_parts.append(chunk_text)
+            page = entry.get("page")
+            if page is not None:
+                page_numbers.append(page)
+        combined_text = "".join(text_parts).strip()
+        if combined_text:
+            sections.append({
+                "name": "Body",
+                "text": combined_text,
+                "page_start": min(page_numbers) if page_numbers else None,
+                "page_end": max(page_numbers) if page_numbers else None,
+            })
     return sections
 
 
-def _collect_captions_from_blocks(blocks: List[Dict[str, Any]],
+def _collect_captions_from_blocks(blocks: List[Any],
                                   page_no: int,
                                   image_blocks: Optional[List[Dict[str, Any]]] = None) -> List[CaptionData]:
     caps: List[CaptionData] = []
     image_blocks = image_blocks or []
 
     for block in blocks:
-        if not isinstance(block, dict):
+        if not block or len(block) < 5:
             continue
+        x0, y0, x1, y1, text = block[:5]
+        block_type = int(block[6]) if len(block) > 6 else 0
+        if block_type != 0:
+            continue
+        if not (text or "").strip():
+            continue
+        bbox = [round(float(x0), 2), round(float(y0), 2), round(float(x1), 2), round(float(y1), 2)]
         raw_lines = []
-        for line in block.get("lines", []):
-            spans = line.get("spans", [])
-            text = "".join(span.get("text", "") for span in spans).strip()
-            if not text:
+        for line in (text or "").splitlines():
+            line_text = line.strip()
+            if not line_text:
                 continue
-            bbox = line.get("bbox") or block.get("bbox") or [0, 0, 0, 0]
             raw_lines.append({
-                "text": text,
-                "bbox": [round(float(bbox[0]), 2), round(float(bbox[1]), 2),
-                         round(float(bbox[2]), 2), round(float(bbox[3]), 2)]
+                "text": line_text,
+                "bbox": bbox
             })
         if not raw_lines:
             continue

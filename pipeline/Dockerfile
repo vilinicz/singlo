@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # spaCy small model (быстро и достаточно для токенизации/negex)
-RUN python -m spacy download en_core_web_sm
+# RUN python -m spacy download en_core_web_sm
 
 # код пайплайна и правила
 COPY . /app

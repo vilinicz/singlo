@@ -6,6 +6,15 @@ from typing import Any, Dict, List, Optional
 
 from .utils import normalize_text, line_number, slugify
 
+
+def _normalize_heading_title(title: str) -> str:
+    cleaned = normalize_text(_clean_latex_text(title))
+    if not cleaned:
+        return ""
+    if cleaned.isupper():
+        return cleaned.title()
+    return cleaned
+
 INPUT_INCLUDE_RE = re.compile(r'\\(input|include)\s*\{([^}]*)\}', re.I)
 LATEX_SECTION_CMD_RE = re.compile(r'\\(chapter|section|subsection|subsubsection)\*?\s*\{([^{}]*)\}', re.I)
 LATEX_ABSTRACT_RE = re.compile(r'\\begin\{abstract\}(.*?)\\end\{abstract\}', re.S | re.I)
@@ -187,6 +196,9 @@ def _parse_latex_sections(doc_body: str,
         if abs_text:
             sections.append({
                 "name": "Abstract",
+                "title_path": "Abstract",
+                "heading": "Abstract",
+                "level": "abstract",
                 "page_start": None,
                 "page_end": None,
                 "text": abs_text,
@@ -196,6 +208,14 @@ def _parse_latex_sections(doc_body: str,
 
     matches = list(LATEX_SECTION_CMD_RE.finditer(body))
     if matches:
+        hierarchy: Dict[str, Optional[str]] = {
+            "chapter": None,
+            "section": None,
+            "subsection": None,
+            "subsubsection": None,
+        }
+        level_order = ["chapter", "section", "subsection", "subsubsection"]
+
         for idx, match in enumerate(matches):
             level = (match.group(1) or "").lower()
             title_raw = match.group(2) or ""
@@ -204,14 +224,51 @@ def _parse_latex_sections(doc_body: str,
             chunk_raw = body[start:end]
             chunk = normalize_text(_clean_latex_text(chunk_raw))
             if not chunk:
+                # even если текст пуст, обновляем иерархию
+                hierarchy[level] = _normalize_heading_title(title_raw) or level.title()
+                for deeper in level_order[level_order.index(level) + 1:]:
+                    hierarchy[deeper] = None
                 continue
-            if level in ("chapter", "section"):
-                name = normalize_text(_clean_latex_text(title_raw)) or level.title()
+
+            cleaned_title = _normalize_heading_title(title_raw)
+            if not cleaned_title:
+                cleaned_title = level.title()
+
+            hierarchy[level] = cleaned_title
+            # сбрасываем дочерние уровни
+            for deeper in level_order[level_order.index(level) + 1:]:
+                hierarchy[deeper] = None
+
+            full_path: List[str] = []
+            if level == "section":
+                full_path.append(cleaned_title)
+            elif level == "subsection":
+                if hierarchy.get("section"):
+                    full_path.append(hierarchy.get("section"))
+                full_path.append(cleaned_title)
+            elif level == "subsubsection":
+                if hierarchy.get("section"):
+                    full_path.append(hierarchy.get("section"))
+                if hierarchy.get("subsection"):
+                    full_path.append(hierarchy.get("subsection"))
+                full_path.append(cleaned_title)
             else:
-                cleaned_title = normalize_text(_clean_latex_text(title_raw))
-                name = f"{level.title()}: {cleaned_title}" if cleaned_title else level.title()
+                full_path.append(cleaned_title)
+
+            if level == "section":
+                display_name = cleaned_title
+            elif level == "subsection":
+                display_name = hierarchy.get("section") or cleaned_title
+            elif level == "subsubsection":
+                display_name = hierarchy.get("subsection") or hierarchy.get("section") or cleaned_title
+            else:
+                display_name = cleaned_title
+
             sections.append({
-                "name": name,
+                "name": display_name,
+                "title_path": " > ".join(full_path),
+                "heading": cleaned_title,
+                "level": level,
                 "page_start": None,
                 "page_end": None,
                 "text": chunk,
@@ -223,6 +280,9 @@ def _parse_latex_sections(doc_body: str,
             prov = _section_prov(0, len(body))
             sections.append({
                 "name": "Body",
+                "title_path": "Body",
+                "heading": "Body",
+                "level": "body",
                 "page_start": None,
                 "page_end": None,
                 "text": content,

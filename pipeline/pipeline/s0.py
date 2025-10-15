@@ -233,16 +233,24 @@ def build_s0(pdf_path: str, out_dir: str, *, use_latex: bool = True) -> Dict[str
         if (not metadata.get("author") or len(metadata.get("author", "")) < 3) and authors_guess:
             metadata["author"] = authors_guess
 
+        sections_raw = core_data.get("sections", []) or []
+        sections: list[Any] = []
+        for section in sections_raw:
+            if isinstance(section, dict):
+                filtered = {k: v for k, v in section.items() if k != "sentences"}
+                sections.append(filtered)
+            else:
+                sections.append(section)
+
         s0_data = {
             "doc_id": core_data.get("suggested_doc_id") or slugify(out_dir_path.name),
             "source_pdf": str(pdf_path),
             "page_count": page_count,
             "metadata": metadata,
-            "sections": core_data.get("sections", []),
+            "sections": sections,
             "captions": core_data.get("captions", []),
             "figures": core_data.get("figures", []),
-            "tables": core_data.get("tables", []),
-            "pages_sample": core_data.get("pages_sample", [])
+            "tables": core_data.get("tables", [])
         }
 
         s0_data["doc_id"] = _safe_doc_id(s0_data, out_dir_path, first_page_text)
@@ -261,5 +269,5 @@ if __name__ == "__main__":
     parser.add_argument("--no-latex", action="store_true", help="disable LaTeX source parsing")
     args = parser.parse_args()
 
-    s0 = build_s0(args.pdf, args.out, use_latex=not args.no_latex)
+    s0 = build_s0(args.pdf, args.out, use_latex=False)
     print(f"✅ S0 saved to {Path(args.out) / 's0.json'} | sections={len(s0['sections'])} captions={len(s0['captions'])}")
