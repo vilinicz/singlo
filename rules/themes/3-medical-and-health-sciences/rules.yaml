@@ -1,56 +1,57 @@
-- id: "Medical and health sciences/Result/clinical-effect"
-  type: Result
-  weight: 0.64
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(reduction|increase)\s+(?:in|of)\s+(RR|OR|HR|BP|heart\s+rate|blood\s+pressure|symptom\s+score)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mmHg|bpm|points)?"
-  negatives: ["not\\s+significant","no\\s+difference"]
-  captures: ["value","unit"]
-- id: "Medical and health sciences/Hypothesis/treatment-improves-outcome"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|propose)\s+that\s+(?:the\s+)?treatment\s+(?:improves|reduces|increases)\s+(survival|outcome|symptoms)"
-  negatives: ["no\s+benefit","null\s+hypothesis"]
-  captures: ["value"]
-- id: "Medical and health sciences/Experiment/clinical-trial"
-  type: Experiment
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(randomi[sz]ed|double[- ]blind|placebo[- ]controlled)\s+(trial|study)\b.*?(?:n\s*=\s*(?P<n>\\d{2,}))?"
-  negatives: ["observational\s+only"]
-  captures: ["n"]
-- id: "Medical and health sciences/Technique/assay-or-imaging"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ELISA|qPCR|Western\s+blot|MRI|CT|EEG|ECG|ultrasound)\b"
-  negatives: ["self\s+report\s+only"]
-  captures: []
-- id: "Medical and health sciences/Dataset/participants"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:participants|patients|subjects)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["case\s+report"]
-  captures: ["n"]
-- id: "Medical and health sciences/Analysis/biostatistics"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(hazard\s+ratio|odds\s+ratio|logistic\s+regression|cox\s+model|Kaplan[–-]Meier)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Medical and health sciences/Conclusion/effectiveness"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(intervention|treatment)\s+(?:is|appears\s+to\s+be)\s+(effective|safe)"
-  negatives: ["inconclusive","insufficient\s+evidence"]
-  captures: []
-- id: "Medical and health sciences/Input Fact/guidelines"
-  type: Input Fact
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(WHO|CDC|guidelines|consensus)\b(.+?)?"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Medical and health sciences/Result/clinical-effect"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(reduction|increase)\s+(?:in|of)\s+(RR|OR|HR|BP|heart\s+rate|blood\s+pressure|symptom\s+score)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mmHg|bpm|points)?'
+    negatives: ['not\\s+significant','no\\s+difference']
+    captures: ["value","unit"]
+  - id: "Medical and health sciences/Hypothesis/treatment-improves-outcome"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(?:the\s+)?treatment\s+(?:improves|reduces|increases)\s+(survival|outcome|symptoms)'
+    negatives: ['no\s+benefit','null\s+hypothesis']
+    captures: ["value"]
+  - id: "Medical and health sciences/Experiment/clinical-trial"
+    type: Experiment
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(randomi[sz]ed|double[- ]blind|placebo[- ]controlled)\s+(trial|study)\b.*?(?:n\s*=\s*(?P<n>\\d{2,}))?'
+    negatives: ['observational\s+only']
+    captures: ["n"]
+  - id: "Medical and health sciences/Technique/assay-or-imaging"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ELISA|qPCR|Western\s+blot|MRI|CT|EEG|ECG|ultrasound)\b'
+    negatives: ['self\s+report\s+only']
+    captures: []
+  - id: "Medical and health sciences/Dataset/participants"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:participants|patients|subjects)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['case\s+report']
+    captures: ["n"]
+  - id: "Medical and health sciences/Analysis/biostatistics"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(hazard\s+ratio|odds\s+ratio|logistic\s+regression|cox\s+model|Kaplan[–-]Meier)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Medical and health sciences/Conclusion/effectiveness"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(intervention|treatment)\s+(?:is|appears\s+to\s+be)\s+(effective|safe)'
+    negatives: ['inconclusive','insufficient\s+evidence']
+    captures: []
+  - id: "Medical and health sciences/Input Fact/guidelines"
+    type: Input Fact
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(WHO|CDC|guidelines|consensus)\b(.+?)?'
+    negatives: ['opinion|commentary']
+    captures: ["value"]

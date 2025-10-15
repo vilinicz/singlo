@@ -1,56 +1,57 @@
-- id: "Social sciences / 5.3-education/Result/test-or-attainment"
-  type: Result
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(test\s+score|attainment|pass\s+rate|dropout)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>points|%|pp)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Social sciences / 5.3-education/Hypothesis/pedagogy-impact"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(curriculum|pedagogy|program)\s+(?:improves|reduces)\s+(attainment|dropout|engagement)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Social sciences / 5.3-education/Experiment/rct-or-quasi"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(RCT|quasi[- ]experimental|difference[- ]in[- ]differences|matching)\b"
-  negatives: ["observational\s+only"]
-  captures: []
-- id: "Social sciences / 5.3-education/Technique/assessment-or-model"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(rubric|item\s+response\s+theory|SEM|multilevel\s+model)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Social sciences / 5.3-education/Dataset/students-or-schools"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:students|schools|classes)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["small\s+sample"]
-  captures: ["n"]
-- id: "Social sciences / 5.3-education/Analysis/regression-or-sem"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(multilevel|SEM|OLS|logit|probit|DiD)\b"
-  negatives: ["correlation\s+only"]
-  captures: []
-- id: "Social sciences / 5.3-education/Conclusion/education-impact"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(program|intervention)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Social sciences / 5.3-education/Input Fact/standard-or-assessment"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(PISA|OECD|standard|curriculum)\b(.+?)?"
-  negatives: ["commentary|opinion"]
-  captures: ["value"]
+elements:
+  - id: "Social sciences / 5.3-education/Result/test-or-attainment"
+    type: Result
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(test\s+score|attainment|pass\s+rate|dropout)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>points|%|pp)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Social sciences / 5.3-education/Hypothesis/pedagogy-impact"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(curriculum|pedagogy|program)\s+(?:improves|reduces)\s+(attainment|dropout|engagement)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Social sciences / 5.3-education/Experiment/rct-or-quasi"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(RCT|quasi[- ]experimental|difference[- ]in[- ]differences|matching)\b'
+    negatives: ['observational\s+only']
+    captures: []
+  - id: "Social sciences / 5.3-education/Technique/assessment-or-model"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(rubric|item\s+response\s+theory|SEM|multilevel\s+model)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Social sciences / 5.3-education/Dataset/students-or-schools"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:students|schools|classes)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['small\s+sample']
+    captures: ["n"]
+  - id: "Social sciences / 5.3-education/Analysis/regression-or-sem"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(multilevel|SEM|OLS|logit|probit|DiD)\b'
+    negatives: ['correlation\s+only']
+    captures: []
+  - id: "Social sciences / 5.3-education/Conclusion/education-impact"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(program|intervention)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Social sciences / 5.3-education/Input Fact/standard-or-assessment"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(PISA|OECD|standard|curriculum)\b(.+?)?'
+    negatives: ['commentary|opinion']
+    captures: ["value"]

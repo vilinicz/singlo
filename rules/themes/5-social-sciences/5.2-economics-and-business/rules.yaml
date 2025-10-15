@@ -1,56 +1,57 @@
-- id: "Social sciences / 5.2-economics-and-business/Result/economic-indicator"
-  type: Result
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(increase|decrease)\s+(?:in|of)\s+(GDP|CPI|productivity|employment|returns)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp|index|bps)?"
-  negatives: ["not\\s+significant","no\\s+effect"]
-  captures: ["value","unit"]
-- id: "Social sciences / 5.2-economics-and-business/Hypothesis/market-behavior"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|expect)\s+that\s+(policy|shock|intervention)\s+(?:increases|reduces)\s+(consumption|investment|employment)"
-  negatives: ["no\s+impact"]
-  captures: ["value"]
-- id: "Social sciences / 5.2-economics-and-business/Experiment/field-or-natural"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(field\s+experiment|natural\s+experiment|RCT)\b"
-  negatives: ["observational\s+only"]
-  captures: []
-- id: "Social sciences / 5.2-economics-and-business/Technique/econometric-method"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(difference[- ]in[- ]differences|IV|instrumental\s+variables|VAR|ARDL|event\s+study)\b"
-  negatives: ["raw\s+comparison"]
-  captures: []
-- id: "Social sciences / 5.2-economics-and-business/Dataset/panel-or-firms"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:panel|firms|households)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["case\s+study"]
-  captures: ["n"]
-- id: "Social sciences / 5.2-economics-and-business/Analysis/regression"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(OLS|fixed\s+effects|GMM|SEM|logit|probit)\b"
-  negatives: ["correlation\s+only"]
-  captures: []
-- id: "Social sciences / 5.2-economics-and-business/Conclusion/implications"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(policy|shock)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Social sciences / 5.2-economics-and-business/Input Fact/official-statistics"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(?:official\s+statistics|national\s+accounts|Eurostat|World\s+Bank)\b(.+?)?"
-  negatives: ["survey\s+only|opinion"]
-  captures: ["value"]
+elements:
+  - id: "Social sciences / 5.2-economics-and-business/Result/economic-indicator"
+    type: Result
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(increase|decrease)\s+(?:in|of)\s+(GDP|CPI|productivity|employment|returns)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp|index|bps)?'
+    negatives: ['not\\s+significant','no\\s+effect']
+    captures: ["value","unit"]
+  - id: "Social sciences / 5.2-economics-and-business/Hypothesis/market-behavior"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|expect)\s+that\s+(policy|shock|intervention)\s+(?:increases|reduces)\s+(consumption|investment|employment)'
+    negatives: ['no\s+impact']
+    captures: ["value"]
+  - id: "Social sciences / 5.2-economics-and-business/Experiment/field-or-natural"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(field\s+experiment|natural\s+experiment|RCT)\b'
+    negatives: ['observational\s+only']
+    captures: []
+  - id: "Social sciences / 5.2-economics-and-business/Technique/econometric-method"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(difference[- ]in[- ]differences|IV|instrumental\s+variables|VAR|ARDL|event\s+study)\b'
+    negatives: ['raw\s+comparison']
+    captures: []
+  - id: "Social sciences / 5.2-economics-and-business/Dataset/panel-or-firms"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:panel|firms|households)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['case\s+study']
+    captures: ["n"]
+  - id: "Social sciences / 5.2-economics-and-business/Analysis/regression"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(OLS|fixed\s+effects|GMM|SEM|logit|probit)\b'
+    negatives: ['correlation\s+only']
+    captures: []
+  - id: "Social sciences / 5.2-economics-and-business/Conclusion/implications"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(policy|shock)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Social sciences / 5.2-economics-and-business/Input Fact/official-statistics"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(?:official\s+statistics|national\s+accounts|Eurostat|World\s+Bank)\b(.+?)?'
+    negatives: ['survey\s+only|opinion']
+    captures: ["value"]

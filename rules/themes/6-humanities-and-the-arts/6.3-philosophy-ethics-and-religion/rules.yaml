@@ -1,56 +1,57 @@
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Result/thesis-or-argument"
-  type: Result
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+show|we\s+demonstrate|we\s+establish)\s+that\s+(.+?)"
-  negatives: ["tentative|unclear"]
-  captures: ["value"]
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Hypothesis/philosophical-claim"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(we\s+argue|we\s+propose|we\s+hypothesi[zs]e)\s+that\s+(.+?)"
-  negatives: ["speculation|assertion\s+without\s+argument"]
-  captures: ["value"]
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Experiment/analysis-of-texts"
-  type: Experiment
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(textual\s+analysis|logical\s+analysis|exegesis|comparative\s+study)\b"
-  negatives: ["summary\s+only"]
-  captures: []
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Technique/logic-or-hermeneutics"
-  type: Technique
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(deductive|inductive|abductive|hermeneutic|phenomenolog(y|ical))\b"
-  negatives: ["impressionistic"]
-  captures: []
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Dataset/canon-or-corpus"
-  type: Dataset
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:texts|treatises|dialogues)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+text"]
-  captures: ["n"]
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Analysis/argumentation"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(argument\s+structure|premise|conclusion|counterexample|modal\s+logic)\b"
-  negatives: ["assertion\s+only"]
-  captures: []
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Conclusion/conclusion"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(.+?)\b"
-  negatives: ["tentative|uncertain"]
-  captures: ["value"]
-- id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Input Fact/source"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(treatise|dialogue|edition|dictionary)\s+(.+?)"
-  negatives: ["hearsay|legend"]
-  captures: ["value"]
+elements:
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Result/thesis-or-argument"
+    type: Result
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+show|we\s+demonstrate|we\s+establish)\s+that\s+(.+?)'
+    negatives: ['tentative|unclear']
+    captures: ["value"]
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Hypothesis/philosophical-claim"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(we\s+argue|we\s+propose|we\s+hypothesi[zs]e)\s+that\s+(.+?)'
+    negatives: ['speculation|assertion\s+without\s+argument']
+    captures: ["value"]
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Experiment/analysis-of-texts"
+    type: Experiment
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(textual\s+analysis|logical\s+analysis|exegesis|comparative\s+study)\b'
+    negatives: ['summary\s+only']
+    captures: []
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Technique/logic-or-hermeneutics"
+    type: Technique
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(deductive|inductive|abductive|hermeneutic|phenomenolog(y|ical))\b'
+    negatives: ['impressionistic']
+    captures: []
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Dataset/canon-or-corpus"
+    type: Dataset
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:texts|treatises|dialogues)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+text']
+    captures: ["n"]
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Analysis/argumentation"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(argument\s+structure|premise|conclusion|counterexample|modal\s+logic)\b'
+    negatives: ['assertion\s+only']
+    captures: []
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Conclusion/conclusion"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
+    negatives: ['tentative|uncertain']
+    captures: ["value"]
+  - id: "Humanities and the arts / 6.3-philosophy-ethics-and-religion/Input Fact/source"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(treatise|dialogue|edition|dictionary)\s+(.+?)'
+    negatives: ['hearsay|legend']
+    captures: ["value"]

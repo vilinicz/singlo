@@ -1,9 +1,0 @@
-id: "biomed-lex"
-version: "0.1.0"
-abbr:
-  - ["body mass index", "BMI"]
-  - ["systolic blood pressure", "SBP"]
-hedges: ["trend", "non-significant"]
-units:  ["mg/dL","mmHg"]
-synonyms:
-  - ["dataset", ["registry","cohort"]]

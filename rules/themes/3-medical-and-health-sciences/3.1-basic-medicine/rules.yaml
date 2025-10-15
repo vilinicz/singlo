@@ -1,56 +1,57 @@
-- id: "Medical and health sciences / 3.1-basic-medicine/Result/molecular-measure"
-  type: Result
-  weight: 0.64
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(expression|activity|binding\s+affinity)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|fold|K[dD])?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Medical and health sciences / 3.1-basic-medicine/Hypothesis/pathway-effect"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+propose\s+that\s+(pathway|receptor|biomarker)\s+(?:mediates|regulates)\s+(.+?)"
-  negatives: ["no\s+effect"]
-  captures: ["value"]
-- id: "Medical and health sciences / 3.1-basic-medicine/Experiment/assay-or-imaging"
-  type: Experiment
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ELISA|Western\s+blot|IF|IHC|qPCR|RNA[- ]seq|imaging)\b"
-  negatives: ["in\s+silico\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.1-basic-medicine/Technique/molecular"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(CRISPR|siRNA|ChIP[- ]seq|co[- ]IP|pull[- ]down)\b"
-  negatives: ["baseline\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.1-basic-medicine/Dataset/samples-or-replicates"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:samples|replicates|cells)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["n\s*=\s*1"]
-  captures: ["n"]
-- id: "Medical and health sciences / 3.1-basic-medicine/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(t[- ]test|ANOVA|multiple\s+comparison|FDR|Bonferroni)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Medical and health sciences / 3.1-basic-medicine/Conclusion/model"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(pathway|receptor)\s+(?:mediates|regulates)\b"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Medical and health sciences / 3.1-basic-medicine/Input Fact/database"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(UniProt|KEGG|Gene\s+Ontology|PDB)\b(.+?)?"
-  negatives: ["inferred|predicted"]
-  captures: ["value"]
+elements:
+  - id: "Medical and health sciences / 3.1-basic-medicine/Result/molecular-measure"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(expression|activity|binding\s+affinity)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|fold|K[dD])?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Medical and health sciences / 3.1-basic-medicine/Hypothesis/pathway-effect"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+propose\s+that\s+(pathway|receptor|biomarker)\s+(?:mediates|regulates)\s+(.+?)'
+    negatives: ['no\s+effect']
+    captures: ["value"]
+  - id: "Medical and health sciences / 3.1-basic-medicine/Experiment/assay-or-imaging"
+    type: Experiment
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ELISA|Western\s+blot|IF|IHC|qPCR|RNA[- ]seq|imaging)\b'
+    negatives: ['in\s+silico\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.1-basic-medicine/Technique/molecular"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(CRISPR|siRNA|ChIP[- ]seq|co[- ]IP|pull[- ]down)\b'
+    negatives: ['baseline\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.1-basic-medicine/Dataset/samples-or-replicates"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:samples|replicates|cells)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['n\s*=\s*1']
+    captures: ["n"]
+  - id: "Medical and health sciences / 3.1-basic-medicine/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(t[- ]test|ANOVA|multiple\s+comparison|FDR|Bonferroni)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Medical and health sciences / 3.1-basic-medicine/Conclusion/model"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(pathway|receptor)\s+(?:mediates|regulates)\b'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Medical and health sciences / 3.1-basic-medicine/Input Fact/database"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(UniProt|KEGG|Gene\s+Ontology|PDB)\b(.+?)?'
+    negatives: ['inferred|predicted']
+    captures: ["value"]

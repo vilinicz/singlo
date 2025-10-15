@@ -1,56 +1,57 @@
-- id: "Natural sciences / 1.6-biological-sciences/Result/biological-measure"
-  type: Result
-  weight: 0.63
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(increase|decrease)\s+(?:in|of)\s+(expression|activity|viability|growth\s+rate)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|fold|OD600)?"
-  negatives: ["not\\s+significant","no\\s+change"]
-  captures: ["value","unit"]
-- id: "Natural sciences / 1.6-biological-sciences/Hypothesis/pathway-or-function"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+(?:hypothesi[zs]e|propose)\s+that\s+(gene|protein|pathway)\s+(?:regulates|controls|mediates)\s+(.+?)"
-  negatives: ["no\s+effect"]
-  captures: ["value"]
-- id: "Natural sciences / 1.6-biological-sciences/Experiment/assay"
-  type: Experiment
-  weight: 0.62
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(ELISA|qPCR|Western\s+blot|microscopy|flow\s+cytometry|knock(?:out|down))\b"
-  negatives: ["in\s+silico\s+only"]
-  captures: []
-- id: "Natural sciences / 1.6-biological-sciences/Technique/molecular-or-cellular"
-  type: Technique
-  weight: 0.66
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(CRISPR|RNA[- ]seq|ChIP[- ]seq|immuno(staining|precipitation)|confocal\s+microscopy)\b"
-  negatives: ["baseline\s+only"]
-  captures: []
-- id: "Natural sciences / 1.6-biological-sciences/Dataset/samples-or-cells"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:samples|cells|replicates)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["n\s*=\s*1"]
-  captures: ["n"]
-- id: "Natural sciences / 1.6-biological-sciences/Analysis/statistical"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(two[- ]?tailed|t[- ]test|ANOVA|post\s+hoc|Bonferroni|FDR)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Natural sciences / 1.6-biological-sciences/Conclusion/functional-model"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(gene|protein|pathway)\s+(?:functions|acts|mediates)\b"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Natural sciences / 1.6-biological-sciences/Input Fact/database-or-guideline"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(UniProt|Gene\s+Ontology|KEGG|NCBI)\b(.+?)?"
-  negatives: ["prediction|inferred"]
-  captures: ["value"]
+elements:
+  - id: "Natural sciences / 1.6-biological-sciences/Result/biological-measure"
+    type: Result
+    weight: 0.63
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(increase|decrease)\s+(?:in|of)\s+(expression|activity|viability|growth\s+rate)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|fold|OD600)?'
+    negatives: ['not\\s+significant','no\\s+change']
+    captures: ["value","unit"]
+  - id: "Natural sciences / 1.6-biological-sciences/Hypothesis/pathway-or-function"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(gene|protein|pathway)\s+(?:regulates|controls|mediates)\s+(.+?)'
+    negatives: ['no\s+effect']
+    captures: ["value"]
+  - id: "Natural sciences / 1.6-biological-sciences/Experiment/assay"
+    type: Experiment
+    weight: 0.62
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(ELISA|qPCR|Western\s+blot|microscopy|flow\s+cytometry|knock(?:out|down))\b'
+    negatives: ['in\s+silico\s+only']
+    captures: []
+  - id: "Natural sciences / 1.6-biological-sciences/Technique/molecular-or-cellular"
+    type: Technique
+    weight: 0.66
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(CRISPR|RNA[- ]seq|ChIP[- ]seq|immuno(staining|precipitation)|confocal\s+microscopy)\b'
+    negatives: ['baseline\s+only']
+    captures: []
+  - id: "Natural sciences / 1.6-biological-sciences/Dataset/samples-or-cells"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:samples|cells|replicates)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['n\s*=\s*1']
+    captures: ["n"]
+  - id: "Natural sciences / 1.6-biological-sciences/Analysis/statistical"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(two[- ]?tailed|t[- ]test|ANOVA|post\s+hoc|Bonferroni|FDR)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Natural sciences / 1.6-biological-sciences/Conclusion/functional-model"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(gene|protein|pathway)\s+(?:functions|acts|mediates)\b'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Natural sciences / 1.6-biological-sciences/Input Fact/database-or-guideline"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(UniProt|Gene\s+Ontology|KEGG|NCBI)\b(.+?)?'
+    negatives: ['prediction|inferred']
+    captures: ["value"]

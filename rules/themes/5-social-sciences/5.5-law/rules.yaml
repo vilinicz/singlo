@@ -1,56 +1,57 @@
-- id: "Social sciences / 5.5-law/Result/case-or-rate"
-  type: Result
-  weight: 0.61
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(case\s+success\s+rate|compliance|conviction\s+rate)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp)?"
-  negatives: ["not\\s+significant"]
-  captures: ["value","unit"]
-- id: "Social sciences / 5.5-law/Hypothesis/legal-impact"
-  type: Hypothesis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+expect\s+that\s+(law|statute|precedent|reform)\s+(?:increases|reduces)\s+(compliance|litigation|deterrence)"
-  negatives: ["no\s+effect"]
-  captures: []
-- id: "Social sciences / 5.5-law/Experiment/case-study-or-natural"
-  type: Experiment
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(case\s+study|natural\s+experiment|quasi[- ]experimental)\b"
-  negatives: ["anecdotal\s+only"]
-  captures: []
-- id: "Social sciences / 5.5-law/Technique/legal-analysis"
-  type: Technique
-  weight: 0.65
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(doctrinal\s+analysis|textual\s+analysis|case\s+citation|precedent\s+network)\b"
-  negatives: ["descriptive\s+only"]
-  captures: []
-- id: "Social sciences / 5.5-law/Dataset/cases-or-articles"
-  type: Dataset
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(?:cases|decisions|articles)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
-  negatives: ["single\s+case"]
-  captures: ["n"]
-- id: "Social sciences / 5.5-law/Analysis/regression-or-nlp"
-  type: Analysis
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "(logit|probit|event\s+study|text\s+classification|topic\s+model)\b"
-  negatives: ["correlation\s+only"]
-  captures: []
-- id: "Social sciences / 5.5-law/Conclusion/legal-implication"
-  type: Conclusion
-  weight: 0.6
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(law|reform|precedent)\s+(?:is\s+effective|has\s+limited\s+impact)"
-  negatives: ["inconclusive"]
-  captures: []
-- id: "Social sciences / 5.5-law/Input Fact/statute-or-article"
-  type: Input Fact
-  weight: 0.58
-  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-  pattern: "according\s+to\s+(statute|article|§)\s+(.+?)"
-  negatives: ["opinion|commentary"]
-  captures: ["value"]
+elements:
+  - id: "Social sciences / 5.5-law/Result/case-or-rate"
+    type: Result
+    weight: 0.61
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(case\s+success\s+rate|compliance|conviction\s+rate)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp)?'
+    negatives: ['not\\s+significant']
+    captures: ["value","unit"]
+  - id: "Social sciences / 5.5-law/Hypothesis/legal-impact"
+    type: Hypothesis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+expect\s+that\s+(law|statute|precedent|reform)\s+(?:increases|reduces)\s+(compliance|litigation|deterrence)'
+    negatives: ['no\s+effect']
+    captures: []
+  - id: "Social sciences / 5.5-law/Experiment/case-study-or-natural"
+    type: Experiment
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(case\s+study|natural\s+experiment|quasi[- ]experimental)\b'
+    negatives: ['anecdotal\s+only']
+    captures: []
+  - id: "Social sciences / 5.5-law/Technique/legal-analysis"
+    type: Technique
+    weight: 0.65
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(doctrinal\s+analysis|textual\s+analysis|case\s+citation|precedent\s+network)\b'
+    negatives: ['descriptive\s+only']
+    captures: []
+  - id: "Social sciences / 5.5-law/Dataset/cases-or-articles"
+    type: Dataset
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(?:cases|decisions|articles)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
+    negatives: ['single\s+case']
+    captures: ["n"]
+  - id: "Social sciences / 5.5-law/Analysis/regression-or-nlp"
+    type: Analysis
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: '(logit|probit|event\s+study|text\s+classification|topic\s+model)\b'
+    negatives: ['correlation\s+only']
+    captures: []
+  - id: "Social sciences / 5.5-law/Conclusion/legal-implication"
+    type: Conclusion
+    weight: 0.6
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(law|reform|precedent)\s+(?:is\s+effective|has\s+limited\s+impact)'
+    negatives: ['inconclusive']
+    captures: []
+  - id: "Social sciences / 5.5-law/Input Fact/statute-or-article"
+    type: Input Fact
+    weight: 0.58
+    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    pattern: 'according\s+to\s+(statute|article|§)\s+(.+?)'
+    negatives: ['opinion|commentary']
+    captures: ["value"]
