@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
 synonyms:
   -
     from: method
@@ -78,15 +91,6 @@ synonyms:
     to: support
   -
     from: cognition
-    to: mental processing
-  -
-    from: emotion
-    to: affect
-  -
-    from: perception
-    to: sensation
-  -
-    from: cognition
     to: cognitions
   -
     from: emotion
@@ -94,3 +98,12 @@ synonyms:
   -
     from: behavior
     to: behaviors
+  -
+    from: perception
+    to: perceptions
+  -
+    from: memory
+    to: memorys
+  -
+    from: clinical
+    to: clinicals

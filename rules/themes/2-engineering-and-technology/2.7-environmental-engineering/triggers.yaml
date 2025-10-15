@@ -3,32 +3,29 @@ version: 1
 threshold: 0.8
 must:
   - wastewater
-  - LCA
+  - remediation
 should:
   -
     - wastewater
-    - 1.0
+    - 1
   -
     - air pollution
-    - 1.0
+    - 1
   -
     - remediation
-    - 1.0
+    - 1
   -
     - LCA
-    - 1.0
+    - 1
   -
     - emission
-    - 1.0
+    - 1
   -
     - treatment
-    - 1.0
+    - 1
   -
     - sustainability
-    - 1.0
-  -
-    - review
-    - 0.6
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +36,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +74,10 @@ negative:
     - 0.8
   -
     - clinical
+    - 0.8
+  -
+    - patient
+    - 0.8
+  -
+    - therapy
     - 0.8

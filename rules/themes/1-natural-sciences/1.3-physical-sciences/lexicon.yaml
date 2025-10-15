@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - keV
+  - MeV
+  - GeV
 synonyms:
   -
     from: method
@@ -78,19 +94,19 @@ synonyms:
     to: support
   -
     from: quantum
-    to: atomic
-  -
-    from: optics
-    to: photonics
-  -
-    from: thermodynamics
-    to: heat physics
-  -
-    from: plasma
-    to: ionized gas
-  -
-    from: quantum
     to: quantums
   -
     from: optics
     to: opticss
+  -
+    from: thermodynamics
+    to: thermodynamicss
+  -
+    from: particle
+    to: particles
+  -
+    from: solid state
+    to: solid states
+  -
+    from: plasma
+    to: plasmas

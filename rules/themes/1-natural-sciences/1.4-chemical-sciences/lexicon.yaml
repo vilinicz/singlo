@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - mmol
+  - pH
+  - ppm
 synonyms:
   -
     from: method
@@ -78,19 +94,19 @@ synonyms:
     to: support
   -
     from: synthesis
-    to: preparation
-  -
-    from: catalyst
-    to: promoter
-  -
-    from: polymer
-    to: macromolecule
-  -
-    from: spectroscopy
-    to: spectrometry
-  -
-    from: synthesis
     to: synthesiss
   -
     from: organic
     to: organics
+  -
+    from: inorganic
+    to: inorganics
+  -
+    from: catalyst
+    to: catalysts
+  -
+    from: polymer
+    to: polymers
+  -
+    from: spectroscopy
+    to: spectroscopys

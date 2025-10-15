@@ -3,32 +3,29 @@ version: 1
 threshold: 0.8
 must:
   - structural
-  - bridge
+  - concrete
 should:
   -
     - structural
-    - 1.0
+    - 1
   -
     - geotechnical
-    - 1.0
+    - 1
   -
     - concrete
-    - 1.0
+    - 1
   -
     - bridge
-    - 1.0
+    - 1
   -
     - seismic
-    - 1.0
+    - 1
   -
     - transport
-    - 1.0
+    - 1
   -
     - hydraulic
-    - 1.0
-  -
-    - review
-    - 0.6
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +36,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +74,10 @@ negative:
     - 0.8
   -
     - clinical
+    - 0.8
+  -
+    - patient
+    - 0.8
+  -
+    - therapy
     - 0.8

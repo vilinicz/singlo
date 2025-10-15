@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - NPK
+  - FAO
+  - GAP
+  - NDVI
+  - GMO
+  - QTL
+  - VET
+  - AI
+  - SNP
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - ha
   - t/ha
   - kg/ha
+  - ppm
+  - ppb
+  - °Brix
+  - L/ha
+  - °C
 synonyms:
   -
     from: method
@@ -77,20 +90,20 @@ synonyms:
     from: evidence
     to: support
   -
-    from: postharvest
-    to: "post-harvest"
-  -
-    from: biosecurity
-    to: biosafety
-  -
     from: extension
     to: extensions
-  -
-    from: sustainability
-    to: sustainabilitys
   -
     from: postharvest
     to: postharvests
   -
     from: biosecurity
     to: biosecuritys
+  -
+    from: policy
+    to: policys
+  -
+    from: biodiversity
+    to: biodiversitys
+  -
+    from: rural
+    to: rurals

@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - CAD
+  - CAE
+  - CNC
+  - PLC
+  - DSP
+  - VLSI
+  - FPGA
+  - BOM
+  - CPS
 hedges:
   - may
   - might
@@ -41,10 +49,16 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - MPa
   - bar
   - °C
+  - RPM
+  - Nm
+  - kW
+  - W
+  - V
+  - A
 synonyms:
   -
     from: method
@@ -78,19 +92,19 @@ synonyms:
     to: support
   -
     from: integration
-    to: interfacing
-  -
-    from: scalability
-    to: scaling
-  -
-    from: interdisciplinary
-    to: interdisciplinarys
-  -
-    from: systems
-    to: systemss
-  -
-    from: integration
     to: integrations
   -
     from: testing
     to: testings
+  -
+    from: standard
+    to: standards
+  -
+    from: benchmark
+    to: benchmarks
+  -
+    from: scalability
+    to: scalabilitys
+  -
+    from: systems
+    to: systemss

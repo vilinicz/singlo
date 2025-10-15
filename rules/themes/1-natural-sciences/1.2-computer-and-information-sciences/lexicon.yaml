@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - MB
+  - GB
+  - TB
 synonyms:
   -
     from: method
@@ -78,19 +94,19 @@ synonyms:
     to: support
   -
     from: algorithm
-    to: procedure
-  -
-    from: network
-    to: graph
-  -
-    from: database
-    to: data store
-  -
-    from: latency
-    to: delay
-  -
-    from: algorithm
     to: algorithms
   -
     from: database
     to: databases
+  -
+    from: information retrieval
+    to: information retrievals
+  -
+    from: software
+    to: softwares
+  -
+    from: network
+    to: networks
+  -
+    from: computation
+    to: computations

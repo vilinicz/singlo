@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,16 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
+  - per 100k
 synonyms:
   -
     from: method
@@ -77,20 +91,20 @@ synonyms:
     from: evidence
     to: support
   -
-    from: community
-    to: neighborhood
-  -
-    from: culture
-    to: tradition
-  -
-    from: migration
-    to: mobility
-  -
     from: inequality
     to: inequalitys
   -
-    from: social network
-    to: social networks
+    from: network
+    to: networks
   -
     from: community
     to: communitys
+  -
+    from: culture
+    to: cultures
+  -
+    from: migration
+    to: migrations
+  -
+    from: identity
+    to: identitys

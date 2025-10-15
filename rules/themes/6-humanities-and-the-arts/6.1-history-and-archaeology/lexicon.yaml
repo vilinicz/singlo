@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - IPA
+  - OCR
+  - MSS
+  - BCE
+  - CE
+  - OED
+  - APA
+  - MLA
+  - DPI
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - pp.
   - vol.
   - ed.
+  - °
+  - bars
+  - BPM
+  - dpi
+  - px
 synonyms:
   -
     from: method
@@ -77,15 +90,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: chronology
-    to: timeline
-  -
-    from: excavation
-    to: dig
-  -
-    from: heritage
-    to: patrimony
-  -
     from: archaeology
     to: archaeologys
   -
@@ -94,3 +98,12 @@ synonyms:
   -
     from: chronology
     to: chronologys
+  -
+    from: excavation
+    to: excavations
+  -
+    from: manuscript
+    to: manuscripts
+  -
+    from: heritage
+    to: heritages

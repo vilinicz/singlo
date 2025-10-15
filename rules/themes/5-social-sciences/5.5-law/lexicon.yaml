@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
+  - §
+  - art.
+  - case
 synonyms:
   -
     from: method
@@ -78,15 +94,6 @@ synonyms:
     to: support
   -
     from: regulation
-    to: rule
-  -
-    from: jurisdiction
-    to: authority
-  -
-    from: litigation
-    to: lawsuit
-  -
-    from: regulation
     to: regulations
   -
     from: statute
@@ -94,3 +101,12 @@ synonyms:
   -
     from: jurisdiction
     to: jurisdictions
+  -
+    from: litigation
+    to: litigations
+  -
+    from: contract
+    to: contracts
+  -
+    from: precedent
+    to: precedents

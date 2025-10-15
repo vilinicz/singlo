@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - CAD
+  - CAE
+  - CNC
+  - PLC
+  - DSP
+  - VLSI
+  - FPGA
+  - BOM
+  - CPS
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - MPa
   - bar
   - °C
+  - RPM
+  - Nm
+  - kW
+  - W
+  - V
+  - A
+  - g/L
+  - g/L/h
 synonyms:
   -
     from: method
@@ -77,15 +93,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: bioprocess
-    to: biomanufacturing
-  -
-    from: titer
-    to: concentration
-  -
-    from: substrate
-    to: feed
-  -
     from: fermentation
     to: fermentations
   -
@@ -94,3 +101,12 @@ synonyms:
   -
     from: bioreactor
     to: bioreactors
+  -
+    from: downstream
+    to: downstreams
+  -
+    from: yield
+    to: yields
+  -
+    from: substrate
+    to: substrates

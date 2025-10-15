@@ -3,32 +3,26 @@ version: 1
 threshold: 0.8
 must:
   - biomedical device
-  - biomechanics
+  - imaging
 should:
   -
     - biomedical device
-    - 1.0
+    - 1
   -
     - prosthesis
-    - 1.0
+    - 1
   -
     - imaging
-    - 1.0
+    - 1
   -
     - biomechanics
-    - 1.0
+    - 1
   -
     - biosensor
-    - 1.0
-  -
-    - assistive
-    - 1.0
+    - 1
   -
     - implant
-    - 1.0
-  -
-    - review
-    - 0.6
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +33,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +71,10 @@ negative:
     - 0.8
   -
     - clinical
+    - 0.8
+  -
+    - patient
+    - 0.8
+  -
+    - therapy
     - 0.8

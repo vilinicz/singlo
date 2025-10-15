@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - IPA
+  - OCR
+  - MSS
+  - BCE
+  - CE
+  - OED
+  - APA
+  - MLA
+  - DPI
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - pp.
   - vol.
   - ed.
+  - °
+  - bars
+  - BPM
+  - dpi
+  - px
 synonyms:
   -
     from: method
@@ -78,15 +91,6 @@ synonyms:
     to: support
   -
     from: painting
-    to: canvas
-  -
-    from: music
-    to: composition
-  -
-    from: theatre
-    to: stage play
-  -
-    from: painting
     to: paintings
   -
     from: music
@@ -94,3 +98,12 @@ synonyms:
   -
     from: theatre
     to: theatres
+  -
+    from: sculpture
+    to: sculptures
+  -
+    from: performance
+    to: performances
+  -
+    from: aesthetics
+    to: aestheticss

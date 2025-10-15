@@ -2,33 +2,27 @@ id: "Engineering and technology / 2.11-other-engineering-and-technologies"
 version: 1
 threshold: 0.8
 must:
-  - interdisciplinary
-  - testing
+  - integration
+  - standard
 should:
   -
-    - interdisciplinary
-    - 1.0
-  -
-    - systems
-    - 1.0
-  -
     - integration
-    - 1.0
+    - 1
   -
     - testing
-    - 1.0
+    - 1
   -
     - standard
-    - 1.0
+    - 1
   -
     - benchmark
-    - 1.0
+    - 1
   -
     - scalability
-    - 1.0
+    - 1
   -
-    - review
-    - 0.6
+    - systems
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +33,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +71,10 @@ negative:
     - 0.8
   -
     - clinical
+    - 0.8
+  -
+    - patient
+    - 0.8
+  -
+    - therapy
     - 0.8

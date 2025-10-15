@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,17 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
+  - grade
+  - percentile
 synonyms:
   -
     from: method
@@ -78,15 +93,6 @@ synonyms:
     to: support
   -
     from: curriculum
-    to: syllabus
-  -
-    from: pedagogy
-    to: instruction
-  -
-    from: assessment
-    to: evaluation
-  -
-    from: curriculum
     to: curriculums
   -
     from: pedagogy
@@ -94,3 +100,12 @@ synonyms:
   -
     from: assessment
     to: assessments
+  -
+    from: learning
+    to: learnings
+  -
+    from: teacher
+    to: teachers
+  -
+    from: student
+    to: students

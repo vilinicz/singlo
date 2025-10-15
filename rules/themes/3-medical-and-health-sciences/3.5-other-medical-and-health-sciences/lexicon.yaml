@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - RCT
+  - ICU
+  - HR
+  - OR
+  - RR
+  - qPCR
+  - ELISA
+  - MRI
+  - CT
 hedges:
   - may
   - might
@@ -41,10 +49,17 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - mg
   - g
   - µg
+  - mL
+  - L
+  - IU
+  - mmHg
+  - bpm
+  - °C
+  - ng/mL
 synonyms:
   -
     from: method
@@ -77,15 +92,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: screening
-    to: testing
-  -
-    from: monitoring
-    to: surveillance
-  -
-    from: interdisciplinary
-    to: interdisciplinarys
-  -
     from: guideline
     to: guidelines
   -
@@ -94,3 +100,12 @@ synonyms:
   -
     from: monitoring
     to: monitorings
+  -
+    from: diagnostic
+    to: diagnostics
+  -
+    from: preclinical
+    to: preclinicals
+  -
+    from: translational
+    to: translationals

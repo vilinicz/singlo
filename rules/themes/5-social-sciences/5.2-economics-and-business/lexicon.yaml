@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
 synonyms:
   -
     from: method
@@ -78,19 +91,19 @@ synonyms:
     to: support
   -
     from: market
-    to: industry
-  -
-    from: firm
-    to: company
-  -
-    from: consumer
-    to: customer
-  -
-    from: finance
-    to: financial
-  -
-    from: market
     to: markets
   -
     from: firm
     to: firms
+  -
+    from: consumer
+    to: consumers
+  -
+    from: macroeconomics
+    to: macroeconomicss
+  -
+    from: finance
+    to: finances
+  -
+    from: productivity
+    to: productivitys

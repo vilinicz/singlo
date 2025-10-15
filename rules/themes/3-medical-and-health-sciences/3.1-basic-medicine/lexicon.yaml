@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - RCT
+  - ICU
+  - HR
+  - OR
+  - RR
+  - qPCR
+  - ELISA
+  - MRI
+  - CT
 hedges:
   - may
   - might
@@ -41,10 +49,17 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - mg
   - g
   - µg
+  - mL
+  - L
+  - IU
+  - mmHg
+  - bpm
+  - °C
+  - ng/mL
 synonyms:
   -
     from: method
@@ -78,15 +93,6 @@ synonyms:
     to: support
   -
     from: pathway
-    to: cascade
-  -
-    from: receptor
-    to: binding protein
-  -
-    from: biomarker
-    to: marker
-  -
-    from: pathway
     to: pathways
   -
     from: receptor
@@ -94,3 +100,12 @@ synonyms:
   -
     from: molecular
     to: moleculars
+  -
+    from: biomarker
+    to: biomarkers
+  -
+    from: in vitro
+    to: in vitros
+  -
+    from: cell line
+    to: cell lines

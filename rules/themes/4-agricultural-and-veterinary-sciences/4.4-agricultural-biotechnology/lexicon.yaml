@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - NPK
+  - FAO
+  - GAP
+  - NDVI
+  - GMO
+  - QTL
+  - VET
+  - AI
+  - SNP
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - ha
   - t/ha
   - kg/ha
+  - ppm
+  - ppb
+  - °Brix
+  - L/ha
+  - °C
+  - bp
+  - kb
+  - cM
 synonyms:
   -
     from: method
@@ -77,20 +93,20 @@ synonyms:
     from: evidence
     to: support
   -
-    from: transgenic
-    to: genetically modified
+    from: GMO
+    to: GMOs
   -
-    from: "marker-assisted"
-    to: marker aided
-  -
-    from: GM
-    to: GMs
-  -
-    from: transgenic
-    to: transgenics
+    from: QTL
+    to: QTLs
   -
     from: "marker-assisted"
     to: "marker-assisteds"
   -
-    from: QTL
-    to: QTLs
+    from: CRISPR
+    to: CRISPRs
+  -
+    from: genome editing
+    to: genome editings
+  -
+    from: micropropagation
+    to: micropropagations

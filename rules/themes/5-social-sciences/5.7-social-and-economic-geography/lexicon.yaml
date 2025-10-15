@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - GDP
+  - CPI
+  - FDI
+  - OLS
+  - IV
+  - RCT
+  - GMM
+  - GIS
+  - PCA
 hedges:
   - may
   - might
@@ -41,10 +49,16 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - USD
   - pp
   - index
+  - score
+  - Likert
+  - years
+  - km
+  - km²
+  - density
 synonyms:
   -
     from: method
@@ -78,15 +92,6 @@ synonyms:
     to: support
   -
     from: urban
-    to: metropolitan
-  -
-    from: regional
-    to: area
-  -
-    from: transport
-    to: mobility
-  -
-    from: urban
     to: urbans
   -
     from: regional
@@ -94,3 +99,12 @@ synonyms:
   -
     from: transport
     to: transports
+  -
+    from: land use
+    to: land uses
+  -
+    from: spatial
+    to: spatials
+  -
+    from: GIS
+    to: GISs

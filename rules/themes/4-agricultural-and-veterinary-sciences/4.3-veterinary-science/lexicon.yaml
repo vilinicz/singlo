@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - NPK
+  - FAO
+  - GAP
+  - NDVI
+  - GMO
+  - QTL
+  - VET
+  - AI
+  - SNP
 hedges:
   - may
   - might
@@ -41,10 +49,17 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - ha
   - t/ha
   - kg/ha
+  - ppm
+  - ppb
+  - °Brix
+  - L/ha
+  - °C
+  - mg/kg
+  - IU/kg
 synonyms:
   -
     from: method
@@ -77,12 +92,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: zoonosis
-    to: "animal-to-human"
-  -
-    from: anesthesia
-    to: analgesia
-  -
     from: pathogen
     to: pathogens
   -
@@ -94,3 +103,9 @@ synonyms:
   -
     from: diagnostic
     to: diagnostics
+  -
+    from: clinical
+    to: clinicals
+  -
+    from: anesthesia
+    to: anesthesias

@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - µL
+  - mL
+  - ng/µL
 synonyms:
   -
     from: method
@@ -77,20 +93,20 @@ synonyms:
     from: evidence
     to: support
   -
-    from: gene
-    to: locus
-  -
-    from: protein
-    to: polypeptide
-  -
-    from: cell
-    to: cellular
-  -
-    from: mutation
-    to: variant
-  -
     from: genetics
     to: geneticss
   -
     from: microbiology
     to: microbiologys
+  -
+    from: neuroscience
+    to: neurosciences
+  -
+    from: ecology
+    to: ecologys
+  -
+    from: evolution
+    to: evolutions
+  -
+    from: cell biology
+    to: cell biologys

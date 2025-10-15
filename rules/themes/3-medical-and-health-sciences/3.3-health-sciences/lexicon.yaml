@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - RCT
+  - ICU
+  - HR
+  - OR
+  - RR
+  - qPCR
+  - ELISA
+  - MRI
+  - CT
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - mg
   - g
   - µg
+  - mL
+  - L
+  - IU
+  - mmHg
+  - bpm
+  - °C
+  - ng/mL
+  - score
 synonyms:
   -
     from: method
@@ -78,15 +94,6 @@ synonyms:
     to: support
   -
     from: public health
-    to: population health
-  -
-    from: rehabilitation
-    to: therapy
-  -
-    from: occupational
-    to: workplace
-  -
-    from: public health
     to: public healths
   -
     from: epidemiology
@@ -94,3 +101,12 @@ synonyms:
   -
     from: nursing
     to: nursings
+  -
+    from: rehabilitation
+    to: rehabilitations
+  -
+    from: policy
+    to: policys
+  -
+    from: occupational
+    to: occupationals

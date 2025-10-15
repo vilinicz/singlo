@@ -3,32 +3,26 @@ version: 1
 threshold: 0.8
 must:
   - survey
-  - ethics
+  - measurement
 should:
   -
     - survey
-    - 1.0
+    - 1
   -
     - methodology
-    - 1.0
+    - 1
   -
     - measurement
-    - 1.0
+    - 1
   -
     - ethics
-    - 1.0
-  -
-    - interdisciplinary
-    - 1.0
+    - 1
   -
     - evaluation
-    - 1.0
+    - 1
   -
     - policy
-    - 1.0
-  -
-    - review
-    - 0.6
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +33,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +71,10 @@ negative:
     - 0.8
   -
     - engineering
+    - 0.8
+  -
+    - design
+    - 0.8
+  -
+    - prototype
     - 0.8

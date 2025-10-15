@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - RCT
+  - ICU
+  - HR
+  - OR
+  - RR
+  - qPCR
+  - ELISA
+  - MRI
+  - CT
 hedges:
   - may
   - might
@@ -41,10 +49,17 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - mg
   - g
   - µg
+  - mL
+  - L
+  - IU
+  - mmHg
+  - bpm
+  - °C
+  - ng/mL
 synonyms:
   -
     from: method
@@ -77,15 +92,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: placebo
-    to: control
-  -
-    from: adverse event
-    to: AE
-  -
-    from: survival
-    to: overall survival
-  -
     from: randomized
     to: randomizeds
   -
@@ -94,3 +100,12 @@ synonyms:
   -
     from: placebo
     to: placebos
+  -
+    from: surgery
+    to: surgerys
+  -
+    from: dose
+    to: doses
+  -
+    from: adverse event
+    to: adverse events

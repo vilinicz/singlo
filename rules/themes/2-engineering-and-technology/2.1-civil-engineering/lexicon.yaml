@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - CAD
+  - CAE
+  - CNC
+  - PLC
+  - DSP
+  - VLSI
+  - FPGA
+  - BOM
+  - CPS
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - MPa
   - bar
   - °C
+  - RPM
+  - Nm
+  - kW
+  - W
+  - V
+  - A
+  - kN
+  - kPa
 synonyms:
   -
     from: method
@@ -78,15 +94,6 @@ synonyms:
     to: support
   -
     from: structural
-    to: "load-bearing"
-  -
-    from: seismic
-    to: earthquake
-  -
-    from: geotechnical
-    to: soil mechanics
-  -
-    from: structural
     to: structurals
   -
     from: geotechnical
@@ -94,3 +101,12 @@ synonyms:
   -
     from: concrete
     to: concretes
+  -
+    from: bridge
+    to: bridges
+  -
+    from: seismic
+    to: seismics
+  -
+    from: transport
+    to: transports

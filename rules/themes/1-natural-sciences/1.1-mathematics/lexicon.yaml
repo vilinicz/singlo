@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - rad
+  - deg
+  - count
 synonyms:
   -
     from: method
@@ -78,19 +94,19 @@ synonyms:
     to: support
   -
     from: theorem
-    to: proposition
-  -
-    from: lemma
-    to: auxiliary result
-  -
-    from: proof
-    to: derivation
-  -
-    from: optimization
-    to: minimization
-  -
-    from: theorem
     to: theorems
   -
     from: algebra
     to: algebras
+  -
+    from: geometry
+    to: geometrys
+  -
+    from: calculus
+    to: calculuss
+  -
+    from: probability
+    to: probabilitys
+  -
+    from: topology
+    to: topologys

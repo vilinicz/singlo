@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - NPK
+  - FAO
+  - GAP
+  - NDVI
+  - GMO
+  - QTL
+  - VET
+  - AI
+  - SNP
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - ha
   - t/ha
   - kg/ha
+  - ppm
+  - ppb
+  - °Brix
+  - L/ha
+  - °C
 synonyms:
   -
     from: method
@@ -77,15 +90,6 @@ synonyms:
     from: evidence
     to: support
   -
-    from: harvest
-    to: reap
-  -
-    from: yield
-    to: productivity
-  -
-    from: silviculture
-    to: forest cultivation
-  -
     from: irrigation
     to: irrigations
   -
@@ -94,3 +98,12 @@ synonyms:
   -
     from: yield
     to: yields
+  -
+    from: silviculture
+    to: silvicultures
+  -
+    from: aquaculture
+    to: aquacultures
+  -
+    from: pest
+    to: pests

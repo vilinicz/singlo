@@ -3,32 +3,29 @@ version: 1
 threshold: 0.8
 must:
   - irrigation
-  - silviculture
+  - yield
 should:
   -
     - irrigation
-    - 1.0
+    - 1
   -
     - harvest
-    - 1.0
+    - 1
   -
     - yield
-    - 1.0
+    - 1
   -
     - silviculture
-    - 1.0
+    - 1
   -
     - aquaculture
-    - 1.0
+    - 1
   -
     - pest
-    - 1.0
+    - 1
   -
     - fertilizer
-    - 1.0
-  -
-    - review
-    - 0.6
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +36,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +74,10 @@ negative:
     - 0.8
   -
     - engineering
+    - 0.8
+  -
+    - design
+    - 0.8
+  -
+    - prototype
     - 0.8

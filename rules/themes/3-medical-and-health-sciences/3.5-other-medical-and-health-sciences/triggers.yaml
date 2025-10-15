@@ -2,33 +2,30 @@ id: "Medical and health sciences / 3.5-other-medical-and-health-sciences"
 version: 1
 threshold: 0.8
 must:
-  - interdisciplinary
+  - guideline
   - monitoring
 should:
   -
-    - interdisciplinary
-    - 1.0
-  -
     - guideline
-    - 1.0
+    - 1
   -
     - screening
-    - 1.0
+    - 1
   -
     - monitoring
-    - 1.0
+    - 1
   -
     - diagnostic
-    - 1.0
+    - 1
   -
     - preclinical
-    - 1.0
+    - 1
   -
     - translational
-    - 1.0
+    - 1
   -
-    - review
-    - 0.6
+    - ethics
+    - 1
   -
     - method
     - 0.6
@@ -39,19 +36,19 @@ should:
     - analysis
     - 0.6
   -
-    - result
-    - 0.6
-  -
     - model
-    - 0.6
-  -
-    - simulation
     - 0.6
   -
     - experiment
     - 0.6
   -
     - evidence
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - significant
     - 0.6
 negative:
   -
@@ -77,4 +74,10 @@ negative:
     - 0.8
   -
     - engineering
+    - 0.8
+  -
+    - design
+    - 0.8
+  -
+    - prototype
     - 0.8

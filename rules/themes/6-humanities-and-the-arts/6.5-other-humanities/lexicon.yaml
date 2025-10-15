@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - IPA
+  - OCR
+  - MSS
+  - BCE
+  - CE
+  - OED
+  - APA
+  - MLA
+  - DPI
 hedges:
   - may
   - might
@@ -41,10 +49,15 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - pp.
   - vol.
   - ed.
+  - °
+  - bars
+  - BPM
+  - dpi
+  - px
 synonyms:
   -
     from: method
@@ -78,15 +91,6 @@ synonyms:
     to: support
   -
     from: digital humanities
-    to: computational humanities
-  -
-    from: criticism
-    to: review
-  -
-    from: interdisciplinary
-    to: interdisciplinarys
-  -
-    from: digital humanities
     to: digital humanitiess
   -
     from: cultural studies
@@ -94,3 +98,12 @@ synonyms:
   -
     from: heritage
     to: heritages
+  -
+    from: criticism
+    to: criticisms
+  -
+    from: theory
+    to: theorys
+  -
+    from: method
+    to: methods

@@ -15,6 +15,14 @@ abbr:
   - CNN
   - RNN
   - PDE
+  - ODE
+  - FFT
+  - DFT
+  - SVD
+  - PCA
+  - QED
+  - QCD
+  - NMR
 hedges:
   - may
   - might
@@ -41,10 +49,18 @@ units:
   - N
   - Pa
   - mol
-  - %
+  - "%"
   - K
   - eV
   - J
+  - M
+  - mM
+  - nm
+  - µm
+  - Å
+  - °C
+  - m/s
+  - ppm
 synonyms:
   -
     from: method
@@ -78,15 +94,6 @@ synonyms:
     to: support
   -
     from: seismology
-    to: earthquake science
-  -
-    from: hydrology
-    to: water cycle
-  -
-    from: geomorphology
-    to: landform science
-  -
-    from: seismology
     to: seismologys
   -
     from: climate
@@ -94,3 +101,12 @@ synonyms:
   -
     from: hydrology
     to: hydrologys
+  -
+    from: geomorphology
+    to: geomorphologys
+  -
+    from: atmosphere
+    to: atmospheres
+  -
+    from: oceanography
+    to: oceanographys
