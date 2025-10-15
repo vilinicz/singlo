@@ -31,9 +31,11 @@ Thumbs.db
 # Project-specific artifacts
 export/
 data/
+datasets/
 pipeline/data/
 pipeline/export/
 article.pdf
+article2.pdf
 
 # Local overrides
 *.local
