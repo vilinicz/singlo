@@ -1,0 +1,56 @@
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Result/milk-or-weight"
+  type: Result
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(milk\s+yield|weight\s+gain|BCS)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>L/day|kg/day|%|score)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Hypothesis/feed-or-breed"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(feed|breed|supplement)\s+(?:improves|reduces)\s+(milk|growth|health)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Experiment/animal-trial"
+  type: Experiment
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(randomi[sz]ed|pasture|stall|feedlot|metabolism\s+cage)\b"
+  negatives: ["single\s+animal"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Technique/animal-science"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(TMR|DMI|digestibility|rumen\s+fermentation|ELISA)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Dataset/animals"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "animals\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["n\s*=\s*1"]
+  captures: ["n"]
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Analysis/statistical"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ANOVA|mixed[- ]effects|growth\s+curve|regression)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Conclusion/production-or-health"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(feed|supplement|breed)\s+(?:improves|reduces)\s+(milk|growth|health)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.2-animal-and-dairy-science/Input Fact/authority"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(FAO|guideline|standard)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

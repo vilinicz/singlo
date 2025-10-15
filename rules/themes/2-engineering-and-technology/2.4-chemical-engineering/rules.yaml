@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.4-chemical-engineering/Result/conversion-or-yield"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(conversion|yield|selectivity)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mol%)?"
+  negatives: ["low\s+selectivity|coking"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.4-chemical-engineering/Hypothesis/process-improvement"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(reactor|catalyst|membrane)\s+(?:improves|enhances|reduces)\s+(conversion|pressure\s+drop|fouling)"
+  negatives: ["no\s+improvement"]
+  captures: ["value"]
+- id: "Engineering and technology / 2.4-chemical-engineering/Experiment/pilot-or-reactor"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(packed\s+bed|CSTR|PFR|pilot\s+plant|membrane\s+module)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.4-chemical-engineering/Technique/process"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(HYSYS|Aspen|process\s+simulation|HEN|distillation\s+design|RTD)\b"
+  negatives: ["hand\s+calc\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.4-chemical-engineering/Dataset/experiments-or-samples"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:experiments|samples|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+run"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.4-chemical-engineering/Analysis/energy-or-mass-balance"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(mass\s+balance|energy\s+balance|residence\s+time\s+distribution|Arrhenius)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.4-chemical-engineering/Conclusion/process-performance"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?process\s+(?:achieves|improves)\s+(conversion|selectivity|yield)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Engineering and technology / 2.4-chemical-engineering/Input Fact/standard-or-correlation"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(ANSI|standard|correlation)\b(.+?)?"
+  negatives: ["empirical\s+only"]
+  captures: ["value"]

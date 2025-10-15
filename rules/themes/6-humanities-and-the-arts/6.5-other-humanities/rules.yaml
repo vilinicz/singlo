@@ -1,0 +1,56 @@
+- id: "Humanities and the arts / 6.5-other-humanities/Result/finding-or-pattern"
+  type: Result
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(analysis|examination)\s+(?:identif(ies|ied)|reveals)\s+(pattern|theme|motif)\b"
+  negatives: ["summary|impressionistic"]
+  captures: []
+- id: "Humanities and the arts / 6.5-other-humanities/Hypothesis/interpretive-claim"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(we\s+argue|we\s+propose|we\s+hypothesi[zs]e)\s+that\s+(.+?)"
+  negatives: ["speculation|unclear"]
+  captures: ["value"]
+- id: "Humanities and the arts / 6.5-other-humanities/Experiment/comparative-or-digital"
+  type: Experiment
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(comparative\s+analysis|digital\s+humanities|text\s+mining)\b"
+  negatives: ["single\s+work"]
+  captures: []
+- id: "Humanities and the arts / 6.5-other-humanities/Technique/method"
+  type: Technique
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(discourse\s+analysis|close\s+reading|stylistic|iconographic)\b"
+  negatives: ["impressionistic"]
+  captures: []
+- id: "Humanities and the arts / 6.5-other-humanities/Dataset/corpus-or-items"
+  type: Dataset
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:corpus|items|works)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+item"]
+  captures: ["n"]
+- id: "Humanities and the arts / 6.5-other-humanities/Analysis/thematic-or-network"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(thematic|network|topic\s+model|stylometry)\b"
+  negatives: ["summary\s+only"]
+  captures: []
+- id: "Humanities and the arts / 6.5-other-humanities/Conclusion/interpretation"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(.+?)\b"
+  negatives: ["tentative|uncertain"]
+  captures: ["value"]
+- id: "Humanities and the arts / 6.5-other-humanities/Input Fact/source-or-edition"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(edition|dictionary|catalogue|archive)\s+(.+?)"
+  negatives: ["hearsay|legend"]
+  captures: ["value"]

@@ -1,0 +1,56 @@
+- id: "Social sciences / 5.6-political-science/Result/turnout-or-seats"
+  type: Result
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(turnout|vote\s+share|seats)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|pp|seats)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Social sciences / 5.6-political-science/Hypothesis/policy-or-campaign"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(policy|campaign|reform)\s+(?:increases|reduces)\s+(turnout|polarization|representation)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Social sciences / 5.6-political-science/Experiment/natural-or-field"
+  type: Experiment
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(natural\s+experiment|field\s+experiment|RDD|DiD)\b"
+  negatives: ["observational\s+only"]
+  captures: []
+- id: "Social sciences / 5.6-political-science/Technique/electoral-or-network"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(roll[- ]call|ideal\s+point|social\s+network|panel\s+regression)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Social sciences / 5.6-political-science/Dataset/constituencies-or-respondents"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:constituencies|respondents|districts)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["small\s+sample"]
+  captures: ["n"]
+- id: "Social sciences / 5.6-political-science/Analysis/regression-or-iv"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(IV|DiD|RDD|fixed\s+effects|logit|probit)\b"
+  negatives: ["correlation\s+only"]
+  captures: []
+- id: "Social sciences / 5.6-political-science/Conclusion/political-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(policy|campaign|reform)\s+(?:is\s+effective|has\s+limited\s+impact)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Social sciences / 5.6-political-science/Input Fact/law-or-constitution"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(constitution|law|statute|regulation)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

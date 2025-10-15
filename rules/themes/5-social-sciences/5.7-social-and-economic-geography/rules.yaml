@@ -1,0 +1,56 @@
+- id: "Social sciences / 5.7-social-and-economic-geography/Result/spatial-metric"
+  type: Result
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(density|accessibility|travel\s+time|housing\s+price)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>km|km²|min|%|USD)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Social sciences / 5.7-social-and-economic-geography/Hypothesis/urban-or-regional"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(policy|infrastructure|land\s+use)\s+(?:affects|improves|reduces)\s+(mobility|congestion|sprawl)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Social sciences / 5.7-social-and-economic-geography/Experiment/spatial-data"
+  type: Experiment
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(spatial\s+dataset|census|OD\s+matrix|remote\s+sensing|survey)\b"
+  negatives: ["case\s+study\s+only"]
+  captures: []
+- id: "Social sciences / 5.7-social-and-economic-geography/Technique/gis-or-model"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(GIS|DEM|gravity\s+model|spatial\s+regression|Geographically\s+Weighted\s+Regression)\b"
+  negatives: ["descriptive\s+mapping\s+only"]
+  captures: []
+- id: "Social sciences / 5.7-social-and-economic-geography/Dataset/zones-or-respondents"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:zones|tracts|respondents|grid\s+cells)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["small\s+sample"]
+  captures: ["n"]
+- id: "Social sciences / 5.7-social-and-economic-geography/Analysis/spatial-regression"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(spatial\s+lag|spatial\s+error|SAR|SEM|GWR)\b"
+  negatives: ["OLS\s+only"]
+  captures: []
+- id: "Social sciences / 5.7-social-and-economic-geography/Conclusion/spatial-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(policy|infrastructure)\s+(?:is\s+effective|has\s+limited\s+impact)\s+on\s+(mobility|accessibility)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Social sciences / 5.7-social-and-economic-geography/Input Fact/official-or-dataset"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(census|official\s+statistics|dataset)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

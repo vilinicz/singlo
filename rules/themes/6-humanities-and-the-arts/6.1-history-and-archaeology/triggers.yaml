@@ -1,0 +1,80 @@
+id: "Humanities and the arts / 6.1-history-and-archaeology"
+version: 1
+threshold: 0.8
+must:
+  - archaeology
+  - excavation
+should:
+  -
+    - archaeology
+    - 1.0
+  -
+    - artifact
+    - 1.0
+  -
+    - chronology
+    - 1.0
+  -
+    - excavation
+    - 1.0
+  -
+    - manuscript
+    - 1.0
+  -
+    - heritage
+    - 1.0
+  -
+    - historiography
+    - 1.0
+  -
+    - review
+    - 0.6
+  -
+    - method
+    - 0.6
+  -
+    - dataset
+    - 0.6
+  -
+    - analysis
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - model
+    - 0.6
+  -
+    - simulation
+    - 0.6
+  -
+    - experiment
+    - 0.6
+  -
+    - evidence
+    - 0.6
+negative:
+  -
+    - science
+    - 0.8
+  -
+    - mathematics
+    - 0.8
+  -
+    - physics
+    - 0.8
+  -
+    - chemistry
+    - 0.8
+  -
+    - biology
+    - 0.8
+  -
+    - geology
+    - 0.8
+  -
+    - ecology
+    - 0.8
+  -
+    - engineering
+    - 0.8

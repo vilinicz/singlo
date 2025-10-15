@@ -1,0 +1,56 @@
+- id: "Social sciences / 5.9-other-social-sciences/Result/index-or-score"
+  type: Result
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(index|score|satisfaction|NPS)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|points|index)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Social sciences / 5.9-other-social-sciences/Hypothesis/impact"
+  type: Hypothesis
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(program|policy|practice)\s+(?:improves|reduces)\s+(outcome|risk|satisfaction)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Social sciences / 5.9-other-social-sciences/Experiment/survey-or-field"
+  type: Experiment
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(survey|panel|field\s+study|evaluation)\b"
+  negatives: ["case\s+study\s+only"]
+  captures: []
+- id: "Social sciences / 5.9-other-social-sciences/Technique/statistics-or-index"
+  type: Technique
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(SEM|PCA|factor\s+analysis|index\s+construction)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Social sciences / 5.9-other-social-sciences/Dataset/respondents-or-records"
+  type: Dataset
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:respondents|records|cases)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["small\s+sample"]
+  captures: ["n"]
+- id: "Social sciences / 5.9-other-social-sciences/Analysis/regression-or-sem"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(OLS|logit|probit|SEM|DiD)\b"
+  negatives: ["correlation\s+only"]
+  captures: []
+- id: "Social sciences / 5.9-other-social-sciences/Conclusion/impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(program|policy)\s+(?:is\s+effective|has\s+limited\s+impact)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Social sciences / 5.9-other-social-sciences/Input Fact/official-or-report"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(official\s+statistics|report|standard)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

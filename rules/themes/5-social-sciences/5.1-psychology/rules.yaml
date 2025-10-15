@@ -1,0 +1,56 @@
+- id: "Social sciences / 5.1-psychology/Result/score-or-latency"
+  type: Result
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(score|accuracy|RT|latency)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>ms|s|points|%)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Social sciences / 5.1-psychology/Hypothesis/cognitive-effect"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(stimulus|intervention)\s+(?:affects|improves|reduces)\s+(cognition|emotion|memory|perception)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Social sciences / 5.1-psychology/Experiment/task-or-lab"
+  type: Experiment
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(lab\s+task|Stroop|Go/No[- ]Go|n[- ]back|fMRI|EEG|ERP)\b"
+  negatives: ["survey\s+only"]
+  captures: []
+- id: "Social sciences / 5.1-psychology/Technique/psychometrics-or-signal"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(Cronbach|factor\s+analysis|ICA|artifact\s+removal|preprocessing)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Social sciences / 5.1-psychology/Dataset/participants"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "participants\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["small\s+sample"]
+  captures: ["n"]
+- id: "Social sciences / 5.1-psychology/Analysis/statistical"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ANOVA|mixed[- ]effects|GLM|Bayesian|regression)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Social sciences / 5.1-psychology/Conclusion/behavioral-effect"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(intervention|stimulus)\s+(?:affects|improves|reduces)\s+(behavior|cognition)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Social sciences / 5.1-psychology/Input Fact/scale-or-manual"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(manual|scale|DSM|ICD)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

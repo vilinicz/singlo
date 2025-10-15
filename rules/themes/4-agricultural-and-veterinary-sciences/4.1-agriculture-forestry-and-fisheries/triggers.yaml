@@ -1,0 +1,80 @@
+id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries"
+version: 1
+threshold: 0.8
+must:
+  - irrigation
+  - silviculture
+should:
+  -
+    - irrigation
+    - 1.0
+  -
+    - harvest
+    - 1.0
+  -
+    - yield
+    - 1.0
+  -
+    - silviculture
+    - 1.0
+  -
+    - aquaculture
+    - 1.0
+  -
+    - pest
+    - 1.0
+  -
+    - fertilizer
+    - 1.0
+  -
+    - review
+    - 0.6
+  -
+    - method
+    - 0.6
+  -
+    - dataset
+    - 0.6
+  -
+    - analysis
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - model
+    - 0.6
+  -
+    - simulation
+    - 0.6
+  -
+    - experiment
+    - 0.6
+  -
+    - evidence
+    - 0.6
+negative:
+  -
+    - science
+    - 0.8
+  -
+    - mathematics
+    - 0.8
+  -
+    - physics
+    - 0.8
+  -
+    - chemistry
+    - 0.8
+  -
+    - biology
+    - 0.8
+  -
+    - geology
+    - 0.8
+  -
+    - ecology
+    - 0.8
+  -
+    - engineering
+    - 0.8

@@ -1,0 +1,56 @@
+- id: "Medical and health sciences / 3.2-clinical-medicine/Result/clinical-measure"
+  type: Result
+  weight: 0.64
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(reduction|increase)\s+(?:in|of)\s+(BP|HbA1c|pain\s+score|mortality|readmission)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mmHg|points)?"
+  negatives: ["not\\s+significant","no\\s+change"]
+  captures: ["value","unit"]
+- id: "Medical and health sciences / 3.2-clinical-medicine/Hypothesis/therapy-effect"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+(?:hypothesi[zs]e|expect)\s+that\s+(therapy|drug|surgery)\s+(?:improves|reduces|increases)\s+(outcomes|survival|symptoms)"
+  negatives: ["no\s+benefit"]
+  captures: ["value"]
+- id: "Medical and health sciences / 3.2-clinical-medicine/Experiment/rct"
+  type: Experiment
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(randomi[sz]ed|double[- ]blind|placebo[- ]controlled)\s+(trial|study)\b.*?(?:n\s*=\s*(?P<n>\\d{2,}))?"
+  negatives: ["observational|retrospective\s+only"]
+  captures: ["n"]
+- id: "Medical and health sciences / 3.2-clinical-medicine/Technique/clinical-tool"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ELISA|qPCR|MRI|CT|ultrasound|laparoscopy|endoscopy)\b"
+  negatives: ["questionnaire\s+only"]
+  captures: []
+- id: "Medical and health sciences / 3.2-clinical-medicine/Dataset/patients"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "patients\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["case\s+report"]
+  captures: ["n"]
+- id: "Medical and health sciences / 3.2-clinical-medicine/Analysis/survival-or-logistic"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(hazard\s+ratio|logistic\s+regression|cox\s+model|Kaplan[–-]Meier)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Medical and health sciences / 3.2-clinical-medicine/Conclusion/clinical-implication"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(intervention|therapy)\s+(?:is|appears\s+to\s+be)\s+(effective|safe)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Medical and health sciences / 3.2-clinical-medicine/Input Fact/guidelines"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(WHO|NICE|guidelines)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

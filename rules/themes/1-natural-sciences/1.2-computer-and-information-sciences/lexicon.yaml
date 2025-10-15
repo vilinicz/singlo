@@ -1,0 +1,96 @@
+abbr:
+  - CI
+  - SD
+  - SEM
+  - ANOVA
+  - SNR
+  - ROC
+  - AUC
+  - MAE
+  - RMSE
+  - R2
+  - NLP
+  - ML
+  - DL
+  - CNN
+  - RNN
+  - PDE
+hedges:
+  - may
+  - might
+  - could
+  - suggests
+  - appears
+  - approximately
+  - likely
+  - possibly
+  - indicative
+  - tends to
+  - roughly
+  - around
+units:
+  - mm
+  - cm
+  - m
+  - kg
+  - ms
+  - s
+  - Hz
+  - kHz
+  - MHz
+  - N
+  - Pa
+  - mol
+  - %
+  - K
+  - eV
+  - J
+synonyms:
+  -
+    from: method
+    to: technique
+  -
+    from: result
+    to: finding
+  -
+    from: analysis
+    to: examination
+  -
+    from: model
+    to: framework
+  -
+    from: experiment
+    to: trial
+  -
+    from: significant
+    to: notable
+  -
+    from: increase
+    to: rise
+  -
+    from: decrease
+    to: reduction
+  -
+    from: effect
+    to: impact
+  -
+    from: evidence
+    to: support
+  -
+    from: algorithm
+    to: procedure
+  -
+    from: network
+    to: graph
+  -
+    from: database
+    to: data store
+  -
+    from: latency
+    to: delay
+  -
+    from: algorithm
+    to: algorithms
+  -
+    from: database
+    to: databases

@@ -1,0 +1,56 @@
+- id: "Natural sciences / 1.4-chemical-sciences/Result/yield-or-purity"
+  type: Result
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(yield|purity|conversion)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mol%|wt%)?"
+  negatives: ["impurity|decomposition","not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Natural sciences / 1.4-chemical-sciences/Hypothesis/mechanism-proposed"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+(?:propose|suggest|hypothesi[zs]e)\s+(?:a\s+)?(mechanism|pathway|intermediate)\b"
+  negatives: ["no\s+mechanism|unclear"]
+  captures: []
+- id: "Natural sciences / 1.4-chemical-sciences/Experiment/synthesis-or-assay"
+  type: Experiment
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(synthesi[sz]ed|prepared|assayed)\s+(?:using|with)\s+(HPLC|GC|NMR|MS|IR|UV[- ]Vis)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Natural sciences / 1.4-chemical-sciences/Technique/catalysis-or-polymerization"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(cataly[sz]ed|polymeri[sz]ation|DFT\s+calculations|titration|spectroscopy)\b"
+  negatives: ["baseline\s+only"]
+  captures: []
+- id: "Natural sciences / 1.4-chemical-sciences/Dataset/compounds-or-spectra"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:collected|measured)\s+(?P<n>\\d{2,})\s+(?:compounds|spectra|samples)\b"
+  negatives: ["single\s+specimen"]
+  captures: ["n"]
+- id: "Natural sciences / 1.4-chemical-sciences/Analysis/kinetics-or-spectrum"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(kinetic\s+model|Arrhenius|rate\s+constant|peak\s+assignment|chemical\s+shift)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Natural sciences / 1.4-chemical-sciences/Conclusion/reactivity-or-structure"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(reactivity|selectivity|structure)\s+(?:is|arises)\b"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Natural sciences / 1.4-chemical-sciences/Input Fact/literature-or-law"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(?:literature|Le\s+Châtelier|Hammond|HSAB)\b(.+?)?"
+  negatives: ["hypothesis|speculation"]
+  captures: ["value"]

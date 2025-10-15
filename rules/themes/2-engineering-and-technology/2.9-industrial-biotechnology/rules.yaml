@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Result/titer-or-yield"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(titer|yield|productivity)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>g/L|g/L/h|%|U/mL)?"
+  negatives: ["low|insufficient"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Hypothesis/process-optimization"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(substrate|DO|pH|temperature|feed)\s+(?:optim[iz]ation|control)\s+(?:increases|improves)\s+(titer|yield)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Experiment/bioreactor"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(CSTR|PFR|fed[- ]batch|bioreactor|downstream|HPLC)\b"
+  negatives: ["shake\s+flask\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Technique/bioprocess"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(bioreactor\s+design|DO\s+control|substrate\s+feeding|downstream\s+processing)\b"
+  negatives: ["manual\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Dataset/runs-or-strains"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:runs|strains|batches)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["n\s*=\s*1"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Analysis/fermentation-or-kinetics"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(yield\s+coefficient|Monod|Haldane|mass\s+transfer|kLa|qP|qS)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Conclusion/production"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?process\s+(?:achieves|improves)\s+(titer|yield|productivity)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Engineering and technology / 2.9-industrial-biotechnology/Input Fact/regulatory-or-standard"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(GMP|QbD|guideline)\b(.+?)?"
+  negatives: ["proposal|opinion"]
+  captures: ["value"]

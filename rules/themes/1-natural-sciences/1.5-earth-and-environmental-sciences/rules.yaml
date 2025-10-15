@@ -1,0 +1,56 @@
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Result/environmental-metric"
+  type: Result
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(increase|decrease|trend)\s+(?:in|of)\s+(precipitation|temperature|SST|NDVI|discharge)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>°C|mm|m³/s|%)?"
+  negatives: ["not\\s+significant","within\s+noise"]
+  captures: ["value","unit"]
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Hypothesis/climate-or-process"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+(?:hypothesi[zs]e|propose)\s+that\s+(ENSO|teleconnection|land\s+use|aerosols)\s+(?:drive|affect|modulate)\s+(.+?)"
+  negatives: ["no\s+link|spurious"]
+  captures: ["value"]
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Experiment/field-or-remote-sensing"
+  type: Experiment
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(field\s+campaign|remote\s+sensing|in\s+situ\s+measurements|core\s+sampling)\b"
+  negatives: ["modeling\s+only"]
+  captures: []
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Technique/gis-or-gcm"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(GIS|DEM|GCM|hydrological\s+model|SWAT|downscal(ing|ed))\b"
+  negatives: ["qualitative\s+mapping\s+only"]
+  captures: []
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Dataset/stations-or-scenes"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:stations|scenes|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+site"]
+  captures: ["n"]
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Analysis/trend-or-regression"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(Mann[–-]Kendall|Theil[–-]Sen|ARIMA|linear\s+trend|regression)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Conclusion/environmental-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(process|factor)\s+(?:affects|modulates|drives)\s+(.+?)"
+  negatives: ["inconclusive"]
+  captures: ["value"]
+- id: "Natural sciences / 1.5-earth-and-environmental-sciences/Input Fact/authority"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(IPCC|NOAA|USGS|WMO)\b(.+?)?"
+  negatives: ["commentary|news"]
+  captures: ["value"]

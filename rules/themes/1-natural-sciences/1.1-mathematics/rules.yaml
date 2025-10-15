@@ -1,0 +1,56 @@
+- id: "Natural sciences / 1.1-mathematics/Result/bound-or-rate"
+  type: Result
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(we\s+(?:prove|show))\s+(?:an?\s+)?(upper|lower)\s+bound\s+(?:of|on)\s+(?P<value>O\(.+?\)|\\Theta\(.+?\)|\\Omega\(.+?\)|[-+]?\\d+(?:\\.\\d+)?)"
+  negatives: ["conjecture|open\s+problem"]
+  captures: ["value"]
+- id: "Natural sciences / 1.1-mathematics/Hypothesis/conjecture"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(conjecture|we\s+hypothesi[zs]e)\s+that\s+(.+?)"
+  negatives: ["disproven|counterexample"]
+  captures: ["value"]
+- id: "Natural sciences / 1.1-mathematics/Experiment/computation-or-simulation"
+  type: Experiment
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(numerical|computational)\s+(?:experiment|simulation|verification)\b"
+  negatives: ["informal|heuristic\s+only"]
+  captures: []
+- id: "Natural sciences / 1.1-mathematics/Technique/algorithm-or-proof"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(we\s+(?:propose|present|introduce))\s+(?:an?|a)\s+(algorithm|method|proof\s+technique|approximation)\b"
+  negatives: ["trivial|folklore"]
+  captures: []
+- id: "Natural sciences / 1.1-mathematics/Dataset/benchmarks"
+  type: Dataset
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(benchmark|instance\s+set|test\s+suite)\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:instances|graphs|problems)"
+  negatives: ["toy\s+example"]
+  captures: ["n"]
+- id: "Natural sciences / 1.1-mathematics/Analysis/complexity"
+  type: Analysis
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "complexity\s+(?:is|of)\s+O\((?P<value>[^)]+)\)"
+  negatives: ["empirical\s+only"]
+  captures: ["value"]
+- id: "Natural sciences / 1.1-mathematics/Conclusion/theorem-summary"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+with\s+(?:the\s+)?(theorem|corollary)\b"
+  negatives: ["informal"]
+  captures: []
+- id: "Natural sciences / 1.1-mathematics/Input Fact/citation"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(?:the\s+)?(theorem|lemma|proposition)\s+of\s+(.+?)"
+  negatives: ["conjecture"]
+  captures: ["value"]

@@ -1,0 +1,56 @@
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Result/yield-or-growth"
+  type: Result
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(yield|growth\s+rate|NDVI|survival)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>t/ha|kg/ha|%|mm)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Hypothesis/management-effect"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(irrigation|fertili[zs]ation|variety|silviculture)\s+(?:improves|reduces)\s+(yield|pest|water\s+use)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Experiment/field-trial"
+  type: Experiment
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(randomi[sz]ed\s+block|split[- ]plot|field\s+trial|pasture\s+trial|net\s+catch)\b"
+  negatives: ["greenhouse\s+only|lab\s+only"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Technique/agro"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(irrigation|drip|NDVI|IPM|fertigation|silviculture|aquaculture)\b"
+  negatives: ["traditional\s+only"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Dataset/plots-or-samples"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:plots|trees|nets|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+plot"]
+  captures: ["n"]
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Analysis/anova-or-mixed"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ANOVA|mixed[- ]effects|GLM|post\s+hoc)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Conclusion/production-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:management|variety|practice)\s+(?:improves|reduces)\s+(yield|risk)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Agricultural and veterinary sciences / 4.1-agriculture-forestry-and-fisheries/Input Fact/authority"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(FAO|guideline|extension)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

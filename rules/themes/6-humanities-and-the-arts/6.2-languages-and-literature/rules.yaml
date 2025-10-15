@@ -1,0 +1,56 @@
+- id: "Humanities and the arts / 6.2-languages-and-literature/Result/stylistic-feature"
+  type: Result
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(analysis|close\s+reading)\s+(?:identif(ies|ied)|reveals)\s+(stylistic\s+feature|motif|rhyme|meter|narrative\s+device)\b"
+  negatives: ["summary|paraphrase"]
+  captures: []
+- id: "Humanities and the arts / 6.2-languages-and-literature/Hypothesis/interpretive-claim"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(we\s+argue|we\s+propose|we\s+hypothesi[zs]e)\s+that\s+(.+?)"
+  negatives: ["speculation|unclear"]
+  captures: ["value"]
+- id: "Humanities and the arts / 6.2-languages-and-literature/Experiment/corpus-comparison"
+  type: Experiment
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(comparative|contrastive)\s+(?:corpus|text)\s+analysis\b"
+  negatives: ["single\s+work"]
+  captures: []
+- id: "Humanities and the arts / 6.2-languages-and-literature/Technique/linguistic-method"
+  type: Technique
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(discourse\s+analysis|semantic\s+analysis|stylometry|topic\s+modeling|n-gram)\b"
+  negatives: ["impressionistic"]
+  captures: []
+- id: "Humanities and the arts / 6.2-languages-and-literature/Dataset/corpus-size"
+  type: Dataset
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:corpus|collection)\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:texts|poems|novels|plays)\b"
+  negatives: ["single\s+text"]
+  captures: ["n"]
+- id: "Humanities and the arts / 6.2-languages-and-literature/Analysis/poetics-or-discourse"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(poetic|discourse|narrative|semantic)\s+analysis\b"
+  negatives: ["summary\s+only"]
+  captures: []
+- id: "Humanities and the arts / 6.2-languages-and-literature/Conclusion/interpretation"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(.+?)\b"
+  negatives: ["tentative|uncertain"]
+  captures: ["value"]
+- id: "Humanities and the arts / 6.2-languages-and-literature/Input Fact/edition-or-manuscript"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(?:edition|manuscript|dictionary|grammar)\s+(.+?)"
+  negatives: ["hearsay|legend"]
+  captures: ["value"]

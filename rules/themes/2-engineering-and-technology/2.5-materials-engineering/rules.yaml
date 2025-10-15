@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.5-materials-engineering/Result/mechanical-or-microstructure"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(hardness|toughness|yield\s+strength|grain\s+size)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>HRC|HV|GPa|MPa|µm|nm)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.5-materials-engineering/Hypothesis/alloying-or-treatment"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(alloying|heat\s+treatment|coating)\s+(?:improves|reduces)\s+(strength|wear|corrosion)"
+  negatives: ["no\s+effect"]
+  captures: ["value"]
+- id: "Engineering and technology / 2.5-materials-engineering/Experiment/materials-tests"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(tensile|hardness|Charpy|XRD|SEM|TEM|AFM)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.5-materials-engineering/Technique/processing-or-deposition"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(additive\s+manufacturing|PVD|CVD|anneal|quench|shot\s+peen)\b"
+  negatives: ["off\s+the\s+shelf\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.5-materials-engineering/Dataset/specimens"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "specimens\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+specimen"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.5-materials-engineering/Analysis/phase-or-fractography"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(phase\s+analysis|Rietveld|fractography|EBSD|EDS)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.5-materials-engineering/Conclusion/performance"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?material\s+(?:meets|improves)\s+(performance|durability)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Engineering and technology / 2.5-materials-engineering/Input Fact/standard-or-handbook"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(ASTM|ASM\s+handbook|standard)\b(.+?)?"
+  negatives: ["draft|proposal"]
+  captures: ["value"]

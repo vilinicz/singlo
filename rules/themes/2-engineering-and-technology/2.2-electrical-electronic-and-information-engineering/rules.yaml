@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Result/performance"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(achieves|reaches|improves)\s+(SNR|throughput|gain|efficiency)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>dB|%|Gbps|Mbps)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Hypothesis/circuit-design"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+(?:hypothesi[zs]e|expect)\s+that\s+(topology|architecture)\s+(?:improves|reduces)\s+(noise|delay|power)"
+  negatives: ["no\s+improvement"]
+  captures: ["value"]
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Experiment/bench"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(bench[- ]?test|prototype|FPGA\s+implementation|hardware\s+prototype)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Technique/electronics"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ADC|DAC|DSP|PLL|FPGA|VLSI|RF|antenna|SoC)\b"
+  negatives: ["manual\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Dataset/test-cases"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:test\s+cases|designs|circuits)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+design"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Analysis/timing-or-power"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(timing\s+analysis|power\s+analysis|post\s+layout\s+simulation)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Conclusion/spec-compliance"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(meets|complies\s+with)\s+(specification|standard)\b"
+  negatives: ["fails|violates"]
+  captures: []
+- id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Input Fact/datasheet"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(datasheet|standard|specification)\s+(.+?)"
+  negatives: ["draft|proposal"]
+  captures: ["value"]

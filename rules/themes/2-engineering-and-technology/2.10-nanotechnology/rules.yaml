@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.10-nanotechnology/Result/nano-property"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(size|zeta\s+potential|PL\s+intensity|surface\s+area)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>nm|Å|mV|m²/g)?"
+  negatives: ["aggregation|broad\s+distribution"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.10-nanotechnology/Hypothesis/functionality"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(functionalization|doping|shell)\s+(?:improves|modulates)\s+(optical|electrical|stability)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Engineering and technology / 2.10-nanotechnology/Experiment/afm-or-tem"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(AFM|STM|TEM|SEM|DLS|SERS|PL\s+spectroscopy)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.10-nanotechnology/Technique/synthesis-or-coating"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(sol[- ]gel|hydrothermal|CVD|ALD|self[- ]assembly|functionalization)\b"
+  negatives: ["off\s+the\s+shelf"]
+  captures: []
+- id: "Engineering and technology / 2.10-nanotechnology/Dataset/particles-or-spectra"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:particles|spectra|images)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+image"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.10-nanotechnology/Analysis/distribution-or-fits"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(size\s+distribution|Gaussian\s+fit|Lorentzian|zeta\s+distribution)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.10-nanotechnology/Conclusion/stability-or-performance"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(nanoparticle|nanotube|quantum\s+dot)\s+(?:is|becomes)\s+(stable|efficient)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Engineering and technology / 2.10-nanotechnology/Input Fact/model-or-standard"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(DLVO|surface\s+energy\s+model|ISO)\b(.+?)?"
+  negatives: ["hypothesis|proposal"]
+  captures: ["value"]

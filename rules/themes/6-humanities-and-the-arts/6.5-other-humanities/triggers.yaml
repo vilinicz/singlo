@@ -1,0 +1,80 @@
+id: "Humanities and the arts / 6.5-other-humanities"
+version: 1
+threshold: 0.8
+must:
+  - interdisciplinary
+  - heritage
+should:
+  -
+    - interdisciplinary
+    - 1.0
+  -
+    - digital humanities
+    - 1.0
+  -
+    - cultural studies
+    - 1.0
+  -
+    - heritage
+    - 1.0
+  -
+    - criticism
+    - 1.0
+  -
+    - theory
+    - 1.0
+  -
+    - method
+    - 1.0
+  -
+    - review
+    - 0.6
+  -
+    - method
+    - 0.6
+  -
+    - dataset
+    - 0.6
+  -
+    - analysis
+    - 0.6
+  -
+    - result
+    - 0.6
+  -
+    - model
+    - 0.6
+  -
+    - simulation
+    - 0.6
+  -
+    - experiment
+    - 0.6
+  -
+    - evidence
+    - 0.6
+negative:
+  -
+    - science
+    - 0.8
+  -
+    - mathematics
+    - 0.8
+  -
+    - physics
+    - 0.8
+  -
+    - chemistry
+    - 0.8
+  -
+    - biology
+    - 0.8
+  -
+    - geology
+    - 0.8
+  -
+    - ecology
+    - 0.8
+  -
+    - engineering
+    - 0.8

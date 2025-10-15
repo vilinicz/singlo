@@ -1,0 +1,56 @@
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Result/health-metric"
+  type: Result
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(improvement|reduction)\s+(?:in|of)\s+(score|risk|incidence)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|per\s+100k|points)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Hypothesis/policy-or-practice"
+  type: Hypothesis
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(policy|practice|monitoring)\s+(?:improves|reduces)\s+(risk|incidence)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Experiment/survey-or-evaluation"
+  type: Experiment
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(survey|evaluation|screening|monitoring)\b"
+  negatives: ["case\s+report"]
+  captures: []
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Technique/assessment-or-statistics"
+  type: Technique
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(risk\s+assessment|screening\s+tool|logistic\s+regression|Kaplan[–-]Meier)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Dataset/participants"
+  type: Dataset
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "participants\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["small\s+sample"]
+  captures: ["n"]
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Analysis/statistical"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(odds\s+ratio|confidence\s+interval|p\s+<\s*0\\.05)\b"
+  negatives: ["unadjusted\s+only"]
+  captures: []
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Conclusion/health-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(intervention|policy)\s+(?:is\s+effective|has\s+limited\s+impact)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Medical and health sciences / 3.5-other-medical-and-health-sciences/Input Fact/guidelines"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(WHO|CDC|guidelines)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

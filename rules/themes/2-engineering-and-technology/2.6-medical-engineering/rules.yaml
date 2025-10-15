@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.6-medical-engineering/Result/device-performance"
+  type: Result
+  weight: 0.64
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(accuracy|sensitivity|specificity|SNR)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|dB|mm|mV|µV)?"
+  negatives: ["not\\s+significant","fails"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.6-medical-engineering/Hypothesis/design-safety"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(prosthesis|biosensor|implant)\s+(?:is|becomes)\s+(safer|more\s+accurate|more\s+comfortable)"
+  negatives: ["no\s+improvement"]
+  captures: []
+- id: "Engineering and technology / 2.6-medical-engineering/Experiment/bench-or-clinical"
+  type: Experiment
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(phantom\s+test|bench\s+test|in\s+vivo|in\s+vitro|clinical\s+evaluation)\b"
+  negatives: ["simulation\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.6-medical-engineering/Technique/signal-or-imaging"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(ECG|EEG|EMG|image\s+reconstruction|artifact\s+removal|biopotential\s+amplifier)\b"
+  negatives: ["manual\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.6-medical-engineering/Dataset/subjects-or-records"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:subjects|records|sessions)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+case"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.6-medical-engineering/Analysis/signal-quality-or-statistics"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(SNR|artifact\s+rate|Bland[–-]Altman|ROC|AUC|BPM)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.6-medical-engineering/Conclusion/device-utility"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?device\s+(?:is|appears\s+to\s+be)\s+(effective|safe)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Engineering and technology / 2.6-medical-engineering/Input Fact/standard"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(ISO\s+10993|IEC\s+60601|standard)\b(.+?)?"
+  negatives: ["draft|proposal"]
+  captures: ["value"]

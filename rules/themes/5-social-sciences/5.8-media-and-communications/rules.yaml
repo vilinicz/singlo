@@ -1,0 +1,56 @@
+- id: "Social sciences / 5.8-media-and-communications/Result/engagement-or-reach"
+  type: Result
+  weight: 0.61
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(engagement|reach|CTR|views|audience\s+share)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|clicks|impr\.|views)?"
+  negatives: ["not\\s+significant"]
+  captures: ["value","unit"]
+- id: "Social sciences / 5.8-media-and-communications/Hypothesis/media-effect"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(platform|content|broadcast)\s+(?:increases|reduces)\s+(engagement|reach|discourse)"
+  negatives: ["no\s+effect"]
+  captures: []
+- id: "Social sciences / 5.8-media-and-communications/Experiment/campaign-or-ab"
+  type: Experiment
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(A/B\s+test|campaign|broadcast|panel|survey)\b"
+  negatives: ["case\s+study\s+only"]
+  captures: []
+- id: "Social sciences / 5.8-media-and-communications/Technique/metrics-or-nlp"
+  type: Technique
+  weight: 0.65
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(CTR|CPM|topic\s+model|sentiment|discourse\s+analysis)\b"
+  negatives: ["descriptive\s+only"]
+  captures: []
+- id: "Social sciences / 5.8-media-and-communications/Dataset/posts-or-broadcasts"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:posts|broadcasts|articles)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+campaign"]
+  captures: ["n"]
+- id: "Social sciences / 5.8-media-and-communications/Analysis/regression-or-temporal"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(regression|ARIMA|Granger\s+causality|network\s+analysis)\b"
+  negatives: ["correlation\s+only"]
+  captures: []
+- id: "Social sciences / 5.8-media-and-communications/Conclusion/media-impact"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+conclude\s+that\s+(?:the\s+)?(platform|content|broadcast)\s+(?:is\s+effective|has\s+limited\s+impact)"
+  negatives: ["inconclusive"]
+  captures: []
+- id: "Social sciences / 5.8-media-and-communications/Input Fact/rating-or-report"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(ratings|official\s+report|platform\s+statistics)\b(.+?)?"
+  negatives: ["opinion|commentary"]
+  captures: ["value"]

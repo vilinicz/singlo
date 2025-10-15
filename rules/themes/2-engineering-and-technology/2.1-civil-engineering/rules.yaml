@@ -1,0 +1,56 @@
+- id: "Engineering and technology / 2.1-civil-engineering/Result/strength-or-deflection"
+  type: Result
+  weight: 0.63
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(compressive|tensile|flexural)\s+strength|deflection\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>MPa|mm)?"
+  negatives: ["below\s+code|insufficient"]
+  captures: ["value","unit"]
+- id: "Engineering and technology / 2.1-civil-engineering/Hypothesis/design-improves-performance"
+  type: Hypothesis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "we\s+expect\s+that\s+(reinforcement|mix|geometry)\s+(?:improves|reduces)\s+(capacity|settlement|cracking)"
+  negatives: ["no\s+improvement"]
+  captures: ["value"]
+- id: "Engineering and technology / 2.1-civil-engineering/Experiment/structural-test"
+  type: Experiment
+  weight: 0.62
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(four[- ]point\s+bending|uniaxial\s+compression|shear\s+test|shake\s+table|wind\s+tunnel)\b"
+  negatives: ["modeling\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.1-civil-engineering/Technique/codes-and-fem"
+  type: Technique
+  weight: 0.66
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(Eurocode|ACI|AASHTO|BIM|FEM|pushover|nonlinear\s+analysis)\b"
+  negatives: ["rule\s+of\s+thumb"]
+  captures: []
+- id: "Engineering and technology / 2.1-civil-engineering/Dataset/specimens-or-spans"
+  type: Dataset
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(?:specimens|spans|piles)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b"
+  negatives: ["single\s+specimen"]
+  captures: ["n"]
+- id: "Engineering and technology / 2.1-civil-engineering/Analysis/structural"
+  type: Analysis
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(moment[- ]curvature|stress[- ]strain|response\s+spectrum|soil\s-structure\s+interaction)\b"
+  negatives: ["qualitative\s+only"]
+  captures: []
+- id: "Engineering and technology / 2.1-civil-engineering/Conclusion/compliance"
+  type: Conclusion
+  weight: 0.6
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "(meets|satisfies|complies\s+with)\s+(Eurocode|ACI|AASHTO)\b"
+  negatives: ["fails\s+to\s+meet"]
+  captures: []
+- id: "Engineering and technology / 2.1-civil-engineering/Input Fact/code-reference"
+  type: Input Fact
+  weight: 0.58
+  sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+  pattern: "according\s+to\s+(Eurocode|ACI|AASHTO)\s+(?:clause|section)\s+(.+?)"
+  negatives: ["draft|proposal"]
+  captures: ["value"]
