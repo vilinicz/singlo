@@ -1,24 +1,77 @@
 abbr:
-  - CI
-  - SD
-  - SEM
-  - ANOVA
-  - SNR
-  - ROC
-  - AUC
-  - MAE
-  - RMSE
-  - R2
-  - SOTA
-  - KPI
-  - API
-  - CPU
-  - GPU
-  - JSON
-  - XML
-  - Fig.
-  - Tab.
-hedges:
+  -
+    - CI
+    - confidence interval
+  -
+    - SD
+    - standard deviation
+  -
+    - SEM
+    - structural equation modeling
+  -
+    - ANOVA
+    - analysis of variance
+  -
+    - SNR
+    - "signal-to-noise ratio"
+  -
+    - ROC
+    - receiver operating characteristic
+  -
+    - AUC
+    - area under the curve
+  -
+    - MAE
+    - mean absolute error
+  -
+    - RMSE
+    - root mean square error
+  -
+    - R2
+    - coefficient of determination
+  -
+    - NLP
+    - natural language processing
+  -
+    - ML
+    - machine learning
+  -
+    - DL
+    - deep learning
+  -
+    - CNN
+    - convolutional neural network
+  -
+    - RNN
+    - recurrent neural network
+  -
+    - SOTA
+    - state of the art
+  -
+    - KPI
+    - key performance indicator
+  -
+    - API
+    - application programming interface
+  -
+    - CPU
+    - central processing unit
+  -
+    - GPU
+    - graphics processing unit
+  -
+    - JSON
+    - javascript object notation
+  -
+    - XML
+    - extensible markup language
+  -
+    - Fig.
+    - figure
+  -
+    - Tab.
+    - table
+hedging_extra:
   - may
   - might
   - could
@@ -31,46 +84,66 @@ hedges:
   - tends to
   - roughly
   - around
-  - in part
-  - to some extent
 units:
   - mm
   - cm
   - m
-  - km
   - kg
-  - g
-  - mg
   - ms
   - s
-  - min
-  - h
   - Hz
   - kHz
   - MHz
-  - GHz
   - N
   - Pa
   - mol
-  - K
-  - "°C"
-  - L
-  - mL
   - "%"
 synonyms:
-  - {from: method, to: technique}
-  - {from: result, to: finding}
-  - {from: analysis, to: examination}
-  - {from: model, to: framework}
-  - {from: experiment, to: trial}
-  - {from: significant, to: notable}
-  - {from: increase, to: rise}
-  - {from: decrease, to: reduction}
-  - {from: effect, to: impact}
-  - {from: evidence, to: support}
-  - {from: dataset, to: corpus}
-  - {from: figure, to: illustration}
-  - {from: table, to: tabulation}
-  - {from: objective, to: goal}
-  - {from: conclusion, to: finding}
-  - {from: technique, to: approach}
+  -
+    - method
+    - technique
+  -
+    - result
+    - finding
+  -
+    - analysis
+    - examination
+  -
+    - model
+    - framework
+  -
+    - experiment
+    - trial
+  -
+    - significant
+    - notable
+  -
+    - increase
+    - rise
+  -
+    - decrease
+    - reduction
+  -
+    - effect
+    - impact
+  -
+    - evidence
+    - support
+  -
+    - dataset
+    - corpus
+  -
+    - figure
+    - illustration
+  -
+    - table
+    - tabulation
+  -
+    - objective
+    - goal
+  -
+    - conclusion
+    - finding
+  -
+    - technique
+    - approach
