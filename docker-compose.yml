@@ -69,6 +69,10 @@ services:
       - ./rules:/app/rules:ro
       - ./export:/app/export
       - ./data:/app/data
+      - ./dataset:/app/dataset:ro
+      - ./tools:/app/tools:ro
+      - ./ui:/app/ui:ro
+      - ./workdir:/app/workdir
     ports:
       - "8000:8000"         # FastAPI
     depends_on:
@@ -99,6 +103,9 @@ services:
       - ./rules:/app/rules:ro
       - ./data:/app/data
       - ./export:/app/export
+      - ./dataset:/app/dataset:ro
+      - ./tools:/app/tools:ro
+      - ./workdir:/app/workdir
     depends_on:
       redis:
         condition: service_healthy

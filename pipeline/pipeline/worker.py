@@ -17,12 +17,12 @@ from rq import Worker, Queue
 from rq.connections import Connection
 import redis
 
-from pipeline.s1 import run_s1
-from pipeline.s0 import build_s0
-from pipeline.s2 import run_s2
+from .s1 import run_s1
+from .s0 import build_s0
+from .s2 import run_s2
 
 # темы: реестр и роутинг
-from pipeline.themes_router import preload as themes_preload
+from .themes_router import preload as themes_preload
 
 
 RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")
