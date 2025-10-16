@@ -28,7 +28,7 @@ elements:
     type: Result
     weight: 0.60
     sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(runti?me|time|space)\\s+complexity\\b.{0,60}?(O\\([^)]{1,40}\\)|\\Omega\\([^)]{1,40}\\)|\\Theta\\([^)]{1,40}\\))"
+    pattern: "\\b(runti?me|time|space)\\s+complexity\\b.{0,60}?(O\\([^)]{1,40}\\)|\\\\Omega\\([^)]{1,40}\\)|\\\\Theta\\([^)]{1,40}\\)|[ΩΘ]\\([^)]{1,40}\\))"
     negatives: [ ]
     captures: [ "bound" ]
 
