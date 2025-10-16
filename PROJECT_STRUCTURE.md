@@ -1,105 +1,117 @@
-**Project Structure**
+**Структура Проекта**
 
-- Purpose: End-to-end pipeline to parse PDFs and extract a scientific knowledge graph, with a web UI and FastAPI gateway. Heuristic rules live under `rules/` (S1), data parsing in `pipeline/`, and the UI stack in `ui/`.
+- Назначение: конвейер от PDF к графу знаний (S0→S1→S2) с FastAPI‑шлюзом и веб‑клиентом. Правила (регексы/лексикон/триггеры) живут в `rules/`, парсинг и бизнес‑логика — в `pipeline/`, UI — в `ui/`.
 
-**Top-Level Layout**
+**Верхнеуровневые Каталоги**
 
-- `pipeline/` — Python 3.11 processing pipeline
-  - `pipeline/pipeline/s0.py` — document ingest (PDF → text/sections)
-  - `pipeline/pipeline/s1.py` — heuristic extraction (rules/regex)
-  - `pipeline/pipeline/s2.py` — linking, post-processing
-  - `pipeline/pipeline/worker.py` — queue worker entrypoint
-  - `pipeline/pipeline/themes_router.py` — themes (FOS) routing logic
-  - `pipeline/pipeline/parsers/` — parsers (`pdf_parser.py`, `latex_parser.py`)
+- `pipeline/` — Python 3.11 pipeline
+  - `pipeline/pipeline/s0.py` — разбор PDF в текст и секции
+  - `pipeline/pipeline/s1.py` — извлечение сущностей по правилам (regex/heuristics)
+  - `pipeline/pipeline/s2.py` — линковка узлов/рёбер, пост‑обработка
+  - `pipeline/pipeline/worker.py` — entrypoint воркера очереди
+  - `pipeline/pipeline/themes_router.py` — маршрутизация по темам (FOS)
+  - `pipeline/pipeline/parsers/` — `pdf_parser.py`, `latex_parser.py`, утилиты
   - `pipeline/requirements.txt`, `pipeline/Dockerfile`
 
-- `ui/` — UI stack
-  - `ui/server/` — FastAPI gateway (queues worker jobs)
-    - `ui/server/app/main.py` — API endpoints (parse/extract/graph)
+- `ui/` — UI‑стек
+  - `ui/server/` — FastAPI (постановка задач, предпросмотр артефактов)
+    - `ui/server/app/main.py` — эндпоинты: parse/extract/status/preview/graph/themes
     - `ui/server/Dockerfile`, `ui/server/requirements.txt`
-  - `ui/web/` — Vite + React client (Cytoscape graph)
+  - `ui/web/` — Vite + React (Cytoscape‑граф)
     - `ui/web/src/App.jsx`, `ui/web/src/main.jsx`, `ui/web/Dockerfile`
 
-- `rules/` — S1 rules and theme taxonomy (FOS-2021)
-  - `rules/common.yaml` — global S1 config (section weights, boosts, link patterns)
-  - `rules/themes/` — 6 fields and 42 subfields
+- `rules/` — конфигурация S1 и таксономия тем (FOS‑2021)
+  - `rules/common.yaml` — глобальные веса секций, бусты, шаблоны связей
+  - `rules/themes/` — 6 направлений, 42 поднаправления
     - `<field>/lexicon.yaml`, `<field>/rules.yaml`, `<field>/triggers.yaml`
-    - `<field>/<subfield>/lexicon.yaml|rules.yaml|triggers.yaml`
-    - `_schemas/` — YAML schemas for lints (`lexicon.schema.yaml`, `rules.schema.yaml`, `triggers.schema.yaml`)
-    - `shared-lexicon.yaml` — shared synonyms/abbr/hedges
-  - `rules/tools/` — lints and helpers (`rules_linter.py`)
+    - `<field>/<subfield>/{lexicon,rules,triggers}.yaml`
+    - `_schemas/` — схемы YAML (`lexicon.schema.yaml`, `rules.schema.yaml`, `triggers.schema.yaml`)
+    - `shared-lexicon.yaml` — общий лексикон (abbr/synonyms/hedges)
+  - `rules/tools/` — инструменты (`rules_linter.py`)
 
-- Data & Working Dirs
-  - `dataset/` — sample corpora (PDFs)
-  - `data/`, `export/`, `workdir/` — intermediate artifacts, cache, exports
+- Данные и рабочие каталоги
+  - `dataset/` — примеры корпусов (PDF)
+  - `data/` — входные и результаты S0 (`data/<doc_id>/input.pdf`, `s0.json`)
+  - `export/` — отладка/итоги: `graph.json`, `s1_debug.json`, `s2_debug.json`
+  - `workdir/` — временные файлы
 
-- Utilities
-  - `scripts/` — maintenance tooling (`fos_generate.py`, YAML migrations)
-  - `tools/` — reporting utilities (`report.py`)
+- Утилиты
+  - `scripts/` — генерация FOS, миграции YAML, фиксы (`fos_generate.py`, `migrate_lexicon_shape.py`, `wrap_rules_elements.py`, ...)
+  - `tools/` — отчёты (`report.py`)
 
-- Orchestration
-  - `docker-compose.yml` — multi-container stack (API, worker, grobid, redis, neo4j)
-  - `makefile` — tasks: `make run`, `make rebuild-all`, `make rebuild-app`
-  - `.env`, `.env.example` — environment variables
+- Оркестрация
+  - `docker-compose.yml` — стек: API, worker, grobid, redis, neo4j
+  - `makefile` — `make run`, `make rebuild-all`, `make rebuild-app`
+  - `.env`, `.env.example` — переменные окружения
 
-**Rules (S1) Overview**
+**Правила (S1)**
 
-- `triggers.yaml` — route PDFs to fields/subfields
-  - Keys: `id`, `version`, `threshold`, `must[]`, `should[[token,weight]]`, `negative[[token,weight]]`
-- `lexicon.yaml` — abbreviations, synonyms, hedging extras
-  - Keys: `abbr[[short,long]]`, `synonyms[[a,b]]`, `hedging_extra[]`
-- `rules.yaml` — regex-based elements for node types
-  - Element keys: `id`, `type` (Result|Hypothesis|Experiment|Technique|Dataset|Analysis|Conclusion|Input Fact), `weight`, `sections[]`, `pattern`, `negatives[]`, `captures[]`
+- `triggers.yaml` — роутинг PDF в тему/подтему
+  - Ключи: `id`, `version`, `threshold`, `must[]`, `should[[token,weight]]`, `negative[[token,weight]]`
+- `lexicon.yaml` — сокращения, синонимы, hedging
+  - Ключи: `abbr[[short,long]]`, `synonyms[[a,b]]`, `hedging_extra[]`
+- `rules.yaml` — элементы графа (regex)
+  - Ключи: `id`, `type` (Result|Hypothesis|Experiment|Technique|Dataset|Analysis|Conclusion|Input Fact), `weight`, `sections[]`, `pattern`, `negatives[]`, `captures[]`
 
-**Development Quickstart**
+**Быстрый Старт**
 
-- Run full stack: `make run` then open `http://localhost:{3000,8000,8070,7474}`
-- UI-only dev: `cd ui/web && npm install && npm run dev` (expects API running)
-- Worker debug: `docker compose exec worker python -m pipeline.worker`
-- Local Python (no Docker): create Python 3.11 venv in `/.venv` and install `pipeline/requirements.txt`
+- Полный стек: `make run` → открыть `http://localhost:{3000,8000,8070,7474}`
+- Только UI: `cd ui/web && npm install && npm run dev` (API должен работать)
+- Отладка воркера: `docker compose exec worker python -m pipeline.worker`
+- Локально (без Docker): Python 3.11 venv в `/.venv`, установить `pipeline/requirements.txt`
 
-**Services & Ports**
+**Сервисы и Порты**
 
 - `grobid` — 8070 (REST), 8071 (Admin)
 - `api` — 8000 (FastAPI)
-- `web` — 3000 (Vite/React dev)
+- `web` — 3000 (Vite/React)
 - `neo4j` — 7474 (HTTP UI), 7687 (Bolt)
 - `redis` — 6379
 
-**API Endpoints**
+**API (основные эндпоинты)**
 
-- `GET /health` — service status
-- `POST /parse` — upload PDF, returns `doc_id` and schedules pipeline (S0→S2)
-- `POST /extract?doc_id=...&theme=auto|<theme>` — enqueue extraction by `doc_id`
-- `GET /status/{doc_id}` — pipeline status and timings
-- `GET /preview/{doc_id}/{artifact}` — preview `s0|s1|s2|graph` artifacts
-- `GET /graph/{doc_id}` — graph JSON
-- `GET /themes` — available themes (FOS registry)
+- `GET /health` — проверка статуса
+- `POST /parse` — загрузка PDF, создание `doc_id`, постановка S0→S2
+- `POST /extract?doc_id=...&theme=auto|<theme>` — явный запуск извлечения
+- `GET /status/{doc_id}` — состояние пайплайна, тайминги
+- `GET /preview/{doc_id}/{artifact}` — предпросмотр `s0|s1|s2|graph`
+- `GET /graph/{doc_id}` — итоговый граф JSON
+- `GET /themes` — список тем (FOS‑реестр)
 
-**Data Flow & Artifacts**
+**Поток Данных и Артефакты**
 
-- Input: uploaded PDF stored at `data/<doc_id>/input.pdf`
-- S0 output: `data/<doc_id>/s0.json` (sections, text)
-- S1/S2 debug: `export/<doc_id>/{s1_debug.json,s2_debug.json}`
+- Input: `data/<doc_id>/input.pdf`
+- S0: `data/<doc_id>/s0.json`
+- S1/S2: `export/<doc_id>/s1_debug.json`, `export/<doc_id>/s2_debug.json`
 - Graph: `export/<doc_id>/graph.json`
-- Routing: `rules/themes/**/triggers.yaml` selects field/subfield; S1 applies `rules.yaml`; S2 links nodes/edges using patterns from `rules/common.yaml`.
+- Роутинг: `rules/themes/**/triggers.yaml` → S1 по `rules.yaml` → S2 связи по `rules/common.yaml`
 
-**Key Environment Variables**
+**Переменные Окружения**
 
-- `GROBID_URL` (API, worker) — Grobid base URL
-- `REDIS_URL` (API, worker) — Redis connection
-- `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` — Neo4j access
-- `S1_RULES_PATH` — path to `rules/common.yaml`
-- `RULES_BASE_DIR`, `THEMES_DIR` (API) — theme registry discovery
+- `GROBID_URL` — адрес Grobid (API, worker)
+- `REDIS_URL` — Redis (API, worker)
+- `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` — доступ к Neo4j
+- `S1_RULES_PATH` — путь к `rules/common.yaml`
+- `RULES_BASE_DIR`, `THEMES_DIR` (API) — автопоиск тем
 
-**Directory Snapshot (abridged)**
+**Runbook (типовой сценарий)**
+
+- `POST /parse` → получить `doc_id`
+- `GET /status/{doc_id}` — следить за прогрессом
+- `GET /preview/{doc_id}/s1` и `.../graph` — проверка артефактов
+- Открыть веб‑клиент и загрузить граф по `doc_id`
+
+**Линтер Правил**
+
+- `python rules/tools/rules_linter.py --json rules_lint_report.json` — проверки YAML/regex
+- Схемы: `rules/themes/_schemas/*.yaml`
+
+**Снимок Дерева (кратко)**
 
 ```
 .
 ├─ pipeline/
-│  ├─ pipeline/
-│  │  ├─ s0.py  s1.py  s2.py  worker.py  themes_router.py
-│  │  └─ parsers/ (pdf_parser.py, latex_parser.py)
+│  ├─ pipeline/ (s0.py, s1.py, s2.py, worker.py, themes_router.py, parsers/)
 │  ├─ requirements.txt
 │  └─ Dockerfile
 ├─ ui/
@@ -107,12 +119,11 @@
 │  └─ web/ (Vite+React)
 ├─ rules/
 │  ├─ common.yaml
-│  ├─ themes/
-│  │  ├─ 1-natural-sciences/ ... 6-humanities-and-the-arts/
-│  │  └─ _schemas/ (lexicon|rules|triggers.schema.yaml)
+│  ├─ themes/ (6 полей, 42 подтемы, _schemas/, shared-lexicon.yaml)
 │  └─ tools/ (rules_linter.py)
 ├─ dataset/  data/  export/  workdir/
 ├─ docker-compose.yml  makefile  AGENTS.md  Project_Description.md
 ```
 
-For goals and context see `Project_Description.md`. For coding and workflow conventions see `AGENTS.md`.
+Для целей и контекста см. `Project_Description.md`. Для конвенций по коду и запуску — `AGENTS.md`.
+
