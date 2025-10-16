@@ -1,57 +1,144 @@
 elements:
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Result/accuracy-or-speed"
+  # ===================== RESULT (улучшения, SOTA, проценты/кратности)
+  - id: "cs/Result/sota_improvement"
     type: Result
-    weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(achieves|reaches|improves)\s+(accuracy|F1|AUC|throughput|latency)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|req/s|QPS)?'
-    negatives: ['not\\s+significant','overfitting']
-    captures: ["value","unit"]
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Hypothesis/assumption"
+    weight: 0.68
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(state[- ]of[- ]the[- ]art|SOTA)\\b.{0,120}?\\b(improv(e|ement|es)|outperform(s|ed)|surpass(es|ed))\\b.{0,160}?(by\\s+(\\d+(?:\\.\\d+)?%|\\d+(?:\\.\\d+)?x)|in\\s+(accuracy|F1|throughput|latency))"
+    negatives: [ "no\\s+significant\\s+difference" ]
+    captures: [ "sota", "verb", "delta", "metric" ]
+
+  - id: "cs/Result/accuracy_metric_gain"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(accuracy|top-1|top-5|F1|mAP)\\b.{0,40}?\\b(increase|improv(e|ement))\\b.{0,120}?(\\d+(?:\\.\\d+)?%|\\d+(?:\\.\\d+)?\\s*points)"
+    negatives: [ "decrease", "drop" ]
+    captures: [ "metric", "verb", "value" ]
+
+  - id: "cs/Result/speedup_latency"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(speedup|faster|latency|throughput)\\b.{0,120}?(\\d+(?:\\.\\d+)?x|\\d+(?:\\.\\d+)?%)(?:\\s+(?:speedup|reduction|increase))?"
+    negatives: [ ]
+    captures: [ "kind", "value" ]
+
+  - id: "cs/Result/complexity_bound"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","Appendix"]
+    pattern: "\\b(runti?me|time|space)\\s+complexity\\b.{0,60}?(O\\([^)]{1,40}\\)|\\Omega\\([^)]{1,40}\\)|\\Theta\\([^)]{1,40}\\))"
+    negatives: [ ]
+    captures: [ "bound" ]
+
+  # ===================== HYPOTHESIS (предположения/тезисы)
+  - id: "cs/Hypothesis/we_hypothesize"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|assume)\s+that\s+(.+?)\s+(?:improves|reduces|leads\s+to)\s+(performance|accuracy|latency)'
-    negatives: ['no\s+improvement']
-    captures: ["value"]
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Experiment/benchmark"
+    weight: 0.60
+    sections: ["Introduction","Abstract","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+hypothes[ie]ze|we\\s+conjecture|we\\s+posit)\\b\\s+that\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  - id: "cs/Hypothesis/assumed_property"
+    type: Hypothesis
+    weight: 0.56
+    sections: ["Introduction","Methods","Body","Unknown"]
+    pattern: "\\b(assumption|assume|suppose)\\b\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  # ===================== INPUT FACT (условия/данные/окружение)
+  - id: "cs/InputFact/setup_env"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(environment|hardware|software|framework)\\b.{0,120}?(GPU|TPU|A100|H100|CUDA|JAX|PyTorch|TensorFlow)"
+    negatives: [ ]
+    captures: [ "env", "platform" ]
+
+  - id: "cs/InputFact/benchmark_protocol"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(protocol|evaluation\\s+protocol|setup)\\b.{0,160}?\\b(train|test|validation|split|seed|epochs?)\\b"
+    negatives: [ ]
+    captures: [ "protocol" ]
+
+  # ===================== EXPERIMENT (оценки/абляции/симуляции)
+  - id: "cs/Experiment/ablation"
     type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(evaluat(e|ion)\s+on|benchmarked\s+on)\s+(?:[A-Z][A-Za-z0-9_\-]+)\s+(?:dataset|corpus)\b'
-    negatives: ['toy|synthetic\s+only']
-    captures: []
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Technique/model-or-algorithm"
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(ablation|component\\s+analysis|module\\s+study)\\b.{0,160}?\\b(remov(e|ing)|disable|without)\\b"
+    negatives: [ ]
+    captures: [ "cue", "action" ]
+
+  - id: "cs/Experiment/evaluation_task"
+    type: Experiment
+    weight: 0.60
+    sections: ["Results","Methods","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(evaluate|evaluation|test|benchmark(ed)?)\\b.{0,160}?\\b(on|against)\\b.{0,60}?(baseline|suite|task|dataset)"
+    negatives: [ ]
+    captures: [ "cue", "target" ]
+
+  # ===================== TECHNIQUE (алгоритм/ядро/эвристика)
+  - id: "cs/Technique/proposed_method"
     type: Technique
     weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(we\s+(?:propose|introduce|present))\s+(?:an?|a)\s+(model|algorithm|architecture|framework)\b'
-    negatives: ['baseline\s+only']
-    captures: []
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Dataset/records"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:dataset|corpus)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|records|documents)\b'
-    negatives: ['private|unavailable']
-    captures: ["n"]
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Analysis/ablation-or-complexity"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(ablation\s+study|complexity\s+analysis|time\s+complexity\s+O\([^)]+\))\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Conclusion/generalization"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(method|model)\s+(?:generalizes|outperforms)\b'
-    negatives: ['overfit|fails\s+to\s+generalize']
-    captures: []
-  - id: "Natural sciences / 1.2-computer-and-information-sciences/Input Fact/standard-or-rfc"
-    type: Input Fact
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+(?:propose|present|introduce)|our\\s+method|our\\s+algorithm)\\b.{0,160}?\\b(algorithm|heuristic|kernel|compiler\\s+pass|search\\s+strategy|training\\s+procedure)\\b"
+    negatives: [ "baseline" ]
+    captures: [ "cue", "kind" ]
+
+  - id: "cs/Technique/optimizer_change"
+    type: Technique
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(?:RFC|standard|specification)\s+(.+?)'
-    negatives: ['proposal|draft']
-    captures: ["value"]
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(optimizer|optimization)\\b.{0,160}?\\b(AdamW|Adam|SGD|momentum|weight\\s*decay|learning\\s*rate|scheduler)\\b"
+    negatives: [ ]
+    captures: [ "topic", "detail" ]
+
+  # ===================== DATASET (бенчмарки)
+  - id: "cs/Dataset/benchmark_named"
+    type: Dataset
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(dataset|benchmark|corpus)\\b.{0,60}?(ImageNet|CIFAR-10|CIFAR-100|COCO|GLUE|SuperGLUE|MMLU|BigBench|WMT|SQuAD|LibriSpeech|KILT|OpenWebText|WikiText|CommonCrawl)\\b"
+    negatives: [ ]
+    captures: [ "kind", "name" ]
+
+  - id: "cs/Dataset/synthetic_or_logs"
+    type: Dataset
+    weight: 0.52
+    sections: ["Methods","Results","Body","Unknown","Appendix"]
+    pattern: "\\b(synthetic\\s+data|simulated\\s+workloads|cluster\\s+logs|production\\s+traces)\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  # ===================== ANALYSIS (профилирование/ошибки/ресурсы)
+  - id: "cs/Analysis/profiling_resources"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(profile|profiling|analy(s|z)e)\\b.{0,160}?\\b(memory|CPU|GPU|TPU|FLOPS|utilization|throughput|latency)\\b"
+    negatives: [ ]
+    captures: [ "cue", "metric" ]
+
+  - id: "cs/Analysis/error_breakdown"
+    type: Analysis
+    weight: 0.56
+    sections: ["Results","Discussion","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(error\\s+analysis|breakdown|failure\\s+modes?)\\b.{0,160}?\\b(misclassification|hallucination|degeneration|instability|variance)\\b"
+    negatives: [ ]
+    captures: [ "cue", "issue" ]
+
+  # ===================== CONCLUSION
+  - id: "cs/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|we\\s+summarize)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

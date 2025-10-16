@@ -1,57 +1,168 @@
 elements:
-  - id: "Natural sciences / 1.6-biological-sciences/Result/biological-measure"
+  # ===== RESULT (количественные и качественные выводы)
+  - id: "bio/Result/differential_expression"
     type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(increase|decrease)\s+(?:in|of)\s+(expression|activity|viability|growth\s+rate)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|fold|OD600)?'
-    negatives: ['not\\s+significant','no\\s+change']
-    captures: ["value","unit"]
-  - id: "Natural sciences / 1.6-biological-sciences/Hypothesis/pathway-or-function"
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(DEGs?|differential(?:ly)?\\s+express(?:ed|ion))\\b.{0,120}?(up|down)\\-?regulated|\\blog2?FC\\b.{0,40}?[+\\-]?\\d+(?:\\.\\d+)?"
+    negatives: [ ]
+    captures: [ "deg", "direction" ]
+
+  - id: "bio/Result/p_value_effect"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(p\\s*[<≤]\\s*0\\.0?5|p\\s*=\\s*0\\.[0-9]+)\\b.{0,160}?(increase|decrease|higher|lower|improv(?:e|ement)|reduction)"
+    negatives: [ "no\\s+significant\\s+difference" ]
+    captures: [ "p", "effect" ]
+
+  - id: "bio/Result/ic50_ec50_kd_mic"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(IC50|EC50|MIC|Kd)\\b.{0,40}?(=|of|around|approximately)\\s*([\\d\\.]+)\\s*(n?m|u?M|mg/L)?"
+    negatives: [ ]
+    captures: [ "metric", "eq", "value", "unit" ]
+
+  - id: "bio/Result/phenotype_direction"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(viability|proliferation|apoptosis|migration|invasion|behavior|lifespan|fertility)\\b.{0,160}?(increased|decreased|improved|impaired|reduced|elevated)"
+    negatives: [ ]
+    captures: [ "readout", "direction" ]
+
+  # ===== HYPOTHESIS (рабочие гипотезы/модели)
+  - id: "bio/Hypothesis/we_hypothesize"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(gene|protein|pathway)\s+(?:regulates|controls|mediates)\s+(.+?)'
-    negatives: ['no\s+effect']
-    captures: ["value"]
-  - id: "Natural sciences / 1.6-biological-sciences/Experiment/assay"
+    weight: 0.62
+    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+hypothes[ie]ze|we\\s+propose|we\\s+posit)\\b\\s+that\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  - id: "bio/Hypothesis/pathway_model"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Introduction","Discussion","Body","Unknown"]
+    pattern: "\\b(model|pathway)\\b.{0,40}?\\b(suggests?|indicates?)\\b.{0,160}?"
+    negatives: [ ]
+    captures: [ "what" ]
+
+  # ===== INPUT FACT (исходные условия/материал/этика)
+  - id: "bio/InputFact/organism_and_strain"
+    type: "Input Fact"
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(mouse|mice|rat|zebrafish|Drosophila|C\\. elegans|Arabidopsis|human\\s+subjects?)\\b.{0,160}?(strain|line|WT|KO|transgenic|inbred|SPF)"
+    negatives: [ ]
+    captures: [ "organism", "qual" ]
+
+  - id: "bio/InputFact/cell_line_medium"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(HeLa|HEK293|U2OS|NIH[- ]?3T3|RAW264\\.7|SH[- ]SY5Y|primary\\s+cells?)\\b.{0,160}?(DMEM|RPMI|FBS|pen[- ]?strep|glutamine)"
+    negatives: [ ]
+    captures: [ "line", "medium" ]
+
+  - id: "bio/InputFact/ethics_and_sample_size"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(ethics\\s+approval|IACUC|IRB|permit)\\b|\\bn\\s*=\\s*\\d{1,4}\\b"
+    negatives: [ ]
+    captures: [ "flag" ]
+
+  # ===== EXPERIMENT (манипуляции/измерения)
+  - id: "bio/Experiment/genetic_perturbation"
+    type: Experiment
+    weight: 0.64
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(CRISPR|Cas9|gRNA|siRNA|shRNA|knockout|KO|knockdown|KD|overexpress(?:ion|ed)|OE|rescue)\\b"
+    negatives: [ ]
+    captures: [ "perturb" ]
+
+  - id: "bio/Experiment/assay_measurement"
     type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(ELISA|qPCR|Western\s+blot|microscopy|flow\s+cytometry|knock(?:out|down))\b'
-    negatives: ['in\s+silico\s+only']
-    captures: []
-  - id: "Natural sciences / 1.6-biological-sciences/Technique/molecular-or-cellular"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(CRISPR|RNA[- ]seq|ChIP[- ]seq|immuno(staining|precipitation)|confocal\s+microscopy)\b'
-    negatives: ['baseline\s+only']
-    captures: []
-  - id: "Natural sciences / 1.6-biological-sciences/Dataset/samples-or-cells"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:samples|cells|replicates)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['n\s*=\s*1']
-    captures: ["n"]
-  - id: "Natural sciences / 1.6-biological-sciences/Analysis/statistical"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(two[- ]?tailed|t[- ]test|ANOVA|post\s+hoc|Bonferroni|FDR)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Natural sciences / 1.6-biological-sciences/Conclusion/functional-model"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(gene|protein|pathway)\s+(?:functions|acts|mediates)\b'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Natural sciences / 1.6-biological-sciences/Input Fact/database-or-guideline"
-    type: Input Fact
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(qPCR|RT[- ]qPCR|Western blot|ELISA|flow\\s+cytometry|FACS|immunofluorescence|IF\\b|IHC\\b|confocal)\\b.{0,160}?(assay|measurement|quantif(?:y|ication)|stain(?:ing)?)"
+    negatives: [ ]
+    captures: [ "tech", "what" ]
+
+  - id: "bio/Experiment/behavior_or_growth"
+    type: Experiment
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(UniProt|Gene\s+Ontology|KEGG|NCBI)\b(.+?)?'
-    negatives: ['prediction|inferred']
-    captures: ["value"]
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(behavior|locomotion|feeding|growth\\s+curve|OD600|CFU)\\b.{0,160}?(test|assay|measurement)"
+    negatives: [ ]
+    captures: [ "readout", "what" ]
+
+  # ===== TECHNIQUE (методы/протоколы)
+  - id: "bio/Technique/library_and_sequencing"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(RNA[- ]seq|ATAC[- ]seq|ChIP[- ]seq|single[- ]cell|scRNA[- ]seq|library\\s+prep(?:aration)?)\\b"
+    negatives: [ ]
+    captures: [ "tech" ]
+
+  - id: "bio/Technique/microscopy_modality"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(confocal|two[- ]photon|STED|STORM|TIRF|super[- ]resolution|electron\\s+microscop(?:y|e))\\b"
+    negatives: [ ]
+    captures: [ "modality" ]
+
+  - id: "bio/Technique/biochem_measure"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(binding|enzymatic|kinetic)\\s+(assay|measurement)\\b.{0,160}?(Kd|Km|Vmax|IC50|EC50)"
+    negatives: [ ]
+    captures: [ "kind", "metric" ]
+
+  # ===== DATASET (репозитории и идентификаторы)
+  - id: "bio/Dataset/public_accession"
+    type: Dataset
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(GSE\\d{3,7}|SRR\\d{3,9}|PRJ\\w{2}\\d{4,}|ENA\\s+\\w+\\d{3,})\\b"
+    negatives: [ ]
+    captures: [ "accession" ]
+
+  - id: "bio/Dataset/biobank_or_cohort"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(biobank|cohort|registry|database)\\b.{0,120}?(participants|subjects|samples|n\\s*=\\s*\\d+)"
+    negatives: [ ]
+    captures: [ "kind", "hint" ]
+
+  # ===== ANALYSIS (обогащения/кластеризация/ассоциации)
+  - id: "bio/Analysis/go_kegg_enrichment"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(GO|Gene\\s+Ontology|KEGG|Reactome)\\b.{0,160}?(enrichment|over[- ]representation|pathway\\s+analysis)"
+    negatives: [ ]
+    captures: [ "db", "action" ]
+
+  - id: "bio/Analysis/clustering_umap_tsne"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(UMAP|t[- ]SNE|PCA|hierarchical\\s+clustering|Leiden|Louvain)\\b"
+    negatives: [ ]
+    captures: [ "method" ]
+
+  # ===== CONCLUSION
+  - id: "bio/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+findings\\s+suggest)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

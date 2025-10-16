@@ -1,160 +1,63 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - PDE
-    - PDE
-  -
-    - ODE
-    - ODE
-  -
-    - FFT
-    - FFT
-  -
-    - DFT
-    - DFT
-  -
-    - SVD
-    - singular value decomposition
-  -
-    - PCA
-    - principal component analysis
-  -
-    - QED
-    - QED
-  -
-    - QCD
-    - QCD
-  -
-    - NMR
-    - nuclear magnetic resonance
+  - [ WT, "wild type" ]
+  - [ KO, "knockout" ]
+  - [ KD, "knockdown" ]
+  - [ OE, "overexpression" ]
+  - [ PCR, "polymerase chain reaction" ]
+  - [ qPCR, "quantitative PCR" ]
+  - [ RT-qPCR, "reverse transcription quantitative PCR" ]
+  - [ WB, "Western blot" ]
+  - [ IF, "immunofluorescence" ]
+  - [ IHC, "immunohistochemistry" ]
+  - [ FACS, "fluorescence-activated cell sorting" ]
+  - [ RNA-seq, "RNA sequencing" ]
+  - [ scRNA-seq, "single-cell RNA sequencing" ]
+  - [ ATAC-seq, "Assay for Transposase-Accessible Chromatin" ]
+  - [ ChIP-seq, "chromatin immunoprecipitation sequencing" ]
+  - [ MIC, "minimum inhibitory concentration" ]
+  - [ IC50, "half maximal inhibitory concentration" ]
+  - [ EC50, "half maximal effective concentration" ]
+  - [ Kd, "dissociation constant" ]
+  - [ Km, "Michaelis constant" ]
+  - [ Vmax, "maximum reaction velocity" ]
+  - [ CFU, "colony-forming units" ]
+  - [ OD600, "optical density at 600 nm" ]
+  - [ RCT, "randomized controlled trial" ]
+
+synonyms:
+  - [ wild type, WT ]
+  - [ knockout, KO ]
+  - [ knockdown, KD ]
+  - [ overexpression, OE ]
+  - [ flow cytometry, FACS ]
+  - [ immunofluorescence, IF ]
+  - [ immunohistochemistry, IHC ]
+  - [ transcriptome, RNA-seq ]
+  - [ single cell, single-cell ]
+  - [ dose response, dose-response ]
+  - [ cell line, cell-line ]
+  - [ viability, survival ]
+  - [ proliferation, growth ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - generally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
   - "%"
-  - K
-  - eV
-  - J
-  - M
-  - mM
-  - nm
-  - Âµm
-  - Ã…
-  - ÂµL
-  - mL
-  - ng/ÂµL
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - genetics
-    - geneticss
-  -
-    - microbiology
-    - microbiologys
-  -
-    - neuroscience
-    - neurosciences
-  -
-    - ecology
-    - ecologys
-  -
-    - evolution
-    - evolutions
-  -
-    - cell biology
-    - cell biologys
+  - "x"
+  - "nM"
+  - "µM"
+  - "mM"
+  - "mg/L"
+  - "°C"
+  - "h"
+  - "min"

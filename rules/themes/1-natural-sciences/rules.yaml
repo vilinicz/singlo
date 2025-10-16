@@ -1,57 +1,128 @@
 elements:
-  - id: "Natural sciences/Result/measurement-improvement"
+  # ===================== HYPOTHESIS
+  - id: "root/Hypothesis/we_hypothesize"
+    type: Hypothesis
+    weight: 0.60
+    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+hypothes[ie]ze|we\\s+conjecture|we\\s+posit)\\b\\s+that\\s+(.{1,180}?)\\."
+    negatives: [ "disprove|counterexample" ]
+    captures: [ "cue", "text" ]
+
+  - id: "root/Hypothesis/assumption"
+    type: Hypothesis
+    weight: 0.56
+    sections: ["Introduction","Methods","Body","Unknown"]
+    pattern: "\\b(assume|assumption|suppose|let)\\b\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  # ===================== INPUT FACT
+  - id: "root/InputFact/citation_fact"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(according\\s+to|following)\\b.{0,40}?\\b(the\\s+)?(theory|model|equation|dataset|protocol|theorem|lemma)\\b\\s+of\\s+(.{1,120}?)\\b"
+    negatives: [ ]
+    captures: [ "cue", "det", "kind", "author" ]
+
+  - id: "root/InputFact/parameters_or_setup"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(parameters?|settings?|setup|protocol)\\b.{0,160}?(\\b(n\\s*=\\s*\\d{1,5}|seed\\s*=\\s*\\d+|temperature\\s*=\\s*\\d{1,3}\\s*°?C|O\\([^)]{1,30}\\)|\\d+(?:\\.\\d+)?%))"
+    negatives: [ ]
+    captures: [ "what", "value" ]
+
+  # ===================== TECHNIQUE
+  - id: "root/Technique/proposed_method"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+(?:propose|present|introduce)|our\\s+(?:method|approach|algorithm|pipeline))\\b.{0,160}?"
+    negatives: [ "baseline|trivial" ]
+    captures: [ "cue" ]
+
+  - id: "root/Technique/measurement_or_characterization"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(assay|measurement|characteri[sz]ation|protocol|procedure|calibration)\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  # ===================== EXPERIMENT
+  - id: "root/Experiment/experiment_or_evaluation"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(experiment|evaluation|benchmark|test|simulation|numerical)\\b"
+    negatives: [ "toy\\s+example\\s+only" ]
+    captures: [ "kind" ]
+
+  - id: "root/Experiment/ablation_or_component"
+    type: Experiment
+    weight: 0.58
+    sections: ["Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(ablation|component\\s+study|module\\s+analysis)\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  # ===================== RESULT
+  - id: "root/Result/quant_change_percent"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(increase|decrease|improv(?:e|ement)|reduction|higher|lower|faster)\\b.{0,120}?(by\\s+\\d+(?:\\.\\d+)?%|\\d+(?:\\.\\d+)?\\s*(points?|x))"
+    negatives: [ "no\\s+significant\\s+difference" ]
+    captures: [ "verb", "delta" ]
+
+  - id: "root/Result/significance_or_interval"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(observed|measured|obtained)\s+(?:an?\s+)?(increase|decrease|value)\s+(?:of|in)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|K|eV|J|Pa|mol|nm|µm|Å)?'
-    negatives: ['not\\s+significant','no\\s+effect','artifact|noise']
-    captures: ["value","unit"]
-  - id: "Natural sciences/Hypothesis/relationship-proposed"
-    type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:is|are|will be)\s+(?:related|correlated|caused)'
-    negatives: ['null\s+hypothesis','no\s+relation']
-    captures: ["value"]
-  - id: "Natural sciences/Experiment/instrument-based"
-    type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:conducted|performed)\s+(?:an?|the)?\s*(experiment|measurement|observation)\s+(?:using|with)\s+(?:NMR|XRD|AFM|Raman|DFT|PCA|spectroscop[a-z]*)'
-    negatives: ['simulation\s+only','no\s+measurement']
-    captures: []
-  - id: "Natural sciences/Technique/specific-method"
-    type: Technique
-    weight: 0.65
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:used|applied|developed)\s+(?:DFT|PCA|SVD|NMR|XRD|spectroscopy|microscopy)\b'
-    negatives: ['baseline\s+only','trivial\s+method']
-    captures: []
-  - id: "Natural sciences/Dataset/samples-collected"
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(p\\s*[<≤]\\s*0\\.0?5|p\\s*=\\s*0\\.[0-9]+|95%\\s+CI|confidence\\s+interval)\\b.{0,160}?(difference|effect|association|improvement)"
+    negatives: [ ]
+    captures: [ "stat", "effect" ]
+
+  - id: "root/Result/generic_statement"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+(?:show|prove|demonstrate|establish))\\b.{0,200}?\\."
+    negatives: [ "contradict|fail\\s+to\\s+show" ]
+    captures: [ "cue" ]
+
+  # ===================== DATASET
+  - id: "root/Dataset/named_or_public"
     type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:dataset|corpus|collection)\s+(?:contains|comprises)\s+(?P<n>\\d{2,})\s+(?:samples|observations|records|specimens)'
-    negatives: ['synthetic\s+only']
-    captures: ["n"]
-  - id: "Natural sciences/Analysis/statistical-or-computational"
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption","Appendix"]
+    pattern: "\\b(dataset|benchmark|corpus|survey|catalogue|data\\s+release)\\b.{0,120}?(\\b[A-Z][A-Za-z0-9_\\-]{2,}\\b|GSE\\d{3,7}|SRR\\d{3,9}|PRJ\\w{2}\\d{4,})"
+    negatives: [ ]
+    captures: [ "kind", "name" ]
+
+  # ===================== ANALYSIS
+  - id: "root/Analysis/correlation_or_association"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(we\s+(?:performed|conducted)\s+)?(?:statistical|computational)\s+analysis\b.*(?:ANOVA|regression|PCA|SVD)'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Natural sciences/Conclusion/phenomenon"
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(correlat(es|ion)|associat(es|ion)|linked\\s+to)\\b.{0,160}?(\\b[A-Za-z][\\w\\-]{2,}\\b)"
+    negatives: [ ]
+    captures: [ "rel", "target" ]
+
+  - id: "root/Analysis/error_or_breakdown"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(error\\s+analysis|breakdown|failure\\s+modes?)\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  # ===================== CONCLUSION
+  - id: "root/Conclusion/summary"
     type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
-    negatives: ['inconclusive','not\s+significant']
-    captures: ["value"]
-  - id: "Natural sciences/Input Fact/law-or-principle"
-    type: Input Fact
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(?:the\s+)?(?:law|principle|theorem|model)\s+of\s+(.+?)'
-    negatives: ['myth|legend']
-    captures: ["value"]
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+findings\\s+suggest)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

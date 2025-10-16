@@ -1,57 +1,152 @@
 elements:
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Result/environmental-metric"
+  # ===== RESULT (ключевые выводы по прокси/микроструктуре/диагенезу)
+  - id: "earth/Result/mgca_banding_presence"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Abstract"]
+    pattern: "\\b(Mg/Ca|magnesium\\s*/\\scalcium)\\b.{0,120}?(bands?|banding|heterogeneity)\\b.{0,80}?(preserved|retained|absent|homogenised|lost)"
+    negatives: [ ]
+    captures: [ "proxy", "banding", "status" ]
+
+  - id: "earth/Result/diagenetic_process_inferred"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(dissolution|overgrowth|replacement|re\\-?precipitation|fluid\\s+mediated)\\b.{0,160}?(responsible|explain(s|ed)|account(s)?\\s+for)"
+    negatives: [ ]
+    captures: [ "process", "cue" ]
+
+  - id: "earth/Result/porosity_and_grain_change"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(increase|decrease|trend)\s+(?:in|of)\s+(precipitation|temperature|SST|NDVI|discharge)\s+(?:by|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>°C|mm|m³/s|%)?'
-    negatives: ['not\\s+significant','within\s+noise']
-    captures: ["value","unit"]
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Hypothesis/climate-or-process"
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(porosity|grain\\s+size|fanning|coarsen(?:ed|ing))\\b.{0,160}?(increase|decrease|greater|smaller|coarser|finer)"
+    negatives: [ ]
+    captures: [ "feature", "trend" ]
+
+  - id: "earth/Result/environmental_condition"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(above|below)\\s+the\\s+lysocline\\b|\\b(over|under)saturated\\s+with\\s+respect\\s+to\\s+calcite\\b"
+    negatives: [ ]
+    captures: [ "state" ]
+
+  # ===== HYPOTHESIS (рабочие гипотезы о модификациях/сохранности)
+  - id: "earth/Hypothesis/diagenetic_hypothesis"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(ENSO|teleconnection|land\s+use|aerosols)\s+(?:drive|affect|modulate)\s+(.+?)'
-    negatives: ['no\s+link|spurious']
-    captures: ["value"]
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Experiment/field-or-remote-sensing"
-    type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(field\s+campaign|remote\s+sensing|in\s+situ\s+measurements|core\s+sampling)\b'
-    negatives: ['modeling\s+only']
-    captures: []
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Technique/gis-or-gcm"
-    type: Technique
-    weight: 0.65
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(GIS|DEM|GCM|hydrological\s+model|SWAT|downscal(ing|ed))\b'
-    negatives: ['qualitative\s+mapping\s+only']
-    captures: []
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Dataset/stations-or-scenes"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:stations|scenes|samples)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+site']
-    captures: ["n"]
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Analysis/trend-or-regression"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(Mann[–-]Kendall|Theil[–-]Sen|ARIMA|linear\s+trend|regression)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Conclusion/environmental-impact"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(process|factor)\s+(?:affects|modulates|drives)\s+(.+?)'
-    negatives: ['inconclusive']
-    captures: ["value"]
-  - id: "Natural sciences / 1.5-earth-and-environmental-sciences/Input Fact/authority"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+hypothesi[zs]e|we\\s+propose|we\\s+posit)\\b.{0,40}?that\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  - id: "earth/Hypothesis/preservation_assumption"
+    type: Hypothesis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(IPCC|NOAA|USGS|WMO)\b(.+?)?'
-    negatives: ['commentary|news']
-    captures: ["value"]
+    sections: ["Introduction","Discussion","Body","Unknown"]
+    pattern: "\\b(glassy|frosty)\\s+specimen(s)?\\b.{0,120}?(represent|indicative|assum(?:e|ption))"
+    negatives: [ ]
+    captures: [ "grade", "cue" ]
+
+  # ===== INPUT FACT (материал, координаты, глубины, условия)
+  - id: "earth/InputFact/core_and_site"
+    type: "Input Fact"
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(core|Site|IODP|ODP|DSDP)\\b.{0,120}?\\b([A-Z]?[0-9]{1,4}[A-Z]?)\\b|\\blatitude\\b|\\blongitude\\b|\\b\\d{1,3}°\\d{1,2}'\\d{1,2}\"[NS]\\b"
+    negatives: [ ]
+    captures: [ "source", "id" ]
+
+  - id: "earth/InputFact/sample_prep"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(sieved|ultrasonicated|embedded|polish(?:ed|ing)|carbon\\s+coat(?:ed)?)\\b.{0,160}?"
+    negatives: [ ]
+    captures: [ "step" ]
+
+  - id: "earth/InputFact/environment_state"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Discussion"]
+    pattern: "\\b(bottom\\s+waters|pore\\s+waters)\\b.{0,160}?\\b(over|under)saturated\\s+with\\s+respect\\s+to\\s+calcite\\b"
+    negatives: [ ]
+    captures: [ "medium", "state" ]
+
+  # ===== TECHNIQUE (EBSD/EMPA/SEM и режимы съёмки)
+  - id: "earth/Technique/ebsd_method"
+    type: Technique
+    weight: 0.66
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(EBSD|electron\\s+backscatter\\s+diffraction)\\b.{0,160}?(step\\s+size|misorientation|grain\\s+map|orientation\\s+map|pole\\s+figure)"
+    negatives: [ ]
+    captures: [ "tech", "detail" ]
+
+  - id: "earth/Technique/empa_wds"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(EMPA|electron\\s+probe|WDS|microprobe)\\b.{0,160}?(map|mmol/mol|dwell\\s+time|pixel\\s+size|quantitative)"
+    negatives: [ ]
+    captures: [ "tech", "detail" ]
+
+  - id: "earth/Technique/sem_imaging"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(SEM|scanning\\s+electron\\s+microscope|forescatter|FSE)\\b.{0,160}?(image|imaging|detector)"
+    negatives: [ ]
+    captures: [ "tech", "detail" ]
+
+  # ===== EXPERIMENT (характеризации/карты/серии)
+  - id: "earth/Experiment/mapping_series"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(map(s)?|mapping)\\b.{0,160}?(Mg/Ca|orientation|grain|banding)"
+    negatives: [ ]
+    captures: [ "what", "target" ]
+
+  - id: "earth/Experiment/preservation_groups"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(glassy|frosty)\\b.{0,80}?\\b(specimen(s)?|group(s)?)\\b"
+    negatives: [ ]
+    captures: [ "grade", "unit" ]
+
+  # ===== ANALYSIS (корреляции/устойчивость прокси/стабильность)
+  - id: "earth/Analysis/banding_vs_microstructure"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(banding|heterogeneity)\\b.{0,160}?(correlate(s)?|associated)\\b.{0,160}?\\b(microstructure|grain(s)?|orientation)"
+    negatives: [ ]
+    captures: [ "banding", "relation", "structure" ]
+
+  - id: "earth/Analysis/proxy_robustness"
+    type: Analysis
+    weight: 0.60
+    sections: ["Discussion","Body","Unknown","Conclusion"]
+    pattern: "\\b(Mg/Ca|δ ?18O|δ ?13C)\\b.{0,160}?(robust|reset|affected|influenced|preserved)"
+    negatives: [ ]
+    captures: [ "proxy", "status" ]
+
+  # ===== DATASET (керны/каталоги/релизы данных)
+  - id: "earth/Dataset/core_catalog"
+    type: Dataset
+    weight: 0.52
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(core|Site|survey|data\\s+release)\\b.{0,120}?\\b(IODP|ODP|DSDP|SDSS|DES|Euclid)\\b"
+    negatives: [ ]
+    captures: [ "kind", "name" ]
+
+  # ===== CONCLUSION
+  - id: "earth/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|we\\s+summarize)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

@@ -1,57 +1,136 @@
 elements:
-  - id: "Natural sciences / 1.3-physical-sciences/Result/material-parameter"
+  # ===== RESULT (утверждения/границы/точные решения)
+  - id: "phys/Result/theorem_like_statement"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Abstract"]
+    pattern: "\\b(we\\s+(?:prove|show|derive|establish)|it\\s+follows\\s+that)\\b.{0,160}?\\b(result|solution|bound|inequality|expression)\\b"
+    negatives: [ "conjecture", "open\\s+problem", "counterexample" ]
+    captures: [ "cue", "kind" ]
+
+  - id: "phys/Result/complexity_or_asymptotic_rate"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","Appendix"]
+    pattern: "\\b(scales\\s+as|behaves\\s+as|asymptotic(?:ally)?)\\b.{0,120}?(O\\([^)]{1,40}\\)|\\Omega\\([^)]{1,40}\\)|\\Theta\\([^)]{1,40}\\)|e^{-?[\\d\\w\\+\\-\\*/]+})"
+    negatives: [ ]
+    captures: [ "verb", "form" ]
+
+  - id: "phys/Result/cosmology_w_near_minus_one"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\bw\\s*=\\s*-?1(?:\\s*[\\+−-]\\s*\\d?\\.\\d+)?|equation\\s+of\\s+state\\s+(?:is|approaches)\\s+(-?1(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: [ "value" ]
+
+  - id: "phys/Result/phase_interpolation"
     type: Result
     weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(band\s+gap|lattice\s+parameter|magnetic\s+moment|conductivity)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>eV|Å|S/m|emu/g|T)?'
-    negatives: ['not\\s+resolved','below\s+noise']
-    captures: ["value","unit"]
-  - id: "Natural sciences / 1.3-physical-sciences/Hypothesis/phase-or-transition"
+    sections: ["Results","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(interpolat(es|ing)|connects)\\b.{0,120}?\\b(de\\s*Sitter|AdS)\\b.{0,80}?\\b(de\\s*Sitter|AdS)\\b"
+    negatives: [ ]
+    captures: [ "verb", "from", "to" ]
+
+  # ===== HYPOTHESIS (конъектуры/рабочие гипотезы/модели)
+  - id: "phys/Hypothesis/conjecture"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|suggest)\s+(?:a\s+)?(phase\s+transition|ordering|coupling)\b'
-    negatives: ['no\s+transition|disorder']
-    captures: []
-  - id: "Natural sciences / 1.3-physical-sciences/Experiment/spectroscopy-or-microscopy"
-    type: Experiment
-    weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(we\s+(?:measured|recorded))\s+(spectra|diffraction|magneti[sz]ation|hysteresis)\s+(?:using|with)\s+(NMR|XRD|Raman|AFM|PL)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Natural sciences / 1.3-physical-sciences/Technique/instrumentation"
+    weight: 0.61
+    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(conjecture|we\\s+hypothesi[zs]e|we\\s+propose\\s+that)\\b\\s+(.{1,160}?)\\."
+    negatives: [ "disprove|counterexample" ]
+    captures: [ "cue", "text" ]
+
+  - id: "phys/Hypothesis/model_assumption"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Introduction","Methods","Body","Unknown"]
+    pattern: "\\b(assume|suppose|let)\\b\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  # ===== INPUT FACT (условия/метрики/метрика/Лагранжиан)
+  - id: "phys/InputFact/lagrangian_hamiltonian"
+    type: "Input Fact"
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(Lagrangian|Hamiltonian)\\b.{0,80}?(=|:)\\s*(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "kind", "eq", "expr" ]
+
+  - id: "phys/InputFact/metric_ansatz_flrw"
+    type: "Input Fact"
+    weight: 0.65
+    sections: ["Introduction","Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(FLRW|Friedmann|metric|ansatz)\\b.{0,120}?\\b(ds\\^?2|ds2|d{sS}\\^?2)\\b"
+    negatives: [ ]
+    captures: [ "cue", "metric" ]
+
+  - id: "phys/InputFact/superpotential_definition"
+    type: "Input Fact"
+    weight: 0.63
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(superpotential|W)\\b.{0,80}?\\b(defined|is\\s+defined|satisf(?:y|ies))\\b.{0,160}?"
+    negatives: [ ]
+    captures: [ "cue" ]
+
+  # ===== TECHNIQUE (методы: superpotential / Hamilton–Jacobi / вариационный)
+  - id: "phys/Technique/superpotential_method"
     type: Technique
     weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(calibrated|assembled|configured)\s+(spectrometer|diffractometer|cryostat|microscope)\b'
-    negatives: ['off\s+the\s+shelf\s+only']
-    captures: []
-  - id: "Natural sciences / 1.3-physical-sciences/Dataset/events-or-spectra"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:collected|compiled)\s+(?P<n>\\d{2,})\s+(?:events|spectra|frames)\b'
-    negatives: ['single\s+measurement']
-    captures: ["n"]
-  - id: "Natural sciences / 1.3-physical-sciences/Analysis/fitting-or-modeling"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(fit|fitted|modeled)\s+(?:data|curve|spectrum)\s+(?:with|using)\s+(Drude|Lorentz|Debye|Gaussian)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Natural sciences / 1.3-physical-sciences/Conclusion/phenomenon"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
-    negatives: ['inconclusive|ambiguous']
-    captures: ["value"]
-  - id: "Natural sciences / 1.3-physical-sciences/Input Fact/theory"
-    type: Input Fact
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(method\\s+of\\s+the\\s+superpotential|Hamilton[- ]Jacobi\\s+approach|variational\\s+principle)\\b"
+    negatives: [ ]
+    captures: [ "method" ]
+
+  - id: "phys/Technique/domain_wall_correspondence"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Discussion"]
+    pattern: "\\b(domain[- ]wall\\s+correspondence|holographic\\s+dual|AdS/CFT)\\b"
+    negatives: [ ]
+    captures: [ "method" ]
+
+  # ===== EXPERIMENT (в физ.теории — численные эксперименты/симуляции)
+  - id: "phys/Experiment/numerical_simulation"
+    type: Experiment
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(?:the\s+)?(standard\s+model|band\s+theory|Maxwell|Boltzmann)\b(.+?)?'
-    negatives: ['hypothesis|speculation']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Appendix"]
+    pattern: "\\b(numerical|computational)\\s+(experiment|simulation|integration|verification)\\b"
+    negatives: [ ]
+    captures: [ "kind", "what" ]
+
+  # ===== ANALYSIS (параметрические режимы, стационарные точки, устойчивость)
+  - id: "phys/Analysis/fixed_points_stability"
+    type: Analysis
+    weight: 0.61
+    sections: ["Results","Discussion","Body","Unknown","Appendix"]
+    pattern: "\\b(fixed\\s+point|critical\\s+point|attractor|repulsive|saddle)\\b.{0,160}?\\b(stability|stable|unstable)\\b"
+    negatives: [ ]
+    captures: [ "fp", "stability" ]
+
+  - id: "phys/Analysis/slow_roll_parameters"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","Appendix"]
+    pattern: "\\b(slow[- ]roll|\\b\\epsilon_H|\\b\\eta_H)\\b.{0,160}?"
+    negatives: [ ]
+    captures: [ "param" ]
+
+  # ===== DATASET (редко: каталоги/наблюдения/каталоги кривых света)
+  - id: "phys/Dataset/observational_catalog"
+    type: Dataset
+    weight: 0.52
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(catalogue|catalog|survey|data\\s+release)\\b.{0,120}?\\b(Planck|WMAP|SDSS|DES|Euclid|HST)\\b"
+    negatives: [ ]
+    captures: [ "name" ]
+
+  # ===== CONCLUSION
+  - id: "phys/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|we\\s+summarize)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

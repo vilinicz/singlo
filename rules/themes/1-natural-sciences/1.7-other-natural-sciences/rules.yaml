@@ -1,57 +1,160 @@
 elements:
-  - id: "Natural sciences / 1.7-other-natural-sciences/Result/general-science"
+  # ===== RESULT
+  - id: "other/Result/qa_above_chance"
     type: Result
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(observed|identified|measured)\s+(?:a\s+)?(pattern|effect|relationship)\b'
-    negatives: ['anecdotal|speculative']
-    captures: []
-  - id: "Natural sciences / 1.7-other-natural-sciences/Hypothesis/cross-disciplinary"
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(question[- ]answering|QA)\\b.{0,160}?(above|over)\\s+chance|\\baccuracy\\b.{0,80}?(above|over)\\s+chance"
+    negatives: [ ]
+    captures: [ "qa", "qual" ]
+
+  - id: "other/Result/improvement_time_cost"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(time|cost)\\b.{0,80}?\\b(improved|reduced|decrease|savings?)\\b"
+    negatives: [ ]
+    captures: [ "metric", "effect" ]
+
+  - id: "other/Result/human_study_preference"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(user\\s+study|survey)\\b.{0,160}?(higher|significant|clear)\\s+(ratings?|preference|median)"
+    negatives: [ ]
+    captures: [ "study", "qual" ]
+
+  - id: "other/Result/description_types_compare"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(full\\s+description|step[- ]level\\s+description|update\\s+description)\\b.{0,160}?(comparable|better|worse|matches?)"
+    negatives: [ ]
+    captures: [ "kind", "cmp" ]
+
+  # ===== HYPOTHESIS
+  - id: "other/Hypothesis/nl_trace_improves_explainability"
+    type: Hypothesis
+    weight: 0.61
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+propose|we\\s+introduce|we\\s+hypothesi[zs]e)\\b.{0,60}?that\\s+(.{1,160}?)(explainab|interpretab)"
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  - id: "other/Hypothesis/events_rewards_updates_help"
     type: Hypothesis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|propose)\s+that\s+(.+?)\s+(?:relates|applies)\s+across\s+domains'
-    negatives: ['no\s+evidence']
-    captures: ["value"]
-  - id: "Natural sciences / 1.7-other-natural-sciences/Experiment/instrumentation"
-    type: Experiment
-    weight: 0.59
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(we\s+(?:performed|conducted))\s+(measurement|experiment)\s+(?:using|with)\s+(instrument|sensor|setup)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Natural sciences / 1.7-other-natural-sciences/Technique/methodology"
+    sections: ["Introduction","Discussion","Body","Unknown"]
+    pattern: "\\b(events|rewards|updates)\\b.{0,160}?(enable|allow|improv(e|es)|support)\\b.{0,120}?\\b(explanation|interpretation)"
+    negatives: [ ]
+    captures: [ "signals", "verb", "target" ]
+
+  # ===== INPUT FACT
+  - id: "other/InputFact/problem_definition"
+    type: "Input Fact"
+    weight: 0.63
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(inverse\\s+problem|forward\\s+model|objective|loss)\\b.{0,160}?(defined|given|formulated|argmin|minimi[sz]e)"
+    negatives: [ ]
+    captures: [ "concept", "cue" ]
+
+  - id: "other/InputFact/signals_definition"
+    type: "Input Fact"
+    weight: 0.63
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(events)\\s*,\\s*(rewards)\\s*,\\s*(updates)\\b.{0,120}?(defined|emitted|instrumented)"
+    negatives: [ ]
+    captures: [ "e", "r", "u", "cue" ]
+
+  - id: "other/InputFact/simulation_elements"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(differentiable\\s+simulator|forward\\s+pass|backward\\s+pass|autodiff|Bezier|curvature|obstacle)\\b"
+    negatives: [ ]
+    captures: [ "item" ]
+
+  # ===== TECHNIQUE
+  - id: "other/Technique/instrumented_optimizer"
     type: Technique
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(we\s+(?:developed|applied))\s+(?:an?|a)\s+(methodology|framework|workflow)\b'
-    negatives: ['ad\s+hoc']
-    captures: []
-  - id: "Natural sciences / 1.7-other-natural-sciences/Dataset/collection"
-    type: Dataset
+    weight: 0.66
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(instrument(ed|ing)|emit(s|ted)|trace)\\b.{0,160}?\\b(optimizer|optimization)\\b"
+    negatives: [ ]
+    captures: [ "verb", "obj" ]
+
+  - id: "other/Technique/post_hoc_lm"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(post\\s*hoc)\\b.{0,120}?\\b(language\\s+model|LM)\\b.{0,120}?\\b(explanation|description)"
+    negatives: [ ]
+    captures: [ "phase", "lm", "goal" ]
+
+  - id: "other/Technique/optimizer_family"
+    type: Technique
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'collection\s+(?:of\s+)?(?P<n>\\d{2,})\s+(?:records|samples|observations)\b'
-    negatives: ['single\s+case']
-    captures: ["n"]
-  - id: "Natural sciences / 1.7-other-natural-sciences/Analysis/statistical"
+    sections: ["Methods","Body","Unknown","Appendix","FigureCaption"]
+    pattern: "\\b(Adam|SGD|RMSProp|sign_sgd)\\b"
+    negatives: [ ]
+    captures: [ "optim" ]
+
+  # ===== EXPERIMENT
+  - id: "other/Experiment/optimization_runs"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(seed(s)?|steps?|learning\\s+rate|scheduler|random)\\b.{0,160}?(run|experiment|evaluate|tested)"
+    negatives: [ ]
+    captures: [ "param", "verb" ]
+
+  - id: "other/Experiment/qa_eval"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption"]
+    pattern: "\\b(question[- ]answering|QA)\\b.{0,160}?\\b(experiment|evaluation|task)"
+    negatives: [ ]
+    captures: [ "qa", "kind" ]
+
+  - id: "other/Experiment/user_study"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(user\\s+study|survey|participants)\\b.{0,160}?(rating|median|preference)"
+    negatives: [ ]
+    captures: [ "study", "metric" ]
+
+  # ===== ANALYSIS
+  - id: "other/Analysis/ablation_description_types"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(regression|ANOVA|time\s+series|factor\s+analysis)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Natural sciences / 1.7-other-natural-sciences/Conclusion/general"
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(full\\s+description|step[- ]level\\s+description|update\\s+description)\\b.{0,160}?(accuracy|performance|success)"
+    negatives: [ ]
+    captures: [ "variant", "metric" ]
+
+  - id: "other/Analysis/noise_discrimination"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(noise|distractor|sigma|σ)\\b.{0,160}?(discriminat(e|ion)|success\\s+rate)"
+    negatives: [ ]
+    captures: [ "noise", "metric" ]
+
+  # ===== DATASET
+  - id: "other/Dataset/logs_and_html"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(logs?/|\\.json|\\.html|supplementary|supplemental\\s+material)\\b"
+    negatives: [ ]
+    captures: [ "artifact" ]
+
+  # ===== CONCLUSION
+  - id: "other/Conclusion/summary"
     type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(.+?)\b'
-    negatives: ['tentative']
-    captures: ["value"]
-  - id: "Natural sciences / 1.7-other-natural-sciences/Input Fact/reference"
-    type: Input Fact
-    weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(?:the\s+)?(theory|model|reference)\s+(.+?)'
-    negatives: ['speculation|opinion']
-    captures: ["value"]
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+methodology\\s+demonstrates|we\\s+demonstrate)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

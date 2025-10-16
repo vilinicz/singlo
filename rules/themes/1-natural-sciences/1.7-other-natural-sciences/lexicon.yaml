@@ -1,157 +1,39 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - PDE
-    - PDE
-  -
-    - ODE
-    - ODE
-  -
-    - FFT
-    - FFT
-  -
-    - DFT
-    - DFT
-  -
-    - SVD
-    - singular value decomposition
-  -
-    - PCA
-    - principal component analysis
-  -
-    - QED
-    - QED
-  -
-    - QCD
-    - QCD
-  -
-    - NMR
-    - nuclear magnetic resonance
+  - [ LM, "language model" ]
+  - [ QA, "question answering" ]
+  - [ SGD, "stochastic gradient descent" ]
+  - [ RMSProp, "root mean square propagation" ]
+  - [ CoT, "chain of thought" ]
+
+synonyms:
+  - [ inverse problem, inverse problems ]
+  - [ forward model, simulator ]
+  - [ autodiff, automatic differentiation ]
+  - [ objective, loss function ]
+  - [ post hoc, post-hoc ]
+  - [ trace, log ]
+  - [ events, signals ]
+  - [ rewards, metrics ]
+  - [ updates, parameter updates ]
+  - [ Bezier, Bézier ]
+  - [ curvature, kappa ]
+  - [ accuracy over chance, above chance ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - broadly
+  - generally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "s"
+  - "steps"
+  - "seeds"
   - "%"
-  - K
-  - eV
-  - J
-  - M
-  - mM
-  - nm
-  - Âµm
-  - Ã…
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - interdisciplinary
-    - interdisciplinarys
-  -
-    - methodology
-    - methodologys
-  -
-    - measurement
-    - measurements
-  -
-    - instrumentation
-    - instrumentations
-  -
-    - review
-    - reviews
-  -
-    - general science
-    - general sciences

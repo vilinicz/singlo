@@ -1,83 +1,43 @@
 id: "Natural sciences / 1.1-mathematics"
-version: 1
-threshold: 0.8
-must:
-  - theorem
-  - geometry
+version: 2
+threshold: 0.58   # был 0.8 — слишком высок для теор. статей без ключевых слов в заголовках
+must: []          # раньше требовал одновременно "theorem" и "geometry" → срезало кучу мат/квант работ :contentReference[oaicite:3]{index=3}
 should:
-  -
-    - theorem
-    - 1
-  -
-    - algebra
-    - 1
-  -
-    - geometry
-    - 1
-  -
-    - calculus
-    - 1
-  -
-    - probability
-    - 1
-  -
-    - topology
-    - 1
-  -
-    - analysis
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Строгие математические маркеры
+  - [ "theorem",         1.0 ]
+  - [ "lemma",           0.9 ]
+  - [ "proposition",     0.9 ]
+  - [ "corollary",       0.9 ]
+  - [ "proof",           0.9 ]
+  - [ "we prove",        0.9 ]
+  - [ "we show",         0.8 ]
+  - [ "bound",           0.8 ]
+  - [ "inequality",      0.8 ]
+  - [ "asymptotic",      0.7 ]
+  - [ "O(",              0.7 ]
+  - [ "\\Omega(",        0.7 ]
+  - [ "\\Theta(",        0.7 ]
+
+  # Ядро матфизики / анализ операторов (универсально для математики и quant-ph)
+  - [ "Hamiltonian",     0.7 ]
+  - [ "unitary",         0.7 ]
+  - [ "eigenvalue",      0.7 ]
+  - [ "variational",     0.6 ]
+  - [ "Lagrangian",      0.6 ]
+  - [ "functional",      0.6 ]
+  - [ "Fisher Information", 0.6 ]
+
+  # Структурные слова, помогающие роутингу
+  - [ "definition",      0.5 ]
+  - [ "assume",          0.5 ]
+  - [ "suppose",         0.5 ]
+  - [ "let",             0.4 ]
 negative:
-  -
-    - engineering
-    - 0.8
-  -
-    - design
-    - 0.8
-  -
-    - prototype
-    - 0.8
-  -
-    - manufacturing
-    - 0.8
-  -
-    - systems
-    - 0.8
-  -
-    - control
-    - 0.8
-  -
-    - optimization
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  # Соседние домены, которые раньше тянулись «в плюс»
+  - [ "patient",         0.9 ]
+  - [ "clinical",        0.9 ]
+  - [ "manufacturing",   0.8 ]
+  - [ "prototype",       0.8 ]
+  - [ "design",          0.8 ]
+  - [ "dataset",         0.6 ]
+  - [ "trial",           0.6 ]

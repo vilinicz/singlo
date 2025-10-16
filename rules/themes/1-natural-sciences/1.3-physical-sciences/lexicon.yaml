@@ -1,160 +1,41 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - PDE
-    - PDE
-  -
-    - ODE
-    - ODE
-  -
-    - FFT
-    - FFT
-  -
-    - DFT
-    - DFT
-  -
-    - SVD
-    - singular value decomposition
-  -
-    - PCA
-    - principal component analysis
-  -
-    - QED
-    - QED
-  -
-    - QCD
-    - QCD
-  -
-    - NMR
-    - nuclear magnetic resonance
+  - [ FLRW, "Friedmann–Lemaître–Robertson–Walker" ]
+  - [ FRW,  "Friedmann–Robertson–Walker" ]
+  - [ AdS,  "anti de Sitter" ]
+  - [ dS,   "de Sitter" ]
+  - [ EoS,  "equation of state" ]
+  - [ HJ,   "Hamilton–Jacobi" ]
+  - [ QFT,  "quantum field theory" ]
+  - [ QG,   "quantum gravity" ]
+  - [ QFI,  "Quantum Fisher Information" ]
+
+synonyms:
+  - [ spacetime, space-time ]
+  - [ eigenvalue, eigenvalues ]
+  - [ eigenvector, eigenvectors ]
+  - [ potential, "scalar potential" ]
+  - [ de Sitter, dS ]
+  - [ anti de Sitter, AdS ]
+  - [ slow roll, slow-roll ]
+  - [ superpotential, W ]
+  - [ scale factor, a ]
+  - [ Hubble, H ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - nominally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
   - "%"
-  - K
-  - eV
-  - J
-  - M
-  - mM
-  - nm
-  - Âµm
-  - Ã…
-  - keV
-  - MeV
-  - GeV
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - quantum
-    - quantums
-  -
-    - optics
-    - opticss
-  -
-    - thermodynamics
-    - thermodynamicss
-  -
-    - particle
-    - particles
-  -
-    - solid state
-    - solid states
-  -
-    - plasma
-    - plasmas
+  - "x"
+  - s
+  - yr
+  - km/s/Mpc

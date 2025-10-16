@@ -1,160 +1,48 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - PDE
-    - PDE
-  -
-    - ODE
-    - ODE
-  -
-    - FFT
-    - FFT
-  -
-    - DFT
-    - DFT
-  -
-    - SVD
-    - singular value decomposition
-  -
-    - PCA
-    - principal component analysis
-  -
-    - QED
-    - QED
-  -
-    - QCD
-    - QCD
-  -
-    - NMR
-    - nuclear magnetic resonance
+  - [ GPU, "graphics processing unit" ]
+  - [ TPU, "tensor processing unit" ]
+  - [ IR,  "intermediate representation" ]
+  - [ JAX, JAX ]
+  - [ ROCm, ROCm ]
+  - [ CUDA, CUDA ]
+  - [ NCCL, NCCL ]
+  - [ LLM, "large language model" ]
+  - [ mAP, "mean average precision" ]
+  - [ AUC, "area under the curve" ]
+  - [ MMLU, "massive multitask language understanding" ]
+  - [ SOTA, "state of the art" ]
+  - [ FLOPS, FLOPS ]
+  - [ BFS, BFS ]
+  - [ DFS, DFS ]
+
+synonyms:
+  - [ algorithm, method ]
+  - [ heuristic, strategy ]
+  - [ runtime, latency ]
+  - [ throughput, speed ]
+  - [ kernel, operator ]
+  - [ dataset, benchmark ]
+  - [ evaluation, testing ]
+  - [ baseline, comparator ]
+  - [ optimizer, optimization ]
+  - [ training, learning ]
+  - [ inference, serving ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggest(s)
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
+  - "%"
+  - "x"
   - ms
   - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
-  - "%"
-  - K
-  - eV
-  - J
-  - M
-  - mM
-  - nm
-  - Âµm
-  - Ã…
   - MB
   - GB
-  - TB
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - algorithm
-    - algorithms
-  -
-    - database
-    - databases
-  -
-    - information retrieval
-    - information retrievals
-  -
-    - software
-    - softwares
-  -
-    - network
-    - networks
-  -
-    - computation
-    - computations

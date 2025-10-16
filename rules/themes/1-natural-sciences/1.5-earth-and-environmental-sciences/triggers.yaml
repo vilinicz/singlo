@@ -1,83 +1,34 @@
 id: "Natural sciences / 1.5-earth-and-environmental-sciences"
-version: 1
-threshold: 0.8
-must:
-  - seismology
-  - hydrology
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - seismology
-    - 1
-  -
-    - climate
-    - 1
-  -
-    - hydrology
-    - 1
-  -
-    - geomorphology
-    - 1
-  -
-    - atmosphere
-    - 1
-  -
-    - oceanography
-    - 1
-  -
-    - geochemistry
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Палео/осадочные и прокси-маркеры
+  - ["foraminifera|foraminifer(a|al)",       1.0]
+  - ["proxy|paleoclimate|palaeoclimate",     0.9]
+  - ["Mg/Ca|magnesium to calcium",           0.9]
+  - ["\\bδ ?18O\\b|\\bδ ?13C\\b|stable isotope", 0.8]
+  - ["lysocline|carbonate\\s+ooze",          0.8]
+  - ["diagenesis|diagenetic|recrystall",     0.9]
+  - ["dissolution|overgrowth|replacement",   0.8]
+  - ["sediment core|core\\s+[A-Z0-9]+",      0.7]
+  - ["glassy|frosty\\s+specimen",            0.7]
+  - ["pore water|oversaturated|undersaturated", 0.6]
+
+  # Аналитика и микроструктура
+  - ["EBSD|electron backscatter diffraction", 0.9]
+  - ["EMPA|electron microprobe|WDS",          0.8]
+  - ["SEM|scanning electron microscope",      0.7]
+  - ["grain|mesocrystal|orientation|c-axis",  0.7]
+  - ["banding|bands|heterogeneity",           0.7]
+
+  # География/стратиграфия
+  - ["latitude|longitude|site|IODP|DSDP|ODP", 0.6]
+  - ["deposition|sedimentary|facies",         0.6]
+
 negative:
-  -
-    - engineering
-    - 0.8
-  -
-    - design
-    - 0.8
-  -
-    - prototype
-    - 0.8
-  -
-    - manufacturing
-    - 0.8
-  -
-    - systems
-    - 0.8
-  -
-    - control
-    - 0.8
-  -
-    - optimization
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  # Соседние домены, чтобы уменьшить шум
+  - ["patient|clinical|cohort|trial",         0.9]
+  - ["transformer|optimizer|benchmark\\s+dataset", 0.8]
+  - ["theorem|lemma|corollary",               0.7]
+  - ["manufacturing|prototype only",          0.6]

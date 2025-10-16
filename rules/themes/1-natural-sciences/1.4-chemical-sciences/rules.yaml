@@ -1,57 +1,160 @@
 elements:
-  - id: "Natural sciences / 1.4-chemical-sciences/Result/yield-or-purity"
+  # ===== RESULT (количественные оптические/термические/структурные итоги)
+  - id: "chem/Result/cpl_glum_value"
+    type: Result
+    weight: 0.68
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(glum|g_(?:lum|abs)|dissymmetry\\s+factor)\\b.{0,120}?(=|of|up\\s+to|reaches)\\s*(-?\\d+(?:\\.\\d+)?)"
+    negatives: [ "measurement\\s+artifact", "no\\s+change" ]
+    captures: [ "metric", "eq", "value" ]
+
+  - id: "chem/Result/quantum_yield_or_brightness"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(quantum\\s+yield|QY|brightness)\\b.{0,80}?(=|of|reaches)\\s*(\\d+(?:\\.\\d+)?%?)"
+    negatives: [ ]
+    captures: [ "metric", "eq", "value" ]
+
+  - id: "chem/Result/thermal_stability_tga"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(yield|purity|conversion)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mol%|wt%)?'
-    negatives: ['impurity|decomposition','not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Natural sciences / 1.4-chemical-sciences/Hypothesis/mechanism-proposed"
-    type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:propose|suggest|hypothesi[zs]e)\s+(?:a\s+)?(mechanism|pathway|intermediate)\b'
-    negatives: ['no\s+mechanism|unclear']
-    captures: []
-  - id: "Natural sciences / 1.4-chemical-sciences/Experiment/synthesis-or-assay"
-    type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(synthesi[sz]ed|prepared|assayed)\s+(?:using|with)\s+(HPLC|GC|NMR|MS|IR|UV[- ]Vis)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Natural sciences / 1.4-chemical-sciences/Technique/catalysis-or-polymerization"
-    type: Technique
-    weight: 0.65
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(cataly[sz]ed|polymeri[sz]ation|DFT\s+calculations|titration|spectroscopy)\b'
-    negatives: ['baseline\s+only']
-    captures: []
-  - id: "Natural sciences / 1.4-chemical-sciences/Dataset/compounds-or-spectra"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:collected|measured)\s+(?P<n>\\d{2,})\s+(?:compounds|spectra|samples)\b'
-    negatives: ['single\s+specimen']
-    captures: ["n"]
-  - id: "Natural sciences / 1.4-chemical-sciences/Analysis/kinetics-or-spectrum"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(kinetic\s+model|Arrhenius|rate\s+constant|peak\s+assignment|chemical\s+shift)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Natural sciences / 1.4-chemical-sciences/Conclusion/reactivity-or-structure"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(reactivity|selectivity|structure)\s+(?:is|arises)\b'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Natural sciences / 1.4-chemical-sciences/Input Fact/literature-or-law"
-    type: Input Fact
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(TGA|thermogravimetric)\\b.{0,160}?(\\bT\\s*\\d?\\s*\\(\\s*5%\\s*\\)|5%\\s+weight[- ]loss|onset)\\b.{0,80}?(\\d{2,3}\\.\\d|\\d{2,3})\\s*°?C"
+    negatives: [ ]
+    captures: [ "tech", "criterion", "value_c" ]
+
+  - id: "chem/Result/dsc_transition"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(DSC|glass\\s+transition|Tg|clearing\\s+point|melting\\s+point)\\b.{0,120}?(at|=)\\s*(\\d{2,3}(?:\\.\\d)?)\\s*°?C"
+    negatives: [ ]
+    captures: [ "kind", "eq", "value_c" ]
+
+  - id: "chem/Result/phase_or_texture"
+    type: Result
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(?:literature|Le\s+Châtelier|Hammond|HSAB)\b(.+?)?'
-    negatives: ['hypothesis|speculation']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(nematic|smectic|cholesteric|fingerprint\\s+texture|helical\\s+order)\\b.{0,160}?(observed|retained|preserved|lost)"
+    negatives: [ ]
+    captures: [ "phase", "status" ]
+
+  - id: "chem/Result/solvent_resistance"
+    type: Result
+    weight: 0.56
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(solvent\\s+resistan[ct]e|swelling|extraction|rinse\\w*)\\b.{0,160}?(unchanged|no\\s+change|remains|retained)"
+    negatives: [ ]
+    captures: [ "test", "status" ]
+
+  # ===== HYPOTHESIS (дизайн-принципы/рабочие гипотезы)
+  - id: "chem/Hypothesis/design_principle"
+    type: Hypothesis
+    weight: 0.62
+    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
+    pattern: "\\b(we\\s+hypothesi[zs]e|we\\s+propose|we\\s+posit)\\b.{0,40}?that\\s+(.{1,160}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "text" ]
+
+  - id: "chem/Hypothesis/performance_tradeoff"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Introduction","Discussion","Body","Unknown"]
+    pattern: "\\b(paradox|trade[- ]off|conflict)\\b.{0,160}?(stability|performance|order|stress)"
+    negatives: [ ]
+    captures: [ "cue", "axis" ]
+
+  # ===== INPUT FACT (условия: состав/стехиометрия/режим)
+  - id: "chem/InputFact/composition_ratio"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(\\(R|S\\)-?[A-Za-z0-9\\-]+|dopant|crosslinker|monomer|inducer)\\b.{0,120}?(mass\\s*ratio|wt%|mol%|molar\\s*ratio)\\b.{0,40}?(\\d+(?:\\.\\d+)?%?)"
+    negatives: [ ]
+    captures: [ "component", "ratio_kw", "value" ]
+
+  - id: "chem/InputFact/processing_conditions"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(spin[- ]coated|anneal(?:ed|ing)?|UV[- ]irradiation|photopolymerization|initiator)\\b.{0,160}?(\\d{1,3})\\s*°?C|\\b(\\d{1,3})\\s*(s|sec|min)\\b"
+    negatives: [ ]
+    captures: [ "process", "temp_c", "time", "time_unit" ]
+
+  - id: "chem/InputFact/structure_assignment"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(NMR|IR\\b|FTIR|XRD|POM|CD\\b|CPL\\b)\\b.{0,160}?(assigned|confirmed|indicates)"
+    negatives: [ ]
+    captures: [ "tech", "verb" ]
+
+  # ===== EXPERIMENT (характеризация/измерения)
+  - id: "chem/Experiment/thermal_or_optical_measurement"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(DSC|TGA|UV[- ]vis|PL\\b|CD\\b|CPL\\b|POM|XRD)\\b.{0,160}?(measurement|test|spectrum|curve|scan|image)"
+    negatives: [ ]
+    captures: [ "tech", "what" ]
+
+  - id: "chem/Experiment/crosslinking_step"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(crosslink(?:ed|ing)|polymeriz(?:ed|ation))\\b.{0,160}?(UV|thermal|photo)\\b"
+    negatives: [ ]
+    captures: [ "act", "mode" ]
+
+  # ===== TECHNIQUE (подходы/методы синтеза и фиксации структуры)
+  - id: "chem/Technique/in_situ_polymerization"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(in[- ]situ\\s+polymeriz(?:ation|e)|lock(?:ing)?\\s+the\\s+ordered\\s+structure)\\b"
+    negatives: [ ]
+    captures: [ "phrase" ]
+
+  - id: "chem/Technique/topology_matched_crosslinker"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Discussion"]
+    pattern: "\\b(bi[- ]?functional|di[- ]?functional|linear\\s+crosslinker|tetra[- ]?functional|star[- ]shaped)\\b.{0,160}?(minimi[sz]e[s]?|reduce[s]?|avoid[s]?|preserv(e|es))\\b.{0,80}?(stress|order|chirality)"
+    negatives: [ ]
+    captures: [ "xlink", "verb", "target" ]
+
+  # ===== ANALYSIS (сдвиги спектров, морфология, порядок)
+  - id: "chem/Analysis/spectral_shift"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(red[- ]shift|blue[- ]shift|bathochromic|hypsochromic)\\b.{0,120}?(\\d{2,3,4}(?:\\.\\d+)?\\s*nm)"
+    negatives: [ ]
+    captures: [ "shift", "value_nm" ]
+
+  - id: "chem/Analysis/morphology_and_order"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(fingerprint\\s+texture|helical\\s+superstructure|long[- ]range\\s+order|anisotropic\\s+texture)\\b.{0,160}?(observed|visuali[sz]ed|retained|destroyed)"
+    negatives: [ ]
+    captures: [ "feature", "status" ]
+
+  # ===== DATASET (реже: каталоги реагентов/серии образцов)
+  - id: "chem/Dataset/series_of_samples"
+    type: Dataset
+    weight: 0.52
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(series|set)\\s+of\\s+(samples|monomers|crosslinkers)\\b.{0,80}?(\\b\\w{1,6}\\d{1,3}\\b)"
+    negatives: [ ]
+    captures: [ "kind", "entity", "code" ]
+
+  # ===== CONCLUSION
+  - id: "chem/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+work\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]
