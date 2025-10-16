@@ -13,6 +13,12 @@ from typing import List, Dict, Any
 from tools.report import generate_report  # см. ниже пункт 2 — CLI уже писали, он реиспользуем
 from pipeline.pipeline.worker import run_pipeline  # если у вас есть синхронный раннер
 from fastapi.responses import HTMLResponse
+from collections import Counter
+
+TYPE_ORDER = [
+    "Input Fact", "Hypothesis", "Experiment", "Technique",
+    "Result", "Dataset", "Analysis", "Conclusion",
+]
 
 # единоразовая настройка логгера для этого роутера
 logger = logging.getLogger("testbench.run")
@@ -48,6 +54,35 @@ def list_pdfs(subdir: str = ""):
         raise HTTPException(404, f"Not found: {base}")
     pdfs = [str(p.relative_to(DATASET_ROOT)) for p in base.rglob("*.pdf")]
     return {"root": str(DATASET_ROOT), "count": len(pdfs), "items": pdfs[:2000]}
+
+
+def _totals_over_rows(rows: list[dict]) -> dict:
+    totals = {
+        "docs": len(rows),
+        "sections": sum(int(r.get("s0_sections") or 0) for r in rows),
+        "nodes": sum(int(r.get("s1_nodes") or 0) for r in rows),
+        "edges": sum(int(r.get("s1_edges") or 0) for r in rows),
+        "by_type": Counter(),
+    }
+    for r in rows:
+        for t, c in (r.get("nodes_by_type") or {}).items():
+            try:
+                totals["by_type"][t] += int(c)
+            except Exception:
+                pass
+    return totals
+
+
+def _render_type_chips(by_type: Counter) -> str:
+    chips = []
+    for t in TYPE_ORDER:
+        c = by_type.get(t, 0)
+        chips.append(f"<span class='chip chip-type'><b>{t}:</b> {c}</span>")
+    # Плюс чип «Other», если встретились незнакомые типы
+    other = sum(v for k, v in by_type.items() if k not in TYPE_ORDER)
+    if other:
+        chips.append(f"<span class='chip chip-type'><b>Other:</b> {other}</span>")
+    return " ".join(chips)
 
 
 def _clean_tree(root: Path):
@@ -268,6 +303,17 @@ def _extract_counts(doc_dir: Path) -> dict:
     }
 
 
+def _fmt_section_list(names: list[str], limit: int = 10) -> str:
+    if not names:
+        return "—"
+    shown = names[:limit]
+    more = len(names) - len(shown)
+    txt = ", ".join(shown)
+    if more > 0:
+        txt += f" … (+{more})"
+    return txt
+
+
 def _extract_counts_for_doc(doc_id: str) -> dict:
     """
     Ищем:
@@ -305,6 +351,18 @@ def _extract_counts_for_doc(doc_id: str) -> dict:
 
     # секции
     s0_sections = len((s0 or {}).get("sections") or [])
+    section_names_set = set()
+    page_count = None
+    captions_count = 0
+
+    if s0 and isinstance(s0.get("sections"), list):
+        s0_sections = len(s0["sections"])
+        page_count = s0.get("page_count")
+        captions_count = len(s0.get("captions") or [])
+        for s in s0["sections"]:
+            nm = (s.get("name") or "").strip()
+            if nm:
+                section_names_set.add(nm)
 
     # узлы/рёбра + по типам
     nodes_total = edges_total = 0
@@ -335,10 +393,13 @@ def _extract_counts_for_doc(doc_id: str) -> dict:
     return {
         "doc_id": doc_id,
         "s0_sections": s0_sections,
+        "s0_page_count": page_count,
+        "s0_captions": captions_count,
+        "s0_section_names": sorted(section_names_set, key=str.lower),
         "s1_nodes": nodes_total,
         "s1_edges": edges_total,
         "nodes_by_type": nodes_by_type,
-        "has_any": any([s0, s1, s2, g]),
+        "has_any": any([s0, s1, s2, g])
     }
 
 
@@ -376,16 +437,35 @@ def dataset_report(limit: int = 5000):
         if not d: return "—"
         return ", ".join(f"{k}:{v}" for k, v in sorted(d.items()))
 
-    html_rows = [
-        f"<tr>"
-        f"<td><div class='truncate' title='{r['doc_id']}'><code>{r['doc_id']}</code></div></td>"
-        f"<td style='text-align:right'>{r['s0_sections']}</td>"
-        f"<td style='text-align:right'>{r['s1_nodes']}</td>"
-        f"<td style='text-align:right'>{r['s1_edges']}</td>"
-        f"<td>{_fmt_types(r['nodes_by_type'])}</td>"
-        f"</tr>"
-        for r in rows
-    ]
+    html_rows = []
+    for r in rows:
+        s0_details = (
+            f"<div class='s0-cell'>"
+            f"<div><b>{r['s0_sections']}</b> sections</div>"
+            f"<div class='s0-meta'>pages: {r.get('s0_page_count') or '—'}"
+            f" &nbsp;|&nbsp; captions: {r.get('s0_captions', 0)}</div>"
+            f"<div class='s0-sections' title='{', '.join(r.get('s0_section_names') or [])}'>"
+            f"{_fmt_section_list(r.get('s0_section_names') or [], limit=10)}</div>"
+            f"</div>"
+        )
+        html_rows.append(
+            f"<tr>"
+            f"<td><div class='truncate' title='{r['doc_id']}'><code>{r['doc_id']}</code></div></td>"
+            f"<td>{s0_details}</td>"
+            f"<td style='text-align:right'>{r['s1_nodes']}</td>"
+            f"<td style='text-align:right'>{r['s1_edges']}</td>"
+            f"<td>{_fmt_types(r['nodes_by_type'])}</td>"
+            f"</tr>"
+        )
+
+    tot = _totals_over_rows(rows)
+    badges = (
+        f"<span class='chip'><b>Docs</b> {tot['docs']}</span>"
+        f"<span class='chip'><b>Sections</b> {tot['sections']}</span>"
+        f"<span class='chip'><b>Nodes</b> {tot['nodes']}</span>"
+        f"<span class='chip'><b>Edges</b> {tot['edges']}</span>"
+    )
+    type_chips = _render_type_chips(tot["by_type"])
 
     html = f"""
     <html><head><title>Dataset Report</title>
@@ -405,6 +485,14 @@ def dataset_report(limit: int = 5000):
       table{{border-collapse:collapse;width:100%}}
       th,td{{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}}
       th{{background:#111a32;color:var(--head)}}
+      .chip{{display:inline-block;padding:6px 10px;border-radius:999px;
+        background:#13203d;color:#dfe7ff;border:1px solid #2a3c68;
+        font-size:12px;margin:0 6px 6px 0}}
+      .chip b{{color:#fff}}
+      .chip-type{{background:#101b33}}
+      .s0-cell b{{color:#fff}}
+      .s0-meta{{font-size:12px; opacity:.8; margin-top:2px}}
+      .s0-sections{{font-size:12px; color:#cdd7ff; line-height:1.25; margin-top:4px}}
       /* 50% для первой колонки */
       th:first-child, td:first-child{{width:50%;max-width:50%}}
     
@@ -426,11 +514,8 @@ def dataset_report(limit: int = 5000):
         <div class="card">
           <h2>Dataset report</h2>
           <div class="kpis">
-            <div class="pill"><b>Docs</b>&nbsp;&nbsp;{total_docs}</div>
-            <div class="pill"><b>Sections</b>&nbsp;&nbsp;{total_sections}</div>
-            <div class="pill"><b>Nodes</b>&nbsp;&nbsp;{total_nodes}</div>
-            <div class="pill"><b>Edges</b>&nbsp;&nbsp;{total_edges}</div>
-            <div class="pill"><b>Node types</b>&nbsp;&nbsp;{unique_types_count}</div>
+           {badges}
+           <div style="margin-top:6px">{type_chips}</div>
           </div>
           <div class="muted" style="color:#9aa3ae;margin:6px 0 12px">
             DATA_DIR: <code>{DATA_DIR}</code> &nbsp;|&nbsp; EXPORT_DIR: <code>{EXPORT_DIR}</code>
@@ -439,7 +524,7 @@ def dataset_report(limit: int = 5000):
             <thead><tr>
               <thead><tr>
                   <th style="width:50%">doc_id</th>
-                  <th style="width:110px">S0 sections</th>
+                  <th style="width:180px">S0</th>
                   <th style="width:110px">S1 nodes</th>
                   <th style="width:110px">S1 edges</th>
                   <th>node types</th>
