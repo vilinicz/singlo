@@ -1,158 +1,56 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ FMEA,  "failure modes and effects analysis" ]
+  - [ FMECA, "failure modes, effects and criticality analysis" ]
+  - [ FTA,   "fault tree analysis" ]
+  - [ HAZOP, "hazard and operability study" ]
+  - [ SIL,   "safety integrity level" ]
+  - [ PL,    "performance level" ]
+  - [ RAM,   "reliability, availability, maintainability" ]
+  - [ MTBF,  "mean time between failures" ]
+  - [ MTTR,  "mean time to repair" ]
+  - [ SPC,   "statistical process control" ]
+  - [ MSA,   "measurement system analysis" ]
+  - [ R&R,   "repeatability and reproducibility" ]
+  - [ Cpk,   "process capability index (short-term)" ]
+  - [ Ppk,   "process performance index (long-term)" ]
+  - [ DoE,   "design of experiments" ]
+  - [ MBSE,  "model-based systems engineering" ]
+  - [ SysML, "systems modeling language" ]
+  - [ IQ/OQ/PQ, "installation/operational/performance qualification" ]
+  - [ OEE,   "overall equipment effectiveness" ]
+
+synonyms:
+  - [ conformity, compliance ]
+  - [ verification, V&V ]
+  - [ usability test, formative evaluation ]
+  - [ acceptance criteria, pass/fail criteria ]
+  - [ requirement traceability, RTM ]
+  - [ reliability, dependability ]
+  - [ fishbone, Ishikawa diagram ]
+  - [ gauge R&R, gage R&R ]
+  - [ uncertainty, expanded uncertainty ]
+
+units:
+  - "%"
+  - "ppm"
+  - "h"
+  - "hours"
+  - "mV"
+  - "°C"
+  - "mm"
+  - "g"
+  - "kPa"
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
-units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
-  - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - integration
-    - integrations
-  -
-    - testing
-    - testings
-  -
-    - standard
-    - standards
-  -
-    - benchmark
-    - benchmarks
-  -
-    - scalability
-    - scalabilitys
-  -
-    - systems
-    - systemss

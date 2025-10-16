@@ -1,57 +1,128 @@
 elements:
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Result/performance"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(achieves|reaches|improves)\s+(SNR|throughput|gain|efficiency)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>dB|%|Gbps|Mbps)?'
-    negatives: ['not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Hypothesis/circuit-design"
+  # ===== HYPOTHESIS
+  - id: "ee/Hypothesis/security_first_design"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|expect)\s+that\s+(topology|architecture)\s+(?:improves|reduces)\s+(noise|delay|power)'
-    negatives: ['no\s+improvement']
-    captures: ["value"]
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Experiment/bench"
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(propose|introduce|hypothes[ie]ze|argue))\\b.{0,60}?that\\s+(.{1,180}?(security|secure communication|PLS|SDR))"
+    negatives: [ ]
+    captures: [ "cue", "verb", "text" ]
+
+  # ===== INPUT FACT
+  - id: "ee/InputFact/sdr_platform_and_env"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(GNU\\s*Radio(\\s*Companion)?|SDRSharp|USRP|RTL[- ]SDR|HackRF|BladeRF|LimeSDR)\\b.{0,120}?(Windows|Linux|Ubuntu|Mac|driver|block|flowgraph|ZMQ)"
+    negatives: [ ]
+    captures: [ "platform", "env" ]
+
+  - id: "ee/InputFact/waveform_and_params"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(OFDM|QPSK|BPSK|QAM\\d{2}|AM|FM|filter|RRC)\\b.{0,120}?\\b(sample\\s*rate|symbol\\s*rate|roll[- ]off|subcarriers?|FFT|CP|gain|center\\s*freq(?:uency)?)\\b"
+    negatives: [ ]
+    captures: [ "wave", "param" ]
+
+  - id: "ee/InputFact/standard_or_gen"
+    type: "Input Fact"
+    weight: 0.56
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(5G|NR\\b|LTE\\b|802\\.11[a-z]?|LoRa|BLE)\\b|\\b(Eb/N0|SNR|BER)\\b"
+    negatives: [ ]
+    captures: [ "std_or_metric" ]
+
+  # ===== TECHNIQUE
+  - id: "ee/Technique/pls_or_crypto"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(physical\\s+layer\\s+security|PLS|key\\s+generation|differential\\s+encod\\w+|AES|encryption|authentication)\\b"
+    negatives: [ ]
+    captures: [ "tech" ]
+
+  - id: "ee/Technique/estimation_equalization"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(channel\\s+estimation|preamble|pilot|equaliz(?:er|ation)|carrier\\s+sync|timing\\s+sync|CFO|ISI)\\b"
+    negatives: [ ]
+    captures: [ "block" ]
+
+  # ===== EXPERIMENT
+  - id: "ee/Experiment/lab_or_sim"
     type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(bench[- ]?test|prototype|FPGA\s+implementation|hardware\s+prototype)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Technique/electronics"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(ADC|DAC|DSP|PLL|FPGA|VLSI|RF|antenna|SoC)\b'
-    negatives: ['manual\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Dataset/test-cases"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:test\s+cases|designs|circuits)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+design']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Analysis/timing-or-power"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(timing\s+analysis|power\s+analysis|post\s+layout\s+simulation)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Conclusion/spec-compliance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(meets|complies\s+with)\s+(specification|standard)\b'
-    negatives: ['fails|violates']
-    captures: []
-  - id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering/Input Fact/datasheet"
-    type: Input Fact
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(simulation|hardware\\s*in\\s*the\\s*loop|over[- ]the[- ]air|lab\\s*(exercise|module)|flowgraph|experiment)\\b"
+    negatives: [ ]
+    captures: [ "mode" ]
+
+  - id: "ee/Experiment/assessment_study"
+    type: Experiment
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(datasheet|standard|specification)\s+(.+?)'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(pre[- ]?survey|post[- ]?survey|Likert|questionnaire|user\\s*study|assessment)\\b"
+    negatives: [ ]
+    captures: [ "study" ]
+
+  # ===== RESULT
+  - id: "ee/Result/ber_snr_trend"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(BER|bit\\s*error\\s*rate|frame\\s*error\\s*rate)\\b.{0,120}?(decrease|reduction|improv(?:e|ement)|lower)\\b.{0,120}?\\b(at|with)\\b.{0,40}?\\b(Eb/N0|SNR)\\b"
+    negatives: [ ]
+    captures: [ "metric", "effect", "with", "snr" ]
+
+  - id: "ee/Result/security_effect"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(secured|secure|encryption|PLS|key\\s+generation|differential\\s+encoding)\\b.{0,160}?(prevents|blocks|reduces|mitigates|resists|robust)\\b.{0,120}?(eavesdropp|attack|interference|jamming)"
+    negatives: [ ]
+    captures: [ "sec", "verb", "threat" ]
+
+  - id: "ee/Result/perf_delta"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(throughput|latency|accuracy|FER|PER)\\b.{0,120}?(increase|decrease|improv(?:e|ement)|reduction|by)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)%|\\d+(?:\\.\\d+)?\\s*dB)"
+    negatives: [ ]
+    captures: [ "metric", "effect", "delta" ]
+
+  # ===== ANALYSIS
+  - id: "ee/Analysis/secured_vs_unsecured"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(secured?\\s+vs\\.?\\s+unsecured?|with\\s+and\\s+without\\s+(encryption|PLS|key))\\b.{0,160}?(comparison|analysis|trade[- ]off)"
+    negatives: [ ]
+    captures: [ "setup", "topic" ]
+
+  - id: "ee/Analysis/modulation_filter_effects"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(QPSK|BPSK|OFDM|QAM\\d{2}|RRC|filter)\\b.{0,160}?(impact|effect|influence)\\b.{0,120}?(BER|SNR|constellation|spectr\\w+)"
+    negatives: [ ]
+    captures: [ "item", "verb", "target" ]
+
+  # ===== DATASET
+  - id: "ee/Dataset/materials_and_artifacts"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(repository|project\\s+website|supplementary|logs?|flowgraph|\\.grc|\\.iq|\\.wav|\\.csv)\\b"
+    negatives: [ ]
+    captures: [ "artifact" ]
+
+  # ===== CONCLUSION
+  - id: "ee/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+findings\\s+suggest)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

@@ -1,83 +1,27 @@
-id: "Engineering and technology / 2.10-nanotechnology"
+id: "Engineering & Technology / 2.10-nanotechnology"
 version: 1
-threshold: 0.8
-must:
-  - nanoparticle
-  - nanofiber
+threshold: 0.60
+must: []
 should:
-  -
-    - nanoparticle
-    - 1
-  -
-    - nanotube
-    - 1
-  -
-    - nanofiber
-    - 1
-  -
-    - quantum dot
-    - 1
-  -
-    - functionalization
-    - 1
-  -
-    - "self-assembly"
-    - 1
-  -
-    - AFM
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Нанообъекты/материал
+  - ["\\bnano(particle|rod|fiber|tube|sheet|structure|composite)s?\\b", 0.98]
+  - ["\\bZnO(?:[-\\s]*NPs?)?\\b|zinc\\s+oxide\\s+nano(particles?)?\\b", 0.98]
+  - ["graphene(\\s+oxide)?|GO\\b|MXene|quantum\\s+dots?|QDs?\\b|TiO2\\b|SiO2\\b|AgNPs?\\b|AuNPs?\\b", 0.8]
+
+  # «Зелёный»/биогенный синтез из растительных экстрактов
+  - ["green\\s+synthesis|biogenic\\s+route|plant\\s+extract|phytochemical|aqueous\\s+extract|leaf\\s+extract|capping\\s+agent", 0.95]
+  - ["Scutellaria\\s+iscanderi|flavonoids?|phenolics?|alkaloids?|terpenoids?|HPLC\\b", 0.7]
+
+  # Характеризация (оптика/структура/размер/заряд)
+  - ["UV[- ]?Vis|Tauc\\s+plot|band\\s+gap|FTIR\\b|XRD\\b|TEM\\b|SEM\\b|EDS\\b|DLS\\b|zeta\\s+potential", 0.95]
+
+  # Параметры/оптимизация синтеза
+  - ["pH\\b|temperature\\b|°C|ratio\\s*\\d+:\\d+|nucleation|growth|yield\\s*\\d+(?:\\.\\d+)?\\s*%", 0.9]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["WWTP|nitrification|AERMOD|CALPUFF|bioremediation|MFC\\b|BES\\b", 0.95]  # 2.7/2.8
+  - ["fermentation|titer|productivity|upstream|downstream\\s+processing|QbD|PAT", 0.95]  # 2.9
+  - ["clinical\\s+trial|patient|ICSI|endometrial|oocyte|cardiomyocyte", 0.95]  # мед/клиника
+  - ["questionnaire|Likert|curriculum|classroom", 0.9]  # пед. исследования
+  - ["jurisprudence|civil\\s+code|regulation", 0.95]
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]

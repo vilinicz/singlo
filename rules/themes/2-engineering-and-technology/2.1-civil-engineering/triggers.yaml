@@ -1,143 +1,31 @@
-id: "Engineering and technology / 2.1-civil-engineering"
-version: 1
-threshold: 0.7
-must:
-  - bim
-  - construction
+id: "Engineering & Technology / 2.1-civil-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - structural
-    - 1
-  -
-    - geotechnical
-    - 1
-  -
-    - concrete
-    - 1
-  -
-    - bridge
-    - 1
-  -
-    - seismic
-    - 1
-  -
-    - transport
-    - 1
-  -
-    - hydraulic
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
-  -
-    - construction
-    - 1.0
-  -
-    - bim
-    - 1.2
-  -
-    - "building information modeling"
-    - 1.2
-  -
-    - bibliometric
-    - 1.0
-  -
-    - vosviewer
-    - 1.1
-  -
-    - "web of science"
-    - 0.8
-  -
-    - scopus
-    - 0.8
-  -
-    - "co-occurrence"
-    - 0.8
-  -
-    - "co-authorship"
-    - 0.7
-  -
-    - prisma
-    - 0.8
-  -
-    - "keyword analysis"
-    - 0.8
-  -
-    - "bim-based"
-    - 1.1
-  -
-    - "construction phase"
-    - 0.9
-  -
-    - "4d"
-    - 0.9
-  -
-    - "5d"
-    - 0.9
-  -
-    - "clash detection"
-    - 0.9
-  -
-    - "quantity takeoff"
-    - 0.9
-  -
-    - "site management"
-    - 0.8
+  # Геотехника, грунты, классификация
+  - ["expansive clay|soft soil|subgrade|sub-base|embankment", 0.95]
+  - ["Atterberg|Liquid Limit|Plastic Limit|Plasticity Index|LL|PL|PI", 0.9]
+  - ["AASHTO|USCS|CH\\b|CL\\b|SM|SC", 0.85]
+  - ["MDD|OMC|maximum dry density|optimum moisture content", 0.9]
+  - ["compaction|Proctor|modified Proctor|standard Proctor", 0.8]
+
+  # Испытания/показатели
+  - ["CBR\\b|California Bearing Ratio|UCS\\b|unconfined compressive strength", 0.95]
+  - ["swelling|shrinkage|secant modulus|E50|shear strength", 0.9]
+  - ["tensile strength|splitting tensile", 0.8]
+
+  # Стабилизация/добавки/волокна
+  - ["stabiliz(e|ation)|additive|lime|cement|fly ash|rice husk ash|pozzolan", 0.85]
+  - ["fiber|coir|coconut|polypropylene|glass fiber", 0.8]
+  - ["curing time|7\\s*days|14\\s*days|28\\s*days", 0.7]
+
+  # Нормативы/ASTM
+  - ["ASTM\\s+D1883|ASTM\\s+D2166|ASTM\\s+C\\s*496", 0.8]
+  - ["sieve\\s+No\\.\\s*200|#200", 0.7]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
-  -
-    - spectroscopy
-    - 0.8
-  -
-    - genome
-    - 0.8
+  - ["patient|clinical|trial|cohort|biobank", 0.9]
+  - ["theorem|lemma|Hamiltonian|Lagrangian", 0.9]
+  - ["transformer\\b|benchmark\\s+dataset\\b|CUDA|optimizer", 0.8]
+  - ["jurisprudence|civil code|regulation|Supreme Court", 0.9]

@@ -1,57 +1,128 @@
 elements:
-  - id: "Engineering and technology / 2.10-nanotechnology/Result/nano-property"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(size|zeta\s+potential|PL\s+intensity|surface\s+area)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>nm|Å|mV|m²/g)?'
-    negatives: ['aggregation|broad\s+distribution']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.10-nanotechnology/Hypothesis/functionality"
+  # ===== HYPOTHESIS
+  - id: "nano/Hypothesis/phyto_route_controls_np"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(functionalization|doping|shell)\s+(?:improves|modulates)\s+(optical|electrical|stability)'
-    negatives: ['no\s+effect']
-    captures: []
-  - id: "Engineering and technology / 2.10-nanotechnology/Experiment/afm-or-tem"
-    type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(AFM|STM|TEM|SEM|DLS|SERS|PL\s+spectroscopy)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.10-nanotechnology/Technique/synthesis-or-coating"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(sol[- ]gel|hydrothermal|CVD|ALD|self[- ]assembly|functionalization)\b'
-    negatives: ['off\s+the\s+shelf']
-    captures: []
-  - id: "Engineering and technology / 2.10-nanotechnology/Dataset/particles-or-spectra"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:particles|spectra|images)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+image']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.10-nanotechnology/Analysis/distribution-or-fits"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(size\s+distribution|Gaussian\s+fit|Lorentzian|zeta\s+distribution)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.10-nanotechnology/Conclusion/stability-or-performance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(nanoparticle|nanotube|quantum\s+dot)\s+(?:is|becomes)\s+(stable|efficient)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.10-nanotechnology/Input Fact/model-or-standard"
-    type: Input Fact
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b.{0,60}?that\\s+(.{1,180}?((plant|phytochemical|green)\\s+(extract|route)|biogenic\\s+route).{0,80}?(reduc(es|e)|stabiliz(es|e)|control(s|led)\\s+the)\\s+(formation|size|morphology)\\s+of\\s+(ZnO|zinc\\s+oxide)\\s+nanoparticles?)"
+    negatives: [ ]
+    captures: [ "cue","verb","text" ]
+
+  # ===== INPUT FACT (прекурсоры/условия/состав)
+  - id: "nano/InputFact/precursors_and_conditions"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract","FigureCaption"]
+    pattern: "\\b(zinc\\s+acetate(?:\\s+dihydrate)?|zinc\\s+nitrate|NaOH|base|solvent|extract)\\b.{0,120}?\\b(pH|temperature|ratio|time|stirring|concentration)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)\\s*(°C|min|h|mM|g/L|%))"
+    negatives: [ ]
+    captures: [ "chem","param","value","unit" ]
+
+  - id: "nano/InputFact/plant_extract_signature"
+    type: "Input Fact"
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(DLVO|surface\s+energy\s+model|ISO)\b(.+?)?'
-    negatives: ['hypothesis|proposal']
-    captures: ["value"]
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(Scutellaria\\s+iscanderi|leaf\\s+extract|aqueous\\s+extract|phytochemical(s)?|flavonoids?|phenolics?|terpenoids?)\\b"
+    negatives: [ ]
+    captures: [ "extract" ]
+
+  # ===== TECHNIQUE (аналитика/характеризация)
+  - id: "nano/Technique/optical_and_structural"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract","FigureCaption","TableCaption"]
+    pattern: "\\b(UV[- ]?Vis|Tauc\\s+plot|band\\s+gap|FTIR|XRD|TEM|SEM|EDS|DLS|zeta\\s+potential)\\b"
+    negatives: [ ]
+    captures: [ "tool" ]
+
+  - id: "nano/Technique/hplc_phytochem"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(HPLC|LC[- ]MS)\\b.{0,120}?(phytochemical|marker|flavonoid|phenolic)"
+    negatives: [ ]
+    captures: [ "tool","target" ]
+
+  # ===== EXPERIMENT (серии/оптимизация)
+  - id: "nano/Experiment/param_sweep"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(series|set|vary(ing|ied))\\b.{0,120}?\\b(pH|temperature|ratio|time|concentration)\\b"
+    negatives: [ ]
+    captures: [ "series","param" ]
+
+  - id: "nano/Experiment/nucleation_growth"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown","FigureCaption"]
+    pattern: "\\b(nucleation|growth\\s+stage|onset\\s+of\\s+color\\s+change)\\b"
+    negatives: [ ]
+    captures: [ "event" ]
+
+  # ===== RESULT (численные показатели/пики)
+  - id: "nano/Result/uvvis_peak_bandgap"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(absorption\\s+peak|\\b\\lambda_{?max}?|band\\s+gap)\\b.{0,80}?\\b(~|=|at)?\\s*(\\d{3,4}(?:\\.\\d+)?)\\s*(nm|eV)\\b"
+    negatives: [ ]
+    captures: [ "what","approx","value","unit" ]
+
+  - id: "nano/Result/ftir_zno_bond"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(FTIR|IR\\s+band)\\b.{0,120}?(Zn[- ]?O|metal[- ]oxygen)\\b.{0,80}?\\b(\\d{3,4})\\s*cm-?1\\b"
+    negatives: [ ]
+    captures: [ "tech","bond","wavenumber" ]
+
+  - id: "nano/Result/size_dls_tEM"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(size|hydrodynamic\\s+diameter|crystallite\\s+size)\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*nm\\b"
+    negatives: [ ]
+    captures: [ "metric","value" ]
+
+  - id: "nano/Result/zeta_potential"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\bzeta\\s+potential\\b.{0,80}?\\b(-?\\d+(?:\\.\\d+)?)\\s*mV\\b"
+    negatives: [ ]
+    captures: [ "value" ]
+
+  - id: "nano/Result/yield_and_optimum"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(yield|conversion)\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*%\\b|\\b(optimum|optimal)\\b.{0,80}?\\b(pH|temperature|ratio)\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*(°C|%|)\\b"
+    negatives: [ ]
+    captures: [ "metric_or_kw","value","opt_kw","opt_param","opt_val","opt_unit" ]
+
+  # ===== ANALYSIS (влияние параметров)
+  - id: "nano/Analysis/param_influence"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(influence|effect|depend(s|ence)\\s+on)\\b.{0,160}?\\b(pH|temperature|ratio|time|concentration)\\b"
+    negatives: [ ]
+    captures: [ "rel","param" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "nano/Dataset/fig_table_supp"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Supplementary|Figure\\s*\\d+|Table\\s*\\d+|Zenodo|Figshare|\\.csv|\\.xlsx)\\b"
+    negatives: [ ]
+    captures: [ "artifact" ]
+
+  # ===== CONCLUSION
+  - id: "nano/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

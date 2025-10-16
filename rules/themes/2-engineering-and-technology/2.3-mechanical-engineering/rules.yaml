@@ -1,57 +1,128 @@
 elements:
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Result/efficiency-or-fatigue"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(efficiency|fatigue\s+life|drag|lift|heat\s+transfer)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|W/m²K|N|Ns/m|W)?'
-    negatives: ['not\\s+significant','worse']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Hypothesis/design-impact"
+  # ===== HYPOTHESIS
+  - id: "me/Hypothesis/working_hypothesis"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(geometry|control|cooling)\s+(?:improves|reduces)\s+(vibration|drag|temperature)'
-    negatives: ['no\s+improvement']
-    captures: ["value"]
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Experiment/rig-or-tunnel"
-    type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(test\s+rig|wind\s+tunnel|thermal\s+loop|engine\s+bench|drop\s+test)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Technique/cfd-or-fem"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(CFD|FEM|PID\s+control|topology\s+optimization|BEM)\b'
-    negatives: ['rule\s+of\s+thumb']
-    captures: []
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Dataset/specimens-or-runs"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:specimens|runs|experiments)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+run']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Analysis/modal-or-thermal"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(modal\s+analysis|frequency\s+response|thermal\s+analysis|stress\s+analysis)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Conclusion/performance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?design\s+(?:meets|improves)\s+(performance|reliability)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.3-mechanical-engineering/Input Fact/standard"
-    type: Input Fact
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|posit|argue))\\b\\s+that\\s+(.{1,180}?)\\."
+    negatives: [ ]
+    captures: [ "cue", "verb", "text" ]
+
+  # ===== INPUT FACT
+  - id: "me/InputFact/system_and_geometry"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(tundish|continuous\\s+casting\\s+machine|CCM|ladle|multilayer\\s+lining|casing)\\b.{0,160}?"
+    negatives: [ ]
+    captures: [ "object" ]
+
+  - id: "me/InputFact/boundary_and_operating"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(boundary\\s+condition|inlet|outlet|heat\\s+flux|wall|emissivity|convection|radiation)\\b.{0,160}?\\b(T\\s*=\\s*\\d{3,4}\\s*K|\\d{3,4}\\s*K|°C|W/m2|m/s|Pa)\\b"
+    negatives: [ ]
+    captures: [ "bc", "value" ]
+
+  - id: "me/InputFact/material_props_layers"
+    type: "Input Fact"
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(ASME|ISO)\s+(?:standard|code)\s+(.+?)'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(layer|lining|insulation|shotcrete|reinforcement)\\b.{0,160}?\\b(thermal\\s+conductivity|heat\\s+capacity|thickness)\\b"
+    negatives: [ ]
+    captures: [ "layer", "prop" ]
+
+  # ===== TECHNIQUE
+  - id: "me/Technique/cfd_setup"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(CFD|ANSYS\\s+CFX|Fluent|OpenFOAM|COMSOL)\\b.{0,160}?\\b(k[-–]ε|k[-–]omega|RANS|LES|Boussinesq|unsteady)\\b"
+    negatives: [ ]
+    captures: [ "solver", "model" ]
+
+  - id: "me/Technique/fem_or_fdm_heat"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(finite\\s+element|finite\\s+difference)\\b.{0,160}?\\b(heat\\s+conduction|energy\\s+equation|explicit\\s+scheme)\\b"
+    negatives: [ ]
+    captures: [ "method", "topic" ]
+
+  # ===== EXPERIMENT (численный/валидационный)
+  - id: "me/Experiment/simulation_campaign"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(simulation|numerical\\s+model(ing)?|parameter\\s+study|regression|validation\\s+set)\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  - id: "me/Experiment/measurement_points"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(measurement\\s+point(s)?|control\\s+point(s)?|plane|section)\\b.{0,160}?\\b(laser|template|survey)\\b"
+    negatives: [ ]
+    captures: [ "points" ]
+
+  # ===== RESULT (количественно выраженные)
+  - id: "me/Result/field_extremes"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(temperature|turbulent\\s+kinetic\\s+energy|shear\\s+stress|heat\\s+flux|velocity)\\b.{0,120}?(up\\s*to|reaches|exceeds|within)\\s+([0-9\\.×\\-–eE\\s]+)(K|Pa|m/s|W/m2|m2/s2)\\b"
+    negatives: [ ]
+    captures: [ "quantity", "qual", "value", "unit" ]
+
+  - id: "me/Result/erosion_rate"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(erosion\\s+rate|wear\\s+rate)\\b.{0,120}?\\b(\\d+(?:\\.\\d+)?\\s*(mm/h|mm\\s*/\\s*h))\\b"
+    negatives: [ ]
+    captures: [ "metric", "value" ]
+
+  - id: "me/Result/model_accuracy"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(R2|coefficient\\s+of\\s+determination)\\b.{0,40}?=\\s*0?\\.\\d{2,}"
+    negatives: [ ]
+    captures: [ "stat" ]
+
+  # ===== ANALYSIS (связи факторов)
+  - id: "me/Analysis/factor_influence"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(influence|impact|depend(s|ence)\\s+on)\\b.{0,160}?\\b(temperature|casting\\s+speed|Mn\\/Si|Mn\\/S|WSS|turbulence)\\b"
+    negatives: [ ]
+    captures: [ "rel", "factor" ]
+
+  - id: "me/Analysis/shap_or_feature_importance"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(SHAP|feature\\s+importance|contribution\\s+of\\s+parameters?)\\b"
+    negatives: [ ]
+    captures: [ "method" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "me/Dataset/maps_and_frames"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption","Appendix"]
+    pattern: "\\b(map\\s+of\\s+local\\s+wear|wear\\s+map|distribution\\s+of\\s+(temperature|velocity|heat\\s+transfer))\\b"
+    negatives: [ ]
+    captures: [ "kind" ]
+
+  # ===== CONCLUSION
+  - id: "me/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|our\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

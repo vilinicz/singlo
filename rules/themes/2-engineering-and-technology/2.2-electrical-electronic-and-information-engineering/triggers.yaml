@@ -1,83 +1,21 @@
-id: "Engineering and technology / 2.2-electrical-electronic-and-information-engineering"
-version: 1
-threshold: 0.8
-must:
-  - circuit
-  - communication
+id: "Engineering & Technology / 2.2-electrical-electronic-and-information-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - circuit
-    - 1
-  -
-    - signal
-    - 1
-  -
-    - communication
-    - 1
-  -
-    - embedded
-    - 1
-  -
-    - VLSI
-    - 1
-  -
-    - antenna
-    - 1
-  -
-    - power grid
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Коммуникации / сигнал-обработка / SDR
+  - ["software[- ]defined radio|SDR\\b|GNU Radio( Companion)?|SDRSharp|USRP|RTL[- ]SDR", 0.98]
+  - ["modulation|demodulation|constellation|spectrum analyzer|waterfall", 0.9]
+  - ["OFDM|QAM|QPSK|BPSK|FSK|AM|FM|RRC|CFO|ISI|AWGN", 0.95]
+  - ["BER\\b|SNR\\b|Eb/N0|throughput|latency|link budget", 0.85]
+  - ["5G|6G|NR\\b|LTE\\b|PHY(\\s*layer)?|MAC\\b|MIMO|beamforming", 0.85]
+  - ["encryption|AES|key management|physical layer security|PLS|eavesdrop(ping|per)", 0.8]
+  - ["differential encoding|pilot|preamble|channel estimation|equalization", 0.8]
+  - ["USRP|HackRF|BladeRF|LimeSDR|antenna|RF front[- ]end", 0.75]
+  - ["curriculum|lab module|hands[- ]on|assessment|questionnaire|Likert", 0.6]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["Atterberg|CBR\\b|UCS\\b|subgrade|AASHTO|ASTM D\\d+", 0.95]        # геотехника (2.1)
+  - ["cohort|biobank|PCR|Western blot|knockout|IC50|EC50", 0.95]        # биология/биомед
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95]          # право
+  - ["Hamiltonian\\b|Lagrangian\\b|theorem|lemma\\b (?!frequency)", 0.8] # чистая математика

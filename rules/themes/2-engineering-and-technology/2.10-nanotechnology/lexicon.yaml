@@ -1,160 +1,47 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ ZnO-NPs, "zinc oxide nanoparticles" ]
+  - [ UV-Vis,  "ultraviolet–visible spectroscopy" ]
+  - [ FTIR,    "Fourier-transform infrared spectroscopy" ]
+  - [ XRD,     "X-ray diffraction" ]
+  - [ TEM,     "transmission electron microscopy" ]
+  - [ SEM,     "scanning electron microscopy" ]
+  - [ EDS,     "energy-dispersive X-ray spectroscopy" ]
+  - [ DLS,     "dynamic light scattering" ]
+  - [ QD,      "quantum dot" ]
+  - [ GO,      "graphene oxide" ]
+
+synonyms:
+  - [ green synthesis, biogenic route ]
+  - [ plant extract, aqueous extract ]
+  - [ capping agent, stabilizer ]
+  - [ band gap, optical band gap ]
+  - [ absorption peak, λmax ]
+  - [ particle size, hydrodynamic diameter ]
+  - [ zinc oxide nanoparticles, ZnO-NPs ]
+  - [ FTIR band, IR band ]
+  - [ yield, conversion ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "nm"
+  - "eV"
+  - "°C"
+  - "mV"
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - nm
-  - Ã…
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - nanoparticle
-    - nanoparticles
-  -
-    - nanotube
-    - nanotubes
-  -
-    - nanofiber
-    - nanofibers
-  -
-    - quantum dot
-    - quantum dots
-  -
-    - functionalization
-    - functionalizations
-  -
-    - "self-assembly"
-    - "self-assemblys"
+  - "min"
+  - "h"
+  - "mM"
+  - "g/L"

@@ -1,83 +1,32 @@
-id: "Engineering and technology / 2.8-environmental-biotechnology"
+id: "Engineering & Technology / 2.8-environmental-biotechnology"
 version: 1
-threshold: 0.8
-must:
-  - bioremediation
-  - consortium
+threshold: 0.60
+must: []
 should:
-  -
-    - bioremediation
-    - 1
-  -
-    - bioaugmentation
-    - 1
-  -
-    - consortium
-    - 1
-  -
-    - metabolism
-    - 1
-  -
-    - biodegradation
-    - 1
-  -
-    - microbial
-    - 1
-  -
-    - enzyme
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Процессы/объекты экобиотехнологии
+  - ["bioremediation|bioaugmentation|biostimulation|biosorption|biodegradation|cometabolis(m|e)", 0.98]
+  - ["nitrification|denitrification|anammox|ammoxidation|sulfate[- ]reducing bacteria|methanogenesis|methanogenic", 0.95]
+  - ["biofilm reactor|granular sludge|UASB|SBR|MBBR|trickling filter|constructed wetland", 0.9]
+  - ["bioelectrochemical system|BES\\b|microbial fuel cell|MFC\\b|anode|cathode|coulombic efficiency|power density", 0.9]
+  - ["whole[- ]cell biosensor|microbial sensor|enzymatic biosensor|bioassay|toxicity assay", 0.85]
+  - ["metagenomics|16S\\s*rRNA|shotgun sequencing|qPCR|OTU\\b|ASV\\b|MAGs?|metatranscriptomics|metaproteomics", 0.9]
+
+  # Целевые загрязнители/матрицы среды
+  - ["phenol|aniline|azo dye|methyl orange|nitroaromatic|PAH\\b|BTEX\\b|pesticid(e|es)|herbicide|pharmaceutical|antibiotic", 0.85]
+  - ["Cr\\(VI\\)|As\\(V\\)|Hg\\(II\\)|Cd\\(II\\)|Pb\\(II\\)|Cu\\(II\\)|Ni\\(II\\)", 0.85]
+  - ["PFAS|PFOS|PFOA|microplastics?|endocrine disruptors?|EEM|fluorescence indices", 0.8]
+  - ["wastewater|leachate|sediment|soil remediation|groundwater|effluent", 0.85]
+
+  # Модели/кинетика/изотермы
+  - ["Langmuir|Freundlich|Temkin|pseudo[- ](first|second)[- ]order|Monod|Haldane|Stover[- ]Kincannon", 0.8]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  # Отсечь соседние ветки
+  - ["USRP|SDR\\b|OFDM|QPSK|SNR\\b", 0.95]                       # связь/ЭЭ (2.2)
+  - ["Atterberg|CBR\\b|UCS\\b|AASHTO|USCS", 0.95]               # геотехника (2.1)
+  - ["FLIM\\b|organoid|NAD\\(P\\)H|Seahorse|ECAR|OCR", 0.95]    # мединж (2.6)
+  - ["oocyte|ICSI|endometrial|clinical trial|patient", 0.95]    # клиника (3.x)
+  - ["grapes|wine|ochratoxin|OTA|food safety", 0.95]            # food micro
+  - ["doubled haploid|anther culture|QTL|SSR|Mendelian", 0.95]  # plant breeding
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95] # право
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]                         # чистая математика

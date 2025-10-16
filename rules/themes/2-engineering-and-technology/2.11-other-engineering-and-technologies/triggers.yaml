@@ -1,80 +1,38 @@
-id: "Engineering and technology / 2.11-other-engineering-and-technologies"
+id: "Engineering & Technology / 2.11-other-engineering-and-technologies"
 version: 1
-threshold: 0.8
-must:
-  - integration
-  - standard
+threshold: 0.60
+must: []
 should:
-  -
-    - integration
-    - 1
-  -
-    - testing
-    - 1
-  -
-    - standard
-    - 1
-  -
-    - benchmark
-    - 1
-  -
-    - scalability
-    - 1
-  -
-    - systems
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Кросс-отраслевые стандарты, сертификация, соответствие
+  - ["ISO\\s*9001|ISO\\s*14001|ISO\\s*45001|ISO\\s*17025|ISO\\s*31000|IEC\\s*61508|IEC\\s*61010|IEC\\s*60601|EN\\s*5012\\d|UL\\s*\\d{3,5}", 0.95]
+  - ["conformity\\s+assessment|certification|compliance|audit|notified\\s+body|technical\\s+file|risk\\s+management", 0.9]
+
+  # Надежность/безопасность/риски
+  - ["FMEA|FMECA|FTA\\b|fault\\s+tree|HAZOP|SIL\\b|PL\\b\\s*(a|b|c|d|e)?|risk\\s+matrix|ALARP|RAM\\b|MTBF\\b|MTTR\\b", 0.95]
+
+  # Метрология/калибровка/неопределенность
+  - ["calibration|traceability|measurement\\s+uncertainty|Gage\\s*R\\s*&\\s*R|MSA\\b|metrology|reference\\s+standard", 0.9]
+
+  # Верификация/валидация/качество/статконтроль
+  - ["verification|validation|acceptance\\s+criteria|test\\s+plan|qualification|IQ/OQ/PQ|SPC\\b|control\\s+chart|Cpk\\b|Ppk\\b|Six\\s*Sigma|DMAIC|Lean", 0.9]
+
+  # Системная инженерия/требования/моделирование процессов
+  - ["systems\\s+engineering|requirements\\s+traceability|requirements\\s+specification|V[- ]model|MBSE\\b|SysML\\b|DOORS\\b|change\\s+control", 0.85]
+
+  # UX/эргономика/юзабилити (инж. контекст)
+  - ["usability\\s+test|human[- ]machine\\s+interface|HMI\\b|ergonomics|task\\s+analysis|ISO\\s*9241", 0.75]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  # Соседние разделы — сильное отсечение
+  - ["wastewater|WWTP|AERMOD|MBR\\b|adsorption|nitrification|denitrification", 0.98]       # 2.7
+  - ["bioremediation|BES\\b|MFC\\b|metagenomics|16S\\s*rRNA", 0.98]                          # 2.8
+  - ["fermentation|titer|productivity|upstream|downstream|QbD|PAT", 0.98]                    # 2.9
+  - ["nanoparticle|ZnO\\b|quantum\\s+dots?|TEM\\b|XRD\\b|DLS\\b", 0.98]                      # 2.10
+  - ["SMAW|GMAW|HAZ\\b|Charpy|CEN\\b|CEIIW\\b|Pcm\\b", 0.98]                                  # 2.5 (welding)
+  - ["patch[- ]clamp|FLIM\\b|organoid|ECAR\\b|OCR\\b|cardiomyocyte", 0.98]                   # 2.6/мед
+  - ["OFDM|QPSK|SDR\\b|USRP|VLSI|FPGA", 0.98]                                                # 2.2
+  - ["AASHTO|Atterberg|UCS\\b|CBR\\b|geotechnical|subgrade", 0.98]                            # 2.1
+  - ["CFD\\b|turbofan|tundish|k[- ]?ε|Nusselt|Rayleigh\\s*scattering", 0.98]                  # 2.3
+  - ["photocatalysis|membrane\\s+(flux|TMP)|Langmuir|Freundlich", 0.98]                      # 2.4/2.7 пересечения
+  - ["questionnaire|Likert|curriculum|classroom", 0.95]                                      # пед. исследования
+  - ["theorem\\b|lemma\\b(?! of)", 0.85]                                                     # чистая математика

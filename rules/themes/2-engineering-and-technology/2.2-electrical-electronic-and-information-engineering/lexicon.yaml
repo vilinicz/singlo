@@ -1,160 +1,53 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ SDR, "software-defined radio" ]
+  - [ GRC, "GNU Radio Companion" ]
+  - [ USRP, "Universal Software Radio Peripheral" ]
+  - [ OFDM, "orthogonal frequency-division multiplexing" ]
+  - [ QAM, "quadrature amplitude modulation" ]
+  - [ QPSK, "quadrature phase-shift keying" ]
+  - [ BPSK, "binary phase-shift keying" ]
+  - [ RRC, "root-raised cosine" ]
+  - [ BER, "bit error rate" ]
+  - [ SNR, "signal-to-noise ratio" ]
+  - [ Eb/N0, "energy per bit to noise power spectral density ratio" ]
+  - [ PLS, "physical layer security" ]
+  - [ AES, "advanced encryption standard" ]
+  - [ CFO, "carrier frequency offset" ]
+  - [ ISI, "inter-symbol interference" ]
+  - [ FER, "frame error rate" ]
+  - [ PER, "packet error rate" ]
+  - [ LTE, "long term evolution" ]
+  - [ NR, "new radio (5G)" ]
+
+synonyms:
+  - [ software defined radio, SDR ]
+  - [ GNU Radio, GRC ]
+  - [ flow graph, flowgraph ]
+  - [ constellation diagram, constellation ]
+  - [ centre frequency, center frequency ]
+  - [ throughput, data rate ]
+  - [ latency, delay ]
+  - [ secured, secure ]
+  - [ eavesdropping, eavesdropper ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - generally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "dB"
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - Î©
-  - F
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - circuit
-    - circuits
-  -
-    - signal
-    - signals
-  -
-    - communication
-    - communications
-  -
-    - embedded
-    - embeddeds
-  -
-    - VLSI
-    - VLSIs
-  -
-    - antenna
-    - antennas
+  - "Msps"
+  - "ksps"
+  - "Hz"
+  - "kHz"
+  - "MHz"
+  - "GHz"

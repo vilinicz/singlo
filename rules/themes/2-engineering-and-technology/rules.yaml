@@ -1,57 +1,112 @@
 elements:
-  - id: "Engineering and technology/Result/performance-metrics"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(achieved|improved|reached)\s+(?:an?\s+)?(efficiency|strength|throughput|accuracy)\s+(?:of|by)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|MPa|kW|W|V|A|Hz|rpm)?'
-    negatives: ['not\\s+significant','degraded|worse']
-    captures: ["value","unit"]
-  - id: "Engineering and technology/Hypothesis/design-improves"
+  # ===== HYPOTHESIS — «процесс/архитектура/алгоритм улучшит KPI»
+  - id: "eng/Hypothesis/process_or_architecture_improves_kpi"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:hypothesi[zs]e|anticipate)\s+that\s+(?:the\s+)?design\s+(?:improves|enhances|reduces)\s+(.+?)'
-    negatives: ['no\s+improvement','unchanged']
-    captures: ["value"]
-  - id: "Engineering and technology/Experiment/bench-or-wind-tunnel"
-    type: Experiment
-    weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(bench(?:mark| test)|wind\s+tunnel|load\s+test|prototype\s+test|hardware\s+in\s+the\s+loop)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology/Technique/engineering-method"
+    weight: 0.60
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b\\s+that\\s+(.{1,180}?((process|architecture|algorithm|controller|material|design)\\b.{0,80}?(improv(es|e)|increas(es|e)|reduces?)\\s+(efficienc(y|ies)|accuracy|throughput|latency|power|cost|reliabilit(y|ies))))"
+    negatives: [ ]
+    captures: ["cue","verb","text"]
+
+  # ===== INPUT FACT — требования/параметры/ресурсы
+  - id: "eng/InputFact/specs_and_requirements"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix","Abstract","TableCaption"]
+    pattern: "\\b(requirement|specification|shall|constraint|tolerance|target|budget)\\b.{0,120}?\\b(\\d+(?:\\.\\d+)?)\\s*(V|A|W|°C|mm|µm|MPa|Gbps|ms|%)\\b"
+    negatives: [ ]
+    captures: ["req","value","unit"]
+
+  - id: "eng/InputFact/test_setup_or_fixture"
+    type: "Input Fact"
+    weight: 0.56
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(test\\s*(bench|rig|fixture)|experimental\\s+setup|instrumentation|sensor\\s+suite)\\b"
+    negatives: [ ]
+    captures: ["setup"]
+
+  # ===== TECHNIQUE — моделирование/контроль/производство/аналитика
+  - id: "eng/Technique/modeling_and_sim"
     type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(CAD|CFD|FEM|PLC|FPGA|VLSI|PID|SCADA)\b'
-    negatives: ['manual\s+only','rule\s+of\s+thumb']
-    captures: []
-  - id: "Engineering and technology/Dataset/test-cases"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:dataset|suite|set)\s+(?:contains|includes)\s+(?P<n>\\d{2,})\s+(?:test\s+cases|components|runs|samples)'
-    negatives: ['synthetic\s+only']
-    captures: ["n"]
-  - id: "Engineering and technology/Analysis/stress-or-fem"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption","Abstract"]
+    pattern: "\\b(CFD|FEM|finite\\s+element|multiphysics|co[- ]simulation|digital\\s+twins?)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "eng/Technique/control_and_calibration"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(PID|state\\s+feedback|MPC|observer|sensor\\s+fusion|calibration|uncertainty\\s+budget)\\b"
+    negatives: [ ]
+    captures: ["tech"]
+
+  - id: "eng/Technique/manufacturing_and_quality"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(process\\s+flow|SOP|work\\s+instruction|SPC|control\\s+chart|Cpk|Ppk|gauge\\s*R\\s*&\\s*R|MSA)\\b"
+    negatives: [ ]
+    captures: ["quality"]
+
+  # ===== EXPERIMENT — верификация/валидация/DoE
+  - id: "eng/Experiment/vv_and_doe"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(verification|validation|acceptance\\s+test|type\\s+test|stress\\s+test|DoE|factorial|response\\s+surface)\\b"
+    negatives: [ ]
+    captures: ["vv"]
+
+  # ===== RESULT — универсальные KPI/метрики
+  - id: "eng/Result/performance_metrics_numeric"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(efficienc(y|ies)|accuracy|error|RMSE|throughput|latency|bandwidth|power|temperature|yield|reliabilit(y|ies)|MTBF|availability)\\b.{0,120}?\\b(=|of|to|at|by)\\s*(-?\\d+(?:\\.\\d+)?)\\s*(%|W|mW|V|A|°C|ms|s|Gbps|°|MPa|h)\\b"
+    negatives: [ ]
+    captures: ["metric","eq","value","unit"]
+
+  - id: "eng/Result/stat_significance"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(p\\s*<\\s*0\\.(?:0\\d|[01]))\\b|\\b(\\d+(?:\\.\\d+)?)\\s*%\\s*(improv(?:e|ement)|reduction|increase)\\b"
+    negatives: [ ]
+    captures: ["p_or_val","effect"]
+
+  # ===== ANALYSIS — корреляции/чувствительность/модели
+  - id: "eng/Analysis/factor_influence"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(stress[- ]strain|FEM\s+results|modal\s+analysis|frequency\s+response)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology/Conclusion/standards"
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(influence|effect|sensitivity|depend(s|ence)\\s+on)\\b.{0,160}?\\b(load|speed|temperature|voltage|current|pressure|flow|dose|gain)\\b"
+    negatives: [ ]
+    captures: ["rel","factor"]
+
+  - id: "eng/Analysis/model_fit_or_validation"
+    type: Analysis
+    weight: 0.58
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(model\\s+(fit|validation|prediction)|goodness[- ]of[- ]fit|R\\^?2|RMSE)\\b"
+    negatives: [ ]
+    captures: ["topic"]
+
+  # ===== DATASET — таблицы/файлы/репозитории
+  - id: "eng/Dataset/artifacts"
+    type: Dataset
+    weight: 0.52
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Supplementary|Figure\\s*\\d+|Table\\s*\\d+|log\\s*file|dataset|repository|Zenodo|Figshare|\\.csv|\\.xlsx)\\b"
+    negatives: [ ]
+    captures: ["artifact"]
+
+  # ===== CONCLUSION — универсальное резюме
+  - id: "eng/Conclusion/summary"
     type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(meets|complies\s+with)\s+(ISO|ASTM|IEEE|IEC)\b'
-    negatives: ['fails\s+to\s+meet']
-    captures: []
-  - id: "Engineering and technology/Input Fact/specification"
-    type: Input Fact
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(ISO|ASTM|IEC|IEEE)\s+(?:standard|specification)\s+(.+?)'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    weight: 0.58
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: ["text"]

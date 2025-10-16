@@ -1,160 +1,42 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ GOQD,  "graphene oxide quantum dot" ]
+  - [ GOQDs, "graphene oxide quantum dots" ]
+  - [ RH,    "relative humidity" ]
+  - [ IDE,   "interdigitated electrode" ]
+  - [ PDDA,  "poly(diallyldimethylammonium chloride)" ]
+  - [ EIS,   "electrochemical impedance spectroscopy" ]
+  - [ RC,    "resistor–capacitor" ]
+  - [ R2,    "coefficient of determination" ]
+  - [ FT-IR, "Fourier-transform infrared spectroscopy" ]
+  - [ SEM,   "scanning electron microscopy" ]
+  - [ TEM,   "transmission electron microscopy" ]
+
+synonyms:
+  - [ ultrathin film, nano-thin film ]
+  - [ self-assembly, self assembled ]
+  - [ silica, SiO2 ]
+  - [ hydrophilic groups, –COOH/–OH groups ]
+  - [ water contact angle, contact angle ]
+  - [ Nyquist plot, Nyquist spectrum ]
+  - [ humidity range, detection range ]
+  - [ response time, rise time ]
+  - [ recovery time, fall time ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - generally
+  - nominally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
-  - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - mol/s
-  - kg/s
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - reactor
-    - reactors
-  -
-    - process
-    - processs
-  -
-    - separation
-    - separations
-  -
-    - distillation
-    - distillations
-  -
-    - membrane
-    - membranes
-  -
-    - heat exchanger
-    - heat exchangers
+  - "ms"
+  - "Hz"
+  - "% RH"
+  - "°C"

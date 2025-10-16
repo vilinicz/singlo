@@ -1,160 +1,89 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  # Качество воды/стоков
+  - [ WWTP, "wastewater treatment plant" ]
+  - [ BOD,  "biochemical oxygen demand" ]
+  - [ COD,  "chemical oxygen demand" ]
+  - [ TSS,  "total suspended solids" ]
+  - [ TN,   "total nitrogen" ]
+  - [ TP,   "total phosphorus" ]
+  - [ DO,   "dissolved oxygen" ]
+  - [ MLSS, "mixed liquor suspended solids" ]
+  - [ HRT,  "hydraulic retention time" ]
+  - [ SRT,  "solids retention time" ]
+
+  # Мембраны/потоки
+  - [ MBR,  "membrane bioreactor" ]
+  - [ RO,   "reverse osmosis" ]
+  - [ NF,   "nanofiltration" ]
+  - [ UF,   "ultrafiltration" ]
+  - [ TMP,  "transmembrane pressure" ]
+  - [ LMH,  "liters per square meter per hour" ]
+
+  # Окислительные процессы/адсорбция
+  - [ AOP,  "advanced oxidation process" ]
+  - [ GAC,  "granular activated carbon" ]
+  - [ PAC,  "powdered activated carbon" ]
+
+  # Воздух/модели/мониторинг
+  - [ CEMS, "continuous emissions monitoring system" ]
+  - [ PM2.5, "particulate matter with aerodynamic diameter ≤2.5 µm" ]
+  - [ PM10,  "particulate matter with aerodynamic diameter ≤10 µm" ]
+  - [ NOx,  "nitrogen oxides" ]
+  - [ SO2,  "sulfur dioxide" ]
+  - [ VOC,  "volatile organic compounds" ]
+  - [ AERMOD, "EPA steady-state plume model" ]
+  - [ CALPUFF, "non-steady-state puff dispersion model" ]
+  - [ WRF,  "weather research and forecasting model" ]
+
+  # Устойчивость/оценка
+  - [ LCA,  "life cycle assessment" ]
+  - [ GWP,  "global warming potential" ]
+
+synonyms:
+  - [ influent, feed ]
+  - [ effluent, permeate ]
+  - [ removal efficiency, percent removal ]
+  - [ adsorption capacity, qmax ]
+  - [ concentration, level ]
+  - [ emission rate, mass flow ]
+  - [ fouling, flux decline ]
+  - [ clean-in-place, CIP ]
+  - [ reverse osmosis, RO ]
+  - [ nanofiltration, NF ]
+  - [ ultrafiltration, UF ]
+  - [ activated sludge, AS ]
+  - [ nitrification-denitrification, NDN ]
+  - [ life cycle assessment, LCA ]
+  - [ carbon footprint, GHG emissions ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "mg/L"
+  - "µg/L"
+  - "µg/m3"
+  - "mg/m3"
+  - "ppm"
+  - "ppb"
+  - "g/s"
+  - "kg/h"
+  - "°C"
+  - "h"
+  - "d"
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - mg/L
-  - NTU
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - wastewater
-    - wastewaters
-  -
-    - air pollution
-    - air pollutions
-  -
-    - remediation
-    - remediations
-  -
-    - LCA
-    - LCAs
-  -
-    - emission
-    - emissions
-  -
-    - treatment
-    - treatments
+  - "LMH"
+  - "bar"
+  - "NTU"
+  - "µS/cm"

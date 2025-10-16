@@ -1,158 +1,51 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ CAD, "computer-aided design" ]
+  - [ CAE, "computer-aided engineering" ]
+  - [ CFD, "computational fluid dynamics" ]
+  - [ FEM, "finite element method" ]
+  - [ PID, "proportional–integral–derivative" ]
+  - [ MPC, "model predictive control" ]
+  - [ BOM, "bill of materials" ]
+  - [ SOP, "standard operating procedure" ]
+  - [ SPC, "statistical process control" ]
+  - [ MSA, "measurement system analysis" ]
+  - [ MTBF, "mean time between failures" ]
+  - [ RMSE, "root mean square error" ]
+
+synonyms:
+  - [ requirements specification, spec ]
+  - [ verification and validation, V&V ]
+  - [ gauge R&R, gage R&R ]
+  - [ performance, efficiency ]
+  - [ availability, uptime ]
+  - [ tolerance, allowable deviation ]
+  - [ digital twin, virtual prototype ]
+
+units:
+  - "%"
+  - "W"
+  - "mW"
+  - "V"
+  - "A"
+  - "°C"
+  - "ms"
+  - "s"
+  - "Gbps"
+  - "MPa"
+  - "h"
+  - "mm"
+  - "µm"
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
-units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
-  - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - engineering
-    - engineerings
-  -
-    - design
-    - designs
-  -
-    - prototype
-    - prototypes
-  -
-    - manufacturing
-    - manufacturings
-  -
-    - systems
-    - systemss
-  -
-    - control
-    - controls

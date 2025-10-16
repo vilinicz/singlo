@@ -1,83 +1,26 @@
-id: "Engineering and technology / 2.3-mechanical-engineering"
-version: 1
-threshold: 0.8
-must:
-  - "thermo-fluid"
-  - dynamics
+id: "Engineering & Technology / 2.3-mechanical-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - "thermo-fluid"
-    - 1
-  -
-    - mechanism
-    - 1
-  -
-    - dynamics
-    - 1
-  -
-    - fatigue
-    - 1
-  -
-    - vibration
-    - 1
-  -
-    - turbomachinery
-    - 1
-  -
-    - CNC
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Процессы и объекты
+  - ["continuous casting|CCM|tundish|ladle lining|erosion wear|refractory lining", 0.95]
+  - ["heat and mass transfer|thermal state|temperature field|heat flux|radiation heat transfer", 0.9]
+  - ["hydrodynamics|shear stress|turbulent kinetic energy|residence time|RTD", 0.9]
+
+  # Численные методы и софт
+  - ["CFD\\b|finite element|FEM\\b|finite difference|FDM\\b", 0.9]
+  - ["ANSYS\\s+CFX|ANSYS Fluent|COMSOL|OpenFOAM", 0.85]
+  - ["k[-–]ε|k[-–]omega|RANS|LES|turbulence model", 0.85]
+
+  # Параметры/единицы и инженерные метрики
+  - ["W/m2|Pa\\b|m/s\\b|K\\b|°C|Reynolds|Nusselt|heat transfer coefficient", 0.8]
+  - ["validation|R2\\s*[=>≈]", 0.6]
+  - ["feature importance|SHAP", 0.6]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["CBR\\b|UCS\\b|Atterberg|AASHTO|USCS", 0.95]              # геотехника (2.1)
+  - ["software[- ]defined radio|QPSK|OFDM|USRP|SNR|BER", 0.95] # электроника/связь (2.2)
+  - ["PCR|Western blot|cohort|biobank|CRISPR", 0.95]           # биология
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95]# право
+  - ["theorem\\b|lemma\\b(?! of)|proof\\b(?! of concept)", 0.8] # чистая математика

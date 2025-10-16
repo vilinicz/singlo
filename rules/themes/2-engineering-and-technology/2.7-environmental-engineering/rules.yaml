@@ -1,57 +1,168 @@
 elements:
-  - id: "Engineering and technology / 2.7-environmental-engineering/Result/removal-efficiency"
+  # ===== HYPOTHESIS
+  - id: "env/Hypothesis/treatment_effectiveness"
+    type: Hypothesis
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b\\s+that\\s+(.{1,180}?(process|reactor|adsorbent|membrane|AOP).{0,60}?(improv(es|e)|enhanc(es|e)|reduces?)\\s+(removal|efficienc|emission|footprint))"
+    negatives: [ ]
+    captures: [ "cue","verb","text" ]
+
+  # ===== INPUT FACT (источник/состав/параметры)
+  - id: "env/InputFact/influent_characteristics"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract","TableCaption"]
+    pattern: "\\b(influent|raw\\s*water|feed)\\b.{0,120}?\\b(BOD|COD|TSS|TN|TP|NH4[- ]?N|NO3[- ]?N|TOC|turbidity|conductivity)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)\\s*(mg/L|NTU|µS/cm))"
+    negatives: [ ]
+    captures: [ "src","param","value","unit" ]
+
+  - id: "env/InputFact/operating_conditions_liquid"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(HRT|SRT|DO|pH|temperature|aeration|MLSS)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)\\s*(h|d|mg/L|°C|mg/L\\s*O2))"
+    negatives: [ ]
+    captures: [ "cond","value","unit" ]
+
+  - id: "env/InputFact/operating_conditions_air"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(stack\\s*height|exit\\s*velocity|exit\\s*temperature|emission\\s*rate)\\b.{0,120}?((?:\\d+(?:\\.\\d+)?)\\s*(m|m/s|°C|g/s|kg/h))"
+    negatives: [ ]
+    captures: [ "cond","value","unit" ]
+
+  # ===== TECHNIQUE (процессы/оборудование/модели)
+  - id: "env/Technique/biological_processes"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(activated\\s+sludge|nitrification|denitrification|anammox|biofilm|MBBR|SBR|MBR)\\b"
+    negatives: [ ]
+    captures: [ "process" ]
+
+  - id: "env/Technique/physical_chemical_processes"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(adsorption|coagulation|flocculation|sedimentation|filtration|RO|NF|UF|AOP|Fenton|ozonation|photocatalys(?:is|t))\\b"
+    negatives: [ ]
+    captures: [ "process" ]
+
+  - id: "env/Technique/emission_control_and_models"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(scrubber|baghouse|electrostatic\\s+precipitator|cyclone|CEMS|AERMOD|CALPUFF|Gaussian\\s+plume|WRF)\\b"
+    negatives: [ ]
+    captures: [ "tool" ]
+
+  - id: "env/Technique/LCA_framework"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(LCA|life\\s+cycle\\s+assessment|ISO\\s*1404\\d|functional\\s+unit|inventory\\s+analysis)\\b"
+    negatives: [ ]
+    captures: [ "lca" ]
+
+  # ===== EXPERIMENT (пилот/полн. масштаб/серии)
+  - id: "env/Experiment/pilot_or_full_scale"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(bench[- ]scale|pilot[- ]scale|full[- ]scale|on[- ]site|field\\s*test)\\b"
+    negatives: [ ]
+    captures: [ "scale" ]
+
+  - id: "env/Experiment/adsorption_or_flux_series"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(breakthrough\\s+curve|isotherm|kinetic\\s+test|flux\\s+decline|fouling\\s+test)\\b"
+    negatives: [ ]
+    captures: [ "series" ]
+
+  # ===== RESULT (количественные эффекты)
+  - id: "env/Result/removal_efficiency"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(removal|reduction)\\b.{0,80}?\\b(BOD|COD|TSS|TN|TP|NH4[- ]?N|NO3[- ]?N|phosphate|dye|phenol|antibiotic|metal)\\b.{0,80}?\\b(by|of)\\s*((?:\\d+(?:\\.\\d+)?)\\s*%)"
+    negatives: [ "no\\s+significant\\s+difference" ]
+    captures: [ "verb","target","by_or_of","value" ]
+
+  - id: "env/Result/adsorption_params"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(Langmuir|Freundlich)\\b.{0,120}?(qmax|K[Ll]?|n)\\b.{0,80}?=\\s*(\\d+(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: [ "model","param","val" ]
+
+  - id: "env/Result/kinetics_and_R2"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(removal\s+efficiency|reduction)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/m³)?'
-    negatives: ['not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.7-environmental-engineering/Hypothesis/treatment-effect"
-    type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(treatment|process)\s+(?:reduces|removes)\s+(BOD|COD|TSS|NH4|NO3)'
-    negatives: ['no\s+effect']
-    captures: []
-  - id: "Engineering and technology / 2.7-environmental-engineering/Experiment/wwtp-or-pilot"
-    type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(WWTP|pilot\s+plant|reactor\s+train|biofilter|MBR)\b'
-    negatives: ['lab\s+jar\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.7-environmental-engineering/Technique/process-or-lca"
-    type: Technique
-    weight: 0.65
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(LCA|activated\s+sludge|A2/O|MBR|Fenton|adsorption|ozonation)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.7-environmental-engineering/Dataset/samples-or-influent-effluent"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:samples|influent|effluent)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+grab']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.7-environmental-engineering/Analysis/statistical-or-mass-balance"
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(pseudo[- ](first|second)[- ]order|intra[- ]particle\\s+diffusion|rate\\s+constant)\\b.{0,120}?\\b(k|k1|k2)\\s*=\\s*(\\d+(?:\\.\\d+)?)\\b.{0,80}?\\b(R2|R\\^?2)\\s*=\\s*0?\\.\\d{2,}"
+    negatives: [ ]
+    captures: [ "kin","kname","kval","r2" ]
+
+  - id: "env/Result/membrane_performance"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(permeate\\s*flux|flux\\s*recovery|TMP|salt\\s*rejection|TOC\\s*rejection)\\b.{0,120}?(increase|decrease|reduction|improv(?:e|ement)|to)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)\\s*(LMH|bar|%))"
+    negatives: [ ]
+    captures: [ "metric","effect","delta","unit" ]
+
+  - id: "env/Result/air_emission_levels"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(PM2?\\.5|PM10|NOx|SO2|O3|VOC|NH3)\\b.{0,120}?(concentration|level|emission)\\b.{0,80}?=\\s*(\\d+(?:\\.\\d+)?)\\s*(µg/m3|mg/m3|ppm|ppb|g/s|kg/h)"
+    negatives: [ ]
+    captures: [ "pollutant","what","value","unit" ]
+
+  - id: "env/Result/LCA_outcomes"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(GWP|global\\s+warming\\s+potential|carbon\\s+footprint|eutrophication|acidification)\\b.{0,120}?(reduction|decrease|lower|increase|hotspot)"
+    negatives: [ ]
+    captures: [ "impact","effect" ]
+
+  # ===== ANALYSIS
+  - id: "env/Analysis/operating_factor_influence"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(mass\s+balance|kinetic\s+model|regression|ANOVA)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.7-environmental-engineering/Conclusion/compliance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(meets|complies\s+with)\s+(discharge\s+limits|regulation)\b'
-    negatives: ['exceeds|violates']
-    captures: []
-  - id: "Engineering and technology / 2.7-environmental-engineering/Input Fact/regulation"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(influence|effect|depend(s|ence)\\s+on)\\b.{0,160}?\\b(pH|HRT|SRT|aeration|dose|contact\\s*time|temperature|pressure)\\b"
+    negatives: [ ]
+    captures: [ "rel","factor" ]
+
+  - id: "env/Analysis/model_validation"
+    type: Analysis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(EPA|EU\s+directive|regulation)\b(.+?)?'
-    negatives: ['draft']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(validation|agreement|Bland[- ]Altman|statistical\\s+fit)\\b.{0,160}?(AERMOD|CALPUFF|Langmuir|Freundlich|pseudo[- ](first|second)[- ]order)"
+    negatives: [ ]
+    captures: [ "val","model" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "env/Dataset/figs_tables_supp"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Supplementary|Figure\\s*\\d+|Table\\s*\\d+|repository|Zenodo|Figshare|\\.(csv|xlsx))\\b"
+    negatives: [ ]
+    captures: [ "art" ]
+
+  # ===== CONCLUSION
+  - id: "env/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

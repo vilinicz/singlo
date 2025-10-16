@@ -1,160 +1,59 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ BES,   "bioelectrochemical system" ]
+  - [ MFC,   "microbial fuel cell" ]
+  - [ UASB,  "upflow anaerobic sludge blanket" ]
+  - [ SBR,   "sequencing batch reactor" ]
+  - [ MBBR,  "moving bed biofilm reactor" ]
+  - [ DO,    "dissolved oxygen" ]
+  - [ ORP,   "oxidation–reduction potential" ]
+  - [ HRT,   "hydraulic retention time" ]
+  - [ SRT,   "solids retention time" ]
+  - [ OTU,   "operational taxonomic unit" ]
+  - [ ASV,   "amplicon sequence variant" ]
+  - [ MAG,   "metagenome-assembled genome" ]
+  - [ qPCR,  "quantitative polymerase chain reaction" ]
+  - [ FISH,  "fluorescence in situ hybridization" ]
+  - [ TOC,   "total organic carbon" ]
+  - [ AAS,   "atomic absorption spectroscopy" ]
+  - [ ICP-MS,"inductively coupled plasma mass spectrometry" ]
+  - [ EIS,   "electrochemical impedance spectroscopy" ]
+  - [ CV,    "cyclic voltammetry" ]
+
+synonyms:
+  - [ bioelectrochemical system, BES ]
+  - [ microbial fuel cell, MFC ]
+  - [ denitrification, denitriﬁcation ]
+  - [ nitrification, nitriﬁcation ]
+  - [ sulfate-reducing bacteria, SRB ]
+  - [ removal efficiency, percent removal ]
+  - [ adsorption capacity, qmax ]
+  - [ inhibitory concentration 50, IC50 ]
+  - [ enrichment, increase in relative abundance ]
+  - [ constructed wetland, CW ]
+  - [ external resistance, load resistance ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - OD600
-  - U/mL
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - bioremediation
-    - bioremediations
-  -
-    - bioaugmentation
-    - bioaugmentations
-  -
-    - consortium
-    - consortiums
-  -
-    - metabolism
-    - metabolisms
-  -
-    - biodegradation
-    - biodegradations
-  -
-    - microbial
-    - microbials
+  - "mg/L"
+  - "µg/L"
+  - "mg/g"
+  - "mW/m2"
+  - "mA/m2"
+  - "mV"
+  - "°C"
+  - "h"
+  - "d"

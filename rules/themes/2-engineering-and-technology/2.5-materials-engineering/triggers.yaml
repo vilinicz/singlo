@@ -1,83 +1,23 @@
-id: "Engineering and technology / 2.5-materials-engineering"
+id: "Engineering & Technology / 2.5-materials-engineering / welding-and-joining-HSS"
 version: 1
-threshold: 0.8
-must:
-  - microstructure
-  - composite
+threshold: 0.60
+must: []
 should:
-  -
-    - microstructure
-    - 1
-  -
-    - alloy
-    - 1
-  -
-    - composite
-    - 1
-  -
-    - ceramic
-    - 1
-  -
-    - fatigue
-    - 1
-  -
-    - fracture
-    - 1
-  -
-    - coating
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Домены и стандарты
+  - ["AWS\\s*A5\\.[1,5,28]|MIL[- ]E[- ]23765|ASME\\s*Section\\s*IX|ISO\\s*2560", 0.95]
+  - ["HSS\\b|HSLA[- ](80|100)|HY[- ](80|100)", 0.9]
+  - ["Charpy|CVN\\b|V[- ]?notch", 0.9]
+  # Процессы сварки/зоны
+  - ["SMAW|SAW|GTAW|GMAW|FCAW(-S)?|heat[- ]input|interpass|HAZ\\b|weld\\s+metal\\b|WM\\b", 0.95]
+  # Металлургия превращений и эквиваленты углерода
+  - ["Ar3|B[SF]\\b|B50\\b|MS\\b|TS[-–]TF|austenite|bainite|martensite|acicular\\s+ferrite", 0.95]
+  - ["CEN\\b|CEIIW\\b|Pcm\\b|carbon\\s+equivalent", 0.92]
+  # Элементы/легирование, охлаждение
+  - ["C[, ]?Mn|Ni|Cr|Mo|Cu|Nb|V|Ti|B|Al|N|O\\b|cooling\\s*rate|Δ8/5|8/5", 0.9]
+  # Аналитика/моделирование
+  - ["dilatometry|neural\\s+network|ANN|JWES|regression\\s+equation", 0.85]
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["clinical\\s+trial|patient|oocyte|endometrial|cardiomyocyte", 0.95]
+  - ["bioremediation|MFC\\b|constructed\\s+wetland|WWTP", 0.95]
+  - ["theorem\\b|lemma\\b(?! of)", 0.85]
+  - ["questionnaire|Likert|curriculum", 0.9]

@@ -1,57 +1,112 @@
 elements:
-  - id: "Engineering and technology / 2.5-materials-engineering/Result/mechanical-or-microstructure"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(hardness|toughness|yield\s+strength|grain\s+size)\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>HRC|HV|GPa|MPa|µm|nm)?'
-    negatives: ['not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.5-materials-engineering/Hypothesis/alloying-or-treatment"
+  # ===== HYPOTHESIS
+  - id: "weld/Hypothesis/lower_TS_improves_strength_toughness"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(alloying|heat\s+treatment|coating)\s+(?:improves|reduces)\s+(strength|wear|corrosion)'
-    negatives: ['no\s+effect']
-    captures: ["value"]
-  - id: "Engineering and technology / 2.5-materials-engineering/Experiment/materials-tests"
-    type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(tensile|hardness|Charpy|XRD|SEM|TEM|AFM)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.5-materials-engineering/Technique/processing-or-deposition"
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b.{0,60}?that\\s+(.{1,180}?(suppress(ing)?|lower(ing)?)\\s+(Ar3|BS|MS|austenite\\s+(transformation|decomposition)[- ]start|TS).{0,80}?(increase|improv)(es|e)\\s+(strength|toughness|CVN))"
+    negatives: []
+    captures: ["cue","verb","text"]
+
+  # ===== INPUT FACT — составы/пределы/охлаждение
+  - id: "weld/InputFact/chem_composition_window"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract","TableCaption"]
+    pattern: "\\b(C|Si|Mn|Ni|Cr|Mo|Cu|Nb|V|Ti|B|Al|N|O)\\b.{0,40}?(wt-?%|ppm)\\b.{0,120}?(range|min(?:imum)?|max(?:imum)?|limit|within|between)"
+    negatives: []
+    captures: ["elem","unit","qual"]
+
+  - id: "weld/InputFact/process_params"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(heat[- ]input|interpass|cooling\\s*rate|Δ?8/5|plate\\s*thickness)\\b.{0,80}?((\\d+(?:\\.\\d+)?)\\s*(kJ/mm|°C/s|mm|°C))"
+    negatives: []
+    captures: ["param","value","unit"]
+
+  # ===== TECHNIQUE — процессы/дила́тометрия/модели
+  - id: "weld/Technique/welding_process"
     type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","FigureCaption","Abstract"]
+    pattern: "\\b(SMAW|SAW|GTAW|GMAW|FCAW(?:-S)?)\\b"
+    negatives: []
+    captures: ["proc"]
+
+  - id: "weld/Technique/dilatometry_or_ann"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(dilatometry|ANN\\b|neural\\s+network|JWES)\\b"
+    negatives: []
+    captures: ["tool"]
+
+  # ===== EXPERIMENT — дизайн/стандарты
+  - id: "weld/Experiment/standardized_weld_procedure"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(standardized|procedure|bead\\s+sequence|joint\\s+geometry|per\\s+(AWS|ISO|ASME))\\b"
+    negatives: []
+    captures: ["std"]
+
+  # ===== RESULT — численные свойства/температуры/эквиваленты
+  - id: "weld/Result/mech_properties"
+    type: Result
     weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(additive\s+manufacturing|PVD|CVD|anneal|quench|shot\s+peen)\b'
-    negatives: ['off\s+the\s+shelf\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.5-materials-engineering/Dataset/specimens"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'specimens\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+specimen']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.5-materials-engineering/Analysis/phase-or-fractography"
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(YS|UTS|elongation|reduction\\s+of\\s+area|RA|Charpy|CVN)\\b.{0,120}?\\b(-?\\d+(?:\\.\\d+)?)\\s*(MPa|J|%)\\b"
+    negatives: []
+    captures: ["metric","value","unit"]
+
+  - id: "weld/Result/TS_temperatures"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(Ar3|BS|B50|BF|MS|TS|TF)\\b.{0,40}?=?.{0,20}?(-?\\d{2,4})\\s*°C"
+    negatives: []
+    captures: ["label","temp"]
+
+  - id: "weld/Result/carbon_equivalent"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(CEN|CEIIW|Pcm)\\b.{0,40}?=\\s*(\\d+(?:\\.\\d+)?)"
+    negatives: []
+    captures: ["formula","value"]
+
+  # ===== ANALYSIS — уравнения/регрессии/влияние
+  - id: "weld/Analysis/regressions_and_models"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(phase\s+analysis|Rietveld|fractography|EBSD|EDS)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.5-materials-engineering/Conclusion/performance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?material\s+(?:meets|improves)\s+(performance|durability)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.5-materials-engineering/Input Fact/standard-or-handbook"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(regression\\s+equation|constitutive\\s+equation|model(s)?|correlat(es|ion))\\b.{0,160}?(UTS|YS|T28J|T100J|Ar3|BS|MS)"
+    negatives: []
+    captures: ["topic","target"]
+
+  - id: "weld/Analysis/alloy_effects"
+    type: Analysis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(ASTM|ASM\s+handbook|standard)\b(.+?)?'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(effect|influence|depend(s|ence)\\s+on)\\b.{0,160}?\\b(C|Mn|Ni|Cr|Mo|Cu|Nb|V|Ti|B|Al|N|O|CEN|cooling\\s*rate)\\b"
+    negatives: []
+    captures: ["rel","factor"]
+
+  # ===== DATASET / артефакты
+  - id: "weld/Dataset/tables_figs_repo"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Table\\s*\\d+|Figure\\s*\\d+|Spreadsheet|database|Supplementary|\\.csv|\\.xlsx)\\b"
+    negatives: []
+    captures: ["artifact"]
+
+  # ===== CONCLUSION
+  - id: "weld/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: []
+    captures: ["text"]

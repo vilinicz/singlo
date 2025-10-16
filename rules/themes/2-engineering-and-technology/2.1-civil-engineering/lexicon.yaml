@@ -1,160 +1,50 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ CBR, "California Bearing Ratio" ]
+  - [ UCS, "unconfined compressive strength" ]
+  - [ MDD, "maximum dry density" ]
+  - [ OMC, "optimum moisture content" ]
+  - [ LL, "Liquid Limit" ]
+  - [ PL, "Plastic Limit" ]
+  - [ PI, "Plasticity Index" ]
+  - [ E50, "secant modulus at 50% peak stress" ]
+  - [ ASTM D1883, "CBR test standard" ]
+  - [ ASTM D2166, "UCS test standard" ]
+  - [ ASTM C496, "Splitting tensile test standard" ]
+  - [ USCS, "Unified Soil Classification System" ]
+  - [ AASHTO, "American Association of State Highway and Transportation Officials" ]
+
+synonyms:
+  - [ expansive clay, swelling clay ]
+  - [ subgrade, sub-grade ]
+  - [ coir, coconut fiber ]
+  - [ rice husk ash, RHA ]
+  - [ fly ash, FA ]
+  - [ tensile strength, splitting tensile strength ]
+  - [ secant modulus, E50 ]
+  - [ maximum dry density, MDD ]
+  - [ optimum moisture content, OMC ]
+  - [ passes sieve No. 200, passed #200 sieve ]
+  - [ curing time, curing period ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - generally
+  - nominally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - kN
-  - kPa
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - structural
-    - structurals
-  -
-    - geotechnical
-    - geotechnicals
-  -
-    - concrete
-    - concretes
-  -
-    - bridge
-    - bridges
-  -
-    - seismic
-    - seismics
-  -
-    - transport
-    - transports
+  - "kPa"
+  - "MPa"
+  - "kN/m3"
+  - "°C"
+  - "mm"
+  - "cm"
+  - "days"

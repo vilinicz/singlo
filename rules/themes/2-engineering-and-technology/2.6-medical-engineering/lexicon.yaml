@@ -1,160 +1,52 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ FLIM,  "fluorescence lifetime imaging microscopy" ]
+  - [ PLIM,  "phosphorescence lifetime imaging microscopy" ]
+  - [ TCSPC, "time-correlated single-photon counting" ]
+  - [ ROI,   "region of interest" ]
+  - [ PSF,   "point spread function" ]
+  - [ NA,    "numerical aperture" ]
+  - [ SNR,   "signal-to-noise ratio" ]
+  - [ NADH,  "nicotinamide adenine dinucleotide (reduced)" ]
+  - [ NADPH, "nicotinamide adenine dinucleotide phosphate (reduced)" ]
+  - [ FAD,   "flavin adenine dinucleotide" ]
+  - [ OCR,   "oxygen consumption rate" ]
+  - [ ECAR,  "extracellular acidification rate" ]
+  - [ OXPHOS,"oxidative phosphorylation" ]
+  - [ ΔΨm,   "mitochondrial membrane potential" ]
+
+synonyms:
+  - [ redox ratio, optical redox ratio ]
+  - [ lifetime map, τ map ]
+  - [ two-photon, 2P ]
+  - [ multiphoton, MP ]
+  - [ oxygen sensor, O2 probe ]
+  - [ organoid, 3D organoid ]
+  - [ spheroid, tumor spheroid ]
+  - [ hypoxia, low oxygen ]
+  - [ normoxia, ambient oxygen ]
+  - [ autofluorescence, endogenous fluorescence ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
+  - generally
+  - nominally
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "ps"
+  - "ns"
+  - "µs"
+  - "nm"
+  - "µm"
+  - "mm"
+  - "fps"
+  - "kPa"
+  - "mmHg"
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - bpm
-  - mmHg
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - biomedical device
-    - biomedical devices
-  -
-    - prosthesis
-    - prosthesiss
-  -
-    - imaging
-    - imagings
-  -
-    - biomechanics
-    - biomechanicss
-  -
-    - biosensor
-    - biosensors
-  -
-    - implant
-    - implants

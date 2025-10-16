@@ -1,83 +1,31 @@
-id: "Engineering and technology / 2.7-environmental-engineering"
-version: 1
-threshold: 0.8
-must:
-  - wastewater
-  - remediation
+id: "Engineering & Technology / 2.7-environmental-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - wastewater
-    - 1
-  -
-    - air pollution
-    - 1
-  -
-    - remediation
-    - 1
-  -
-    - LCA
-    - 1
-  -
-    - emission
-    - 1
-  -
-    - treatment
-    - 1
-  -
-    - sustainability
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Вода/стоки, WWTP, показатели
+  - ["wastewater|sewage|influent|effluent|WWTP|treatment plant|secondary clarifier|activated sludge|biofilm|MBBR|SBR", 0.95]
+  - ["BOD\\b|COD\\b|TSS\\b|NH4[- ]?N|NO3[- ]?N|TN\\b|TP\\b|turbidity|conductivity", 0.95]
+  - ["membrane bioreactor|MBR\\b|ultrafiltration|UF\\b|nanofiltration|NF\\b|reverse osmosis|RO\\b|TMP\\b|permeate\\s*flux", 0.9]
+  - ["advanced oxidation|AOP\\b|Fenton|photo[- ]Fenton|ozonation|photocatalys(?:is|t)|TiO2", 0.9]
+  - ["adsorption|adsorbent|activated carbon|GAC\\b|PAC\\b|Langmuir|Freundlich|pseudo[- ](first|second)[- ]order", 0.9]
+  - ["desalination|brine|antiscalant|fouling|clean[- ]in[- ]place|CIP", 0.75]
+
+  # Воздух и выбросы
+  - ["air quality|stack|flue gas|CEMS|emission(s)?|PM2?\\.5|PM10|NOx|SO2|O3\\b|VOC\\b|NH3\\b", 0.9]
+  - ["dispersion model|AERMOD|CALPUFF|HYSPLIT|Gaussian plume|WRF\\b", 0.85]
+  - ["scrubber|electrostatic precipitator|baghouse|cyclone", 0.75]
+
+  # Отходы/почвы/биогаз
+  - ["landfill|leachate|composting|anaerobic digestion|biogas|BMP\\b|methane yield|soil remediation|phytoremediation", 0.85]
+
+  # Оценка воздействия/устойчивость
+  - ["life cycle assessment|LCA\\b|carbon footprint|GWP\\b|ISO\\s*1404\\d|impact category|eutrophication", 0.8]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["USRP|SDR\\b|QPSK|OFDM|SNR\\b", 0.95]                       # связь (2.2)
+  - ["Atterberg|CBR\\b|UCS\\b|AASHTO|USCS", 0.95]               # геотехника (2.1)
+  - ["FLIM\\b|organoid|NAD\\(P\\)H|Seahorse|ECAR|OCR", 0.95]    # мединж (2.6)
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95] # право
+  - ["questionnaire|Likert|curriculum|classroom", 0.9]          # пед. исслед.
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]                         # чистая математика

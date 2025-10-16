@@ -1,83 +1,29 @@
-id: "Engineering and technology / 2.9-industrial-biotechnology"
+id: "Engineering & Technology / 2.9-industrial-biotechnology"
 version: 1
-threshold: 0.8
-must:
-  - fermentation
-  - bioreactor
+threshold: 0.60
+must: []
 should:
-  -
-    - fermentation
-    - 1
-  -
-    - bioprocess
-    - 1
-  -
-    - bioreactor
-    - 1
-  -
-    - downstream
-    - 1
-  -
-    - yield
-    - 1
-  -
-    - substrate
-    - 1
-  -
-    - strain
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Процессы/режимы/оборудование
+  - ["fermentation|bioreactor|chemostat|fed[- ]batch|perfusion|continuous\\s+bioprocess", 0.98]
+  - ["upstream|downstream\\s+processing|DSP\\b|CIP\\b|SIP\\b|PAT\\b|QbD\\b|process analytical technology", 0.9]
+  - ["space[- ]time\\s+yield|STY\\b|volumetric\\s+productivity|specific\\s+productivity|titer|yield", 0.9]
+  - ["chromatograph(y|ic)|ion[- ]exchange|affinity|HIC\\b|UF/DF|ultra\\s*filtration|diafiltration", 0.85]
+
+  # Организмы/шасси/инжиниринг
+  - ["E\\.\\s*coli|Saccharomyces\\s+cerevisiae|Pichia\\s+pastoris|Komagataella|Bacillus\\s+subtilis|Corynebacterium\\s+glutamicum|Yarrowia\\s+lipolytica|Streptomyces", 0.95]
+  - ["metabolic\\s+engineering|overexpression|knock(out|in)|CRISPR|Cas9|pathway\\s+optimization|flux\\s+balance\\s+analysis|13C\\s*-?MFA", 0.9]
+
+  # Продукты/субстраты/биокатализ
+  - ["ethanol|lactic\\s+acid|succinic\\s+acid|1,3[- ]propanediol|2,3[- ]butanediol|itaconic|citric\\s+acid|lysine|glutamate|PHA\\b|PHB\\b|biosurfactant|rhamnolipid", 0.85]
+  - ["cellulase|amylase|protease|lipase|cutinase|transaminase|ketoreductase|whole[- ]cell\\s+biocatalysis|enzyme\\s+immobilization", 0.85]
+  - ["lignocellulosic|corn\\s*stover|bagasse|glycerol|molasses|syngas|CO2\\s+fixation|gas\\s+fermentation", 0.8]
+
+  # Аналитика/контроль
+  - ["HPLC|GC[- ]MS|LC[- ]MS|NIR\\b|Raman\\b|off[- ]gas\\s+analysis|online\\s+monitoring", 0.8]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["clinical\\s+trial|patient|randomized|ICSI|endometrial|oocyte", 0.95]      # клиника
+  - ["ecotoxicol|Gammarus|hemolymph|patch[- ]clamp|cardiomyocyte", 0.95]       # био/эко и медфизиология
+  - ["WWTP|AERMOD|CALPUFF|sorption|constructed\\s+wetland", 0.95]              # экоинж/окружающая среда
+  - ["grapes|wine|ochratoxin|OTA|food safety", 0.95]                            # food micro (если не про процесс)
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]

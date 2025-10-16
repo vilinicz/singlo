@@ -1,83 +1,26 @@
-id: "Engineering and technology / 2.4-chemical-engineering"
-version: 1
-threshold: 0.8
-must:
-  - reactor
-  - separation
+id: "Engineering & Technology / 2.4-chemical-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - reactor
-    - 1
-  -
-    - process
-    - 1
-  -
-    - separation
-    - 1
-  -
-    - distillation
-    - 1
-  -
-    - membrane
-    - 1
-  -
-    - heat exchanger
-    - 1
-  -
-    - flow sheet
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Материалы/плёнки/самосборка/подложки
+  - ["self[- ]assembly|electrostatic self[- ]assembly|thin film|ultrathin film|microspheres?|nanoparticles?", 0.9]
+  - ["graphene oxide|GOQDs?|MXene|polyelectrolyte|PDDA|SiO2|silica", 0.9]
+  - ["interdigitated electrodes?|IDE\\b|sputtering|deposition|coating|spin[- ]coat", 0.8]
+
+  # Сенсоры/характеризация/условия
+  - ["humidity sensor|gas sensor|adsorption|diffusion|hysteresis|response time|recovery time", 0.95]
+  - ["impedance spectroscopy|Nyquist|Warburg|RC\\b|Grotthuss", 0.85]
+  - ["relative humidity|RH\\b|%\\s*RH|chopper|modulation|Hz\\b", 0.8]
+  - ["stability|temperature fluctuation|contact angle|hydrophilic|surface area", 0.7]
+
+  # Метрики/сравнения/приложения (общие для хим.-инж.)
+  - ["sensitivity|detection range|calibration|linear fit|R2\\b", 0.6]
+  - ["respiration monitoring|explosion monitoring|speech activity|ventilator", 0.5]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["CBR\\b|UCS\\b|AASHTO|Atterberg", 0.95]                    # геотехника (2.1)
+  - ["USRP|SDR\\b|QPSK|OFDM|SNR|BER", 0.95]                     # электротехника/связь (2.2)
+  - ["PCR|cohort|biobank|CRISPR|Western blot", 0.95]            # биомед
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95] # право
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]                         # чистая математика

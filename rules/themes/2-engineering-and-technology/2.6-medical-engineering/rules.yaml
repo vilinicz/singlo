@@ -1,57 +1,160 @@
 elements:
-  - id: "Engineering and technology / 2.6-medical-engineering/Result/device-performance"
+  # ===== HYPOTHESIS
+  - id: "med/Hypothesis/lifetime_reports_metabolism"
+    type: Hypothesis
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(propose|hypothes[ie]ze|argue))\\b.{0,60}?that\\s+(.{1,180}?(lifetime|FLIM|PLIM|phasor).{0,60}?(metaboli[sc] state|redox|oxygenation))"
+    negatives: [ ]
+    captures: [ "cue","verb","text" ]
+
+  - id: "med/Hypothesis/organoids_enable_translation"
+    type: Hypothesis
+    weight: 0.58
+    sections: ["Introduction","Discussion","Body","Unknown"]
+    pattern: "\\b(organoids?|spheroids?)\\b.{0,160}?(enable|allow|support)\\b.{0,120}?(translation|preclinical|drug\\s*screening)"
+    negatives: [ ]
+    captures: [ "model","verb","goal" ]
+
+  # ===== INPUT FACT (образец/оптика/условия)
+  - id: "med/InputFact/sample_and_matrix"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(organoids?|spheroids?|3D\\s+culture|Matrigel|hydrogel|collagen\\s*gel)\\b"
+    negatives: [ ]
+    captures: [ "sample" ]
+
+  - id: "med/InputFact/optical_setup"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(confocal|two[- ]photon|multiphoton|light[- ]sheet|spinning\\s+disk)\\b.{0,160}?\\b(objective|NA\\s*=\\s*\\d\\.\\d|excitation\\s*\\d{3,4}\\s*nm|emission\\s*\\d{3,4}\\s*nm)\\b"
+    negatives: [ ]
+    captures: [ "modality","param" ]
+
+  - id: "med/InputFact/lifetime_hardware"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(TCSPC|time[- ]correlated\\s+single[- ]photon\\s+counting|gated\\s*detection|frequency[- ]domain)\\b"
+    negatives: [ ]
+    captures: [ "hw" ]
+
+  - id: "med/InputFact/perturbations"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(hypoxia|normoxia|rotenone|oligomycin|antimycin|FCCP|2[- ]DG|glucose\\s*deprivation)\\b"
+    negatives: [ ]
+    captures: [ "perturb" ]
+
+  # ===== TECHNIQUE (методы анализа/калибровки)
+  - id: "med/Technique/flim_plim_phasor"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract","FigureCaption"]
+    pattern: "\\b(FLIM|PLIM|lifetime\\s+imaging|phasor\\s+analysis)\\b"
+    negatives: [ ]
+    captures: [ "tech" ]
+
+  - id: "med/Technique/redox_ratio"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(redox\\s+ratio)\\b.{0,80}?(NAD\\(P\\)H|NADH|FAD)\\b"
+    negatives: [ ]
+    captures: [ "tech","markers" ]
+
+  - id: "med/Technique/calibration_and_mapping"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(calibration|reference\\s*phantom|lifetime\\s*map|oxygen\\s*calibration|Stern[- ]Volmer)\\b"
+    negatives: [ ]
+    captures: [ "step" ]
+
+  # ===== EXPERIMENT (серии/валидация)
+  - id: "med/Experiment/drug_or_env_series"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(series|dose[- ]response|time[- ]course|longitudinal)\\b.{0,120}?\\b(drug|oxygen|pH|glucose|temperature)\\b"
+    negatives: [ ]
+    captures: [ "series","factor" ]
+
+  - id: "med/Experiment/validation_against_bench"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(Seahorse|OCR\\b|ECAR\\b|Clark\\s*electrode|HPLC|western\\s+blot)\\b.{0,160}?(validation|correlat(?:ion|es))"
+    negatives: [ ]
+    captures: [ "bench","goal" ]
+
+  # ===== RESULT (количественные эффекты)
+  - id: "med/Result/lifetime_values"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(lifetime|τ\\s*=?|tau)\\b.{0,40}?\\b(\\d+(?:\\.\\d+)?)\\s*(ps|ns|µs)\\b"
+    negatives: [ ]
+    captures: [ "what","value","unit" ]
+
+  - id: "med/Result/redox_ratio_change"
     type: Result
     weight: 0.64
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(accuracy|sensitivity|specificity|SNR)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|dB|mm|mV|µV)?'
-    negatives: ['not\\s+significant','fails']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.6-medical-engineering/Hypothesis/design-safety"
-    type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(prosthesis|biosensor|implant)\s+(?:is|becomes)\s+(safer|more\s+accurate|more\s+comfortable)'
-    negatives: ['no\s+improvement']
-    captures: []
-  - id: "Engineering and technology / 2.6-medical-engineering/Experiment/bench-or-clinical"
-    type: Experiment
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(phantom\s+test|bench\s+test|in\s+vivo|in\s+vitro|clinical\s+evaluation)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.6-medical-engineering/Technique/signal-or-imaging"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(ECG|EEG|EMG|image\s+reconstruction|artifact\s+removal|biopotential\s+amplifier)\b'
-    negatives: ['manual\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.6-medical-engineering/Dataset/subjects-or-records"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:subjects|records|sessions)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+case']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.6-medical-engineering/Analysis/signal-quality-or-statistics"
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(redox\\s+ratio)\\b.{0,80}?(increase|decrease|higher|lower|shift)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)%|\\d+(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: [ "what","effect","delta" ]
+
+  - id: "med/Result/oxygen_or_pH_response"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(O2|oxygen|pH)\\b.{0,120}?(map|gradient|depletion|increase)\\b.{0,120}?\\b(\\d+(?:\\.\\d+)?\\s*(kPa|mmHg|units))\\b"
+    negatives: [ ]
+    captures: [ "analyte","effect","value" ]
+
+  - id: "med/Result/imaging_performance"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(resolution|penetration\\s*depth|SNR|speed|throughput)\\b.{0,120}?(improv(?:e|ement)|increase|decrease|to)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)%|\\d+(?:\\.\\d+)?\\s*(µm|mm|fps))"
+    negatives: [ ]
+    captures: [ "metric","effect","delta" ]
+
+  # ===== ANALYSIS
+  - id: "med/Analysis/phasor_or_clustering"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(SNR|artifact\s+rate|Bland[–-]Altman|ROC|AUC|BPM)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.6-medical-engineering/Conclusion/device-utility"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?device\s+(?:is|appears\s+to\s+be)\s+(effective|safe)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.6-medical-engineering/Input Fact/standard"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(phasor\\s+(plot|coordinates?)|g\\,\\s*s\\s*coordinates|cluster(?:ing)?)\\b.{0,160}?(metabolic\\s+states?|cell\\s+subpopulations?)"
+    negatives: [ ]
+    captures: [ "tool","target" ]
+
+  - id: "med/Analysis/correlation_with_bench"
+    type: Analysis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(ISO\s+10993|IEC\s+60601|standard)\b(.+?)?'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(correlat(es|ion)|agreement|Bland[- ]Altman)\\b.{0,160}?(Seahorse|OCR|ECAR|biochemical)"
+    negatives: [ ]
+    captures: [ "rel","bench" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "med/Dataset/code_and_images"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(repository|Zenodo|Figshare|BioStudies|supplementary|\\.tif|\\.lif|\\.czi|\\.nd2|\\.csv|\\.ipynb|\\.mat)\\b"
+    negatives: [ ]
+    captures: [ "artifact" ]
+
+  # ===== CONCLUSION
+  - id: "med/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+work\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

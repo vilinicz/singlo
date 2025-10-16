@@ -1,57 +1,136 @@
 elements:
-  - id: "Engineering and technology / 2.4-chemical-engineering/Result/conversion-or-yield"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(conversion|yield|selectivity)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mol%)?'
-    negatives: ['low\s+selectivity|coking']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.4-chemical-engineering/Hypothesis/process-improvement"
+  # ===== HYPOTHESIS
+  - id: "chem/Hypothesis/ultrafast_mechanism"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(reactor|catalyst|membrane)\s+(?:improves|enhances|reduces)\s+(conversion|pressure\s+drop|fouling)'
-    negatives: ['no\s+improvement']
-    captures: ["value"]
-  - id: "Engineering and technology / 2.4-chemical-engineering/Experiment/pilot-or-reactor"
-    type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(packed\s+bed|CSTR|PFR|pilot\s+plant|membrane\s+module)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.4-chemical-engineering/Technique/process"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(HYSYS|Aspen|process\s+simulation|HEN|distillation\s+design|RTD)\b'
-    negatives: ['hand\s+calc\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.4-chemical-engineering/Dataset/experiments-or-samples"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:experiments|samples|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+run']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.4-chemical-engineering/Analysis/energy-or-mass-balance"
-    type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(mass\s+balance|energy\s+balance|residence\s+time\s+distribution|Arrhenius)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.4-chemical-engineering/Conclusion/process-performance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?process\s+(?:achieves|improves)\s+(conversion|selectivity|yield)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.4-chemical-engineering/Input Fact/standard-or-correlation"
-    type: Input Fact
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(propose|introduce|hypothes[ie]ze|argue))\\b.{0,60}?that\\s+(.{1,180}?)(ultra[- ]?fast|millisecond[- ]level)\\s+(response|recovery)\\b"
+    negatives: [ ]
+    captures: [ "cue", "verb", "text" ]
+
+  # ===== INPUT FACT (материалы, структура, условия)
+  - id: "chem/InputFact/material_stack"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract","Appendix"]
+    pattern: "\\b(GOQDs?|graphene\\s+oxide\\s+quantum\\s+dots|SiO2|silica\\s+microspheres|PDDA|polyelectrolyte|interdigitated\\s+electrodes?|IDE)\\b"
+    negatives: [ ]
+    captures: [ "mat" ]
+
+  - id: "chem/InputFact/fabrication_route"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(electrostatic\\s+self[- ]assembly|self[- ]assembled|sputter(?:ing)?|deposited|coated|oven\\s+at\\s*\\d+\\s*°C)\\b"
+    negatives: [ ]
+    captures: [ "step" ]
+
+  - id: "chem/InputFact/test_conditions"
+    type: "Input Fact"
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(ANSI|standard|correlation)\b(.+?)?'
-    negatives: ['empirical\s+only']
-    captures: ["value"]
+    sections: ["Methods","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(RH|relative\\s+humidity)\\b.{0,80}?\\b(\\d{1,3}\\s*%)(?:\\s*(to|–|-)\\s*(\\d{1,3}\\s*%))?|\\b(\\d{1,3})\\s*Hz\\b"
+    negatives: [ ]
+    captures: [ "rh_kw","rh1","sep","rh2","freq" ]
+
+  # ===== TECHNIQUE (методы измерений/анализа)
+  - id: "chem/Technique/eis_nyquist"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","Abstract","FigureCaption"]
+    pattern: "\\b(impedance\\s+spectroscop(y|ic)|Nyquist|equivalent\\s+circuit|RC\\b|Warburg)\\b"
+    negatives: [ ]
+    captures: [ "tech" ]
+
+  - id: "chem/Technique/chopped_flow_setup"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(chopper|periodic\\s+humidity\\s+modulation|preamble|window|Fourier\\s+transform)\\b"
+    negatives: [ ]
+    captures: [ "setup" ]
+
+  - id: "chem/Technique/surface_and_wetting"
+    type: Technique
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(contact\\s+angle|hydrophilic|surface\\s+area|roughness|FT[- ]IR|SEM|TEM)\\b"
+    negatives: [ ]
+    captures: [ "char" ]
+
+  # ===== EXPERIMENT (серии испытаний/валидации)
+  - id: "chem/Experiment/sweep_and_validation"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(sensitivity\\s+characteristics|frequency\\s+from\\s+\\d+\\s*Hz\\s+to\\s+\\d+\\s*Hz|stability\\s+test|temperature\\s+fluctuation|validation)\\b"
+    negatives: [ ]
+    captures: [ "exp" ]
+
+  # ===== RESULT (ключевые количественные метрики)
+  - id: "chem/Result/resp_reco_time_ms"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(response\\s+time|recovery\\s+time)\\b.{0,60}?\\b(\\d+(?:\\.\\d+)?)\\s*ms\\b"
+    negatives: [ ]
+    captures: [ "what", "value_ms" ]
+
+  - id: "chem/Result/hysteresis_and_range"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Abstract"]
+    pattern: "\\b(hysteresis)\\b.{0,80}?\\b(<|≤|=)?\\s*(\\d+(?:\\.\\d+)?)\\s*%\\s*RH\\b|\\b(range)\\b.{0,80}?\\b(\\d{1,2}\\s*%\\s*to\\s*\\d{1,3}\\s*%\\s*RH)\\b"
+    negatives: [ ]
+    captures: [ "metric","cmp","val","kw","rng" ]
+
+  - id: "chem/Result/impedance_transition"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(Nyquist|impedance)\\b.{0,160}?(Warburg|Grotthuss|transition\\s+from\\s+dry\\s+to\\s+wet)"
+    negatives: [ ]
+    captures: [ "nyq","feature" ]
+
+  - id: "chem/Result/high_freq_tracking"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(follow|track|detect)\\b.{0,80}?\\b(up\\s*to|at)\\s*(\\d{2,4})\\s*Hz\\b"
+    negatives: [ ]
+    captures: [ "verb","freq" ]
+
+  - id: "chem/Result/comparison_to_commercial"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(commercial\\s+sensor|SHT\\d{2}|benchmark)\\b.{0,160}?(slower|cannot|fails|worse|lower)"
+    negatives: [ ]
+    captures: [ "baseline","effect" ]
+
+  # ===== ANALYSIS (объяснение механизма)
+  - id: "chem/Analysis/mechanism_chain"
+    type: Analysis
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(mechanism|depends\\s+on|due\\s+to)\\b.{0,160}?(diffusion\\s+path|surface\\s+area|contact\\s+angle|adsorbed\\s+layer|hydrophilic\\s+groups?)"
+    negatives: [ ]
+    captures: [ "cue","factor" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "chem/Dataset/supplement_and_media"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Supplementary|Video\\s*\\d+|Table\\s*\\d+|Figure\\s*\\d+)\\b"
+    negatives: [ ]
+    captures: [ "art" ]
+
+  # ===== CONCLUSION
+  - id: "chem/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+work\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

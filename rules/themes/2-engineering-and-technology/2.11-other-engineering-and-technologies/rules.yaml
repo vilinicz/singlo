@@ -1,57 +1,160 @@
 elements:
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Result/performance"
-    type: Result
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(throughput|latency|accuracy|energy\s+use)\s+(?:of|is)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|ms|W|J)?'
-    negatives: ['not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Hypothesis/scaling-or-integration"
+  # ===== HYPOTHESIS (процессы/стандарты/качество)
+  - id: "oth/Hypothesis/process_or_standard_improves_outcome"
     type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+(?:expect|anticipate)\s+that\s+(integration|scaling|standardization)\s+(?:improves|reduces)\s+(overhead|latency|cost)'
-    negatives: ['no\s+impact']
-    captures: []
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Experiment/prototype"
-    type: Experiment
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(prototype|pilot|bench\s+test|A/B\s+test)\b'
-    negatives: ['simulation\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Technique/systems"
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b\\s+that\\s+(.{1,180}?((standard|framework|process|procedure|FMEA|SPC|MBSE|traceability)\\b.{0,80}?(improv(es|e)|enhanc(es|e)|reduces?)\\s+(defects|nonconformit(y|ies)|risk|rework|lead\\s*time|downtime)))"
+    negatives: [ ]
+    captures: ["cue","verb","text"]
+
+  # ===== INPUT FACT (стандарты/область/уровни рисков/требования)
+  - id: "oth/InputFact/standard_or_regulation"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(ISO\\s*9001|ISO\\s*17025|ISO\\s*14971|IEC\\s*61508|IEC\\s*60601|EN\\s*5012\\d|UL\\s*\\d{3,5}|GDPR|REACH|RoHS)\\b"
+    negatives: [ ]
+    captures: ["std"]
+
+  - id: "oth/InputFact/requirement_statement"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(requirement|specification|shall|acceptance\\s+criteria|traceability\\s+matrix)\\b"
+    negatives: [ ]
+    captures: ["req"]
+
+  - id: "oth/InputFact/risk_levels"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(risk\\s+level|severity|occurrence|detectability|RPN|risk\\s+matrix|SIL\\s*(\\d)|PL\\s*[abcde])\\b"
+    negatives: [ ]
+    captures: ["risk","sil_or_pl"]
+
+  # ===== TECHNIQUE (методы качества/системная инженерия/метрология)
+  - id: "oth/Technique/quality_methods"
     type: Technique
-    weight: 0.65
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(systems\s+integration|middleware|SCADA|MES|QA|QC)\b'
-    negatives: ['ad\s+hoc']
-    captures: []
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Dataset/components-or-tests"
-    type: Dataset
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Abstract","FigureCaption"]
+    pattern: "\\b(SPC|control\\s+chart|Cpk|Ppk|DoE|DMAIC|DFSS|Pareto|Ishikawa|5\\s*Whys)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "oth/Technique/systems_engineering"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(MBSE|SysML|V[- ]model|requirements\\s+management|traceability|DOORS)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "oth/Technique/metrology_calibration"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(calibration|MSA|Gage\\s*R\\s*&\\s*R|measurement\\s+uncertainty|traceab(le|ility)\\s+to\\s+(SI|NMI))\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "oth/Technique/safety_and_risk"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(FMEA|FMECA|HAZOP|fault\\s+tree|FTA|LOPA|bow[- ]tie)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  # ===== EXPERIMENT (верификация/валидация/приемочные тесты/юзабилити)
+  - id: "oth/Experiment/verification_validation"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(verification|validation|acceptance\\s+test|type\\s+test|factory\\s+acceptance\\s+test|FAT|site\\s+acceptance\\s+test|SAT|IQ/OQ/PQ)\\b"
+    negatives: [ ]
+    captures: ["vv"]
+
+  - id: "oth/Experiment/usability_or_human_factors"
+    type: Experiment
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:components|tests|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+test']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Analysis/reliability-or-benchmark"
+    sections: ["Methods","Results","Body","Unknown"]
+    pattern: "\\b(usability\\s+study|formative\\s+evaluation|summative\\s+evaluation|task\\s+analysis|think[- ]aloud)\\b"
+    negatives: [ ]
+    captures: ["hf"]
+
+  # ===== RESULT (KPI/надежность/качество/неопределенность/соответствие)
+  - id: "oth/Result/reliability_mtbf_mttr"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(MTBF|MTTR)\\b.{0,80}?\\b(=|is|of|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(h|hours|\\bh\\b)\\b"
+    negatives: [ ]
+    captures: ["metric","eq","value","unit"]
+
+  - id: "oth/Result/process_capability"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(Cpk|Ppk)\\b\\s*(=|of|:)\\s*(\\d+(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: ["metric","eq","value"]
+
+  - id: "oth/Result/defect_rate_or_ppm"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(defect\\s+rate|DPMO|ppm|nonconformit(?:y|ies))\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*(ppm|%)\\b"
+    negatives: [ ]
+    captures: ["metric","value","unit"]
+
+  - id: "oth/Result/measurement_uncertainty"
+    type: Result
+    weight: 0.62
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(uncertainty|expanded\\s+uncertainty|U\\b)\\b.{0,80}?\\b(±\\s*\\d+(?:\\.\\d+)?)\\s*(%|\\w+/\\w+|[a-zA-Z]+)\\b"
+    negatives: [ ]
+    captures: ["what","value","unit"]
+
+  - id: "oth/Result/compliance_to_standard"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(complies\\s+with|meets|conforms\\s+to|passes)\\b.{0,80}?\\b(ISO\\s*\\d{4,5}|IEC\\s*\\d{4,5}|EN\\s*\\d{4,5}|UL\\s*\\d{3,5})\\b"
+    negatives: [ ]
+    captures: ["verb","std"]
+
+  # ===== ANALYSIS (корневые причины/корреляции/рисковая оценка)
+  - id: "oth/Analysis/root_cause_or_pareto"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(MTBF|reliability|benchmark|profiling|bottleneck)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Conclusion/standards"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(meets|complies\s+with)\s+(standard|specification)\b'
-    negatives: ['violates|fails']
-    captures: []
-  - id: "Engineering and technology / 2.11-other-engineering-and-technologies/Input Fact/reference"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(root\\s+cause|Pareto\\s+analysis|Ishikawa|fishbone)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "oth/Analysis/risk_evaluation"
+    type: Analysis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(specification|standard|reference)\s+(.+?)'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(risk\\s+evaluation|RPN|risk\\s+reduction|mitigation)\\b.{0,120}?\\b(before|after)\\b"
+    negatives: [ ]
+    captures: ["topic","phase"]
+
+  # ===== DATASET / артефакты (матрицы/журналы/приложения)
+  - id: "oth/Dataset/artifacts_and_repos"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(requirements\\s+matrix|traceability\\s+matrix|test\\s+report|risk\\s+register|change\\s+log|Supplementary|Zenodo|Figshare|\\.csv|\\.xlsx)\\b"
+    negatives: [ ]
+    captures: ["artifact"]
+
+  # ===== CONCLUSION
+  - id: "oth/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: ["text"]

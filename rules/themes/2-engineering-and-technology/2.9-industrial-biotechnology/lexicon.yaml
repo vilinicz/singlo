@@ -1,160 +1,53 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ PAT,  "process analytical technology" ]
+  - [ QbD,  "quality by design" ]
+  - [ DSP,  "downstream processing" ]
+  - [ CIP,  "clean-in-place" ]
+  - [ SIP,  "steam-in-place" ]
+  - [ STY,  "space-time yield" ]
+  - [ FBA,  "flux balance analysis" ]
+  - [ 13C-MFA, "13C metabolic flux analysis" ]
+  - [ STR,  "stirred tank reactor" ]
+  - [ UF/DF, "ultrafiltration/diafiltration" ]
+  - [ DO,   "dissolved oxygen" ]
+
+synonyms:
+  - [ Komagataella, Pichia pastoris ]
+  - [ volumetric productivity, space-time yield ]
+  - [ titer, concentration ]
+  - [ yield, conversion ]
+  - [ off-gas analysis, exhaust gas analysis ]
+  - [ soft sensor, virtual sensor ]
+  - [ whole-cell biocatalysis, whole cell biocatalysis ]
+  - [ ultrafiltration, UF ]
+  - [ diafiltration, DF ]
+  - [ stirred tank reactor, STR ]
+  - [ clean in place, CIP ]
+  - [ steam in place, SIP ]
+
 hedging_extra:
+  - approximately
+  - roughly
+  - tends to
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
+  - generally
+  - nominally
   - around
+
 units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
+  - "g/L"
+  - "g/g"
+  - "g/L/h"
   - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - g/L
-  - g/L/h
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - fermentation
-    - fermentations
-  -
-    - bioprocess
-    - bioprocesss
-  -
-    - bioreactor
-    - bioreactors
-  -
-    - downstream
-    - downstreams
-  -
-    - yield
-    - yields
-  -
-    - substrate
-    - substrates
+  - "U/mg"
+  - "IU/mg"
+  - "U/g"
+  - "rpm"
+  - "vvm"
+  - "°C"
+  - "mM"

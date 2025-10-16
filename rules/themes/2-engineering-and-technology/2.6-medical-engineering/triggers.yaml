@@ -1,80 +1,29 @@
-id: "Engineering and technology / 2.6-medical-engineering"
-version: 1
-threshold: 0.8
-must:
-  - biomedical device
-  - imaging
+id: "Engineering & Technology / 2.6-medical-engineering"
+version: 2
+threshold: 0.60
+must: []
 should:
-  -
-    - biomedical device
-    - 1
-  -
-    - prosthesis
-    - 1
-  -
-    - imaging
-    - 1
-  -
-    - biomechanics
-    - 1
-  -
-    - biosensor
-    - 1
-  -
-    - implant
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
+  # Биомед. визуализация / биофотоника / приборы
+  - ["biomedical engineering|biomedical imaging|bioimaging|biophotonics", 0.9]
+  - ["FLIM\\b|PLIM\\b|lifetime imaging|time[- ]resolved fluorescence|phasor", 0.98]
+  - ["TCSPC|time[- ]correlated single[- ]photon counting|gated detection|frequency[- ]domain", 0.9]
+  - ["two[- ]photon|multiphoton|confocal|spinning disk|light[- ]sheet", 0.85]
+  - ["objective\\s*NA|point spread function|PSF\\b|SNR\\b|deconvolution", 0.7]
+
+  # Метаболические маркеры / сенсоры
+  - ["NADH|NAD\\(P\\)H|FAD\\b|redox ratio|autofluorescence", 0.95]
+  - ["oxygen sensor|O2\\s*probe|phosphorescen(t|ce)|Warburg|Grotthuss|pH\\s*sensor|Δ?Ψm|membrane potential", 0.85]
+
+  # Объект: 3D культуры / органоиды / микрофлюидика
+  - ["organoid|spheroid|3D culture|hydrogel|Matrigel|microfluidic|perfusion", 0.9]
+  - ["drug screening|hypoxia|normoxia|mitochondrial inhibitor|oligomycin|rotenone|2[- ]DG", 0.7]
+
+  # Валидация/сравнения
+  - ["Seahorse|OCR\\b|ECAR\\b|flow cytometry|immunofluorescence", 0.6]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
+  - ["Atterberg|CBR\\b|AASHTO|UCS\\b", 0.95]                 # геотехника
+  - ["USRP|SDR\\b|OFDM|QPSK|SNR\\b\\s*\\(radio\\)", 0.95]     # связь/ЭЭ
+  - ["jurisprudence|civil code|Supreme Court|regulation", 0.95] # право
+  - ["questionnaire|Likert|curriculum|classroom", 0.9]        # пед. исследования
+  - ["theorem\\b|lemma\\b(?! of)", 0.8]                       # чистая математика

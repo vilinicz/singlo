@@ -1,57 +1,160 @@
 elements:
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Result/degradation-or-removal"
+  # ===== HYPOTHESIS
+  - id: "envbio/Hypothesis/bioprocess_improves_removal"
+    type: Hypothesis
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|argue))\\b\\s+that\\s+(.{1,180}?(bioremediat|bioaugment|biosorpt|degrad|BES|MFC|anammox|nitrif|denitrif).{0,80}?(improv(es|e)|enhanc(es|e)|reduces?)\\s+(removal|toxicit|emission|load|footprint))"
+    negatives: [ ]
+    captures: [ "cue","verb","text" ]
+
+  # ===== INPUT FACT — микроорганизмы/ферменты/матрица/условия
+  - id: "envbio/InputFact/microbes_or_enzymes"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(Pseudomonas|Shewanella|Geobacter|Bacillus|Acinetobacter|Comamonas|Nitrosomonas|Nitrospira|Candidatus\\s+Brocadia|SRB|sulfate[- ]reducing\\s+bacteria|laccase|peroxidase|dehalogenase)\\b"
+    negatives: [ ]
+    captures: [ "agent" ]
+
+  - id: "envbio/InputFact/matrix_and_pollutant"
+    type: "Input Fact"
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","TableCaption","Abstract"]
+    pattern: "\\b(wastewater|leachate|soil|sediment|groundwater|effluent)\\b.{0,120}?\\b(phenol|PAH|BTEX|azo\\s+dye|antibiotic|pharmaceutical|PFOS|PFOA|Cr\\(VI\\)|As\\(V\\)|Hg\\(II\\)|Cd\\(II\\))\\b"
+    negatives: [ ]
+    captures: [ "matrix","pollutant" ]
+
+  - id: "envbio/InputFact/operating_conditions"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(pH|DO|ORP|temperature|HRT|SRT|aeration|anode|cathode|external\\s+resistance)\\b.{0,80}?((?:\\d+(?:\\.\\d+)?)\\s*(°C|h|d|mg/L|mV|ohm|Ω))"
+    negatives: [ ]
+    captures: [ "cond","value","unit" ]
+
+  # ===== TECHNIQUE — реакторы/омика/электрохимия/аналитика
+  - id: "envbio/Technique/bioreactors"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","FigureCaption","Abstract"]
+    pattern: "\\b(UASB|SBR|MBBR|biofilm\\s*reactor|granular\\s*sludge|constructed\\s*wetland|packed\\s*bed)\\b"
+    negatives: [ ]
+    captures: [ "reactor" ]
+
+  - id: "envbio/Technique/BES_MFC"
+    type: Technique
+    weight: 0.64
+    sections: ["Methods","Body","Unknown","FigureCaption"]
+    pattern: "\\b(BES|microbial\\s+fuel\\s+cell|MFC)\\b.{0,120}?(anode|cathode|open\\s+circuit\\s+potential|OCP|polarization|EIS|CV)\\b"
+    negatives: [ ]
+    captures: [ "bes","electro" ]
+
+  - id: "envbio/Technique/omics_and_quant"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(16S\\s*rRNA|qPCR|shotgun\\s+metagenomics|metatranscriptomics|MAGs?|amplicon\\s+sequencing|FISH)\\b"
+    negatives: [ ]
+    captures: [ "omics" ]
+
+  - id: "envbio/Technique/analytics"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(HPLC|GC[- ]MS|IC\\b|TOC\\b|UV[- ]Vis|AAS\\b|ICP[- ]MS|respirometry)\\b"
+    negatives: [ ]
+    captures: [ "tool" ]
+
+  # ===== EXPERIMENT — серии/масштабы/биоассеи
+  - id: "envbio/Experiment/batch_pilot_series"
+    type: Experiment
+    weight: 0.60
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(batch|SBR|pilot[- ]scale|bench[- ]scale|full[- ]scale)\\b.{0,80}?\\b(series|dose[- ]response|time[- ]course|temperature|pH)\\b"
+    negatives: [ ]
+    captures: [ "scale","series" ]
+
+  - id: "envbio/Experiment/bioassay_toxicity"
+    type: Experiment
+    weight: 0.58
+    sections: ["Methods","Results","Body","Unknown","FigureCaption"]
+    pattern: "\\b(bioassay|toxicity\\s+test|Microtox|inhibition\\s+assay|IC50|EC50)\\b"
+    negatives: [ ]
+    captures: [ "assay" ]
+
+  # ===== RESULT — эффективность/кинетика/электрохимия/сообщество
+  - id: "envbio/Result/removal_efficiency"
+    type: Result
+    weight: 0.66
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(removal|degradation|detoxification)\\b.{0,80}?\\b(phenol|PAH|BTEX|dye|antibiotic|PFOS|PFOA|Cr\\(VI\\)|As\\(V\\)|metal|ammonia|nitrate|phosphate)\\b.{0,80}?\\b(by|of)\\s*((?:\\d+(?:\\.\\d+)?)\\s*%)"
+    negatives: [ "no\\s+significant\\s+difference" ]
+    captures: [ "verb","target","by_or_of","value" ]
+
+  - id: "envbio/Result/kinetics_isotherms"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(Langmuir|Freundlich|pseudo[- ](first|second)[- ]order|Monod|Haldane)\\b.{0,120}?(qmax|K[Ll]?|n|k|\\bµ?max)\\s*=\\s*(\\d+(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: [ "model","param","val" ]
+
+  - id: "envbio/Result/BES_performance"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Abstract","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(power\\s+density|current\\s+density|coulombic\\s+efficienc(y|ies))\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*(mW/m2|mA/m2|%)\\b"
+    negatives: [ ]
+    captures: [ "metric","value","unit" ]
+
+  - id: "envbio/Result/community_shift"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(degradation|biodegradation|removal)\s+(?:of|rate)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>%|mg/L|g/L|U/mL)?'
-    negatives: ['not\\s+significant']
-    captures: ["value","unit"]
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Hypothesis/consortium-effect"
-    type: Hypothesis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+expect\s+that\s+(consortium|enzyme|bioaugmentation)\s+(?:enhances|increases)\s+(removal|yield)'
-    negatives: ['no\s+effect']
-    captures: []
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Experiment/reactor-or-assay"
-    type: Experiment
-    weight: 0.61
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(bioreactor|batch\s+assay|qPCR|HPLC|SDS[- ]PAGE)\b'
-    negatives: ['in\s+silico\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Technique/bioprocess"
-    type: Technique
-    weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(immobilization|biofilm|aeration|fed[- ]batch|chemostat)\b'
-    negatives: ['manual\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Dataset/samples-or-strains"
-    type: Dataset
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(?:samples|strains|runs)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['n\s*=\s*1']
-    captures: ["n"]
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Analysis/kinetic-or-omics"
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(relative\\s+abundance|copy\\s+number|reads|OTU|ASV|MAG)\\b.{0,120}?(increase|decrease|enrich(ed|ment)|decline)\\b"
+    negatives: [ ]
+    captures: [ "measure","effect" ]
+
+  - id: "envbio/Result/toxicity_metrics"
+    type: Result
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
+    pattern: "\\b(IC50|EC50|inhibition)\\b.{0,80}?\\b(\\d+(?:\\.\\d+)?)\\s*(mg/L|µg/L|%)\\b"
+    negatives: [ ]
+    captures: [ "metric","value","unit" ]
+
+  # ===== ANALYSIS — факторы/пути/корреляции
+  - id: "envbio/Analysis/operating_factor_influence"
     type: Analysis
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: '(Monod|Haldane|kinetic\s+fit|metagenom(ic|e)|16S\s+rRNA)\b'
-    negatives: ['descriptive\s+only']
-    captures: []
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Conclusion/performance"
-    type: Conclusion
-    weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'we\s+conclude\s+that\s+(?:the\s+)?(process|consortium)\s+(?:improves|achieves)\s+(removal|degradation)'
-    negatives: ['inconclusive']
-    captures: []
-  - id: "Engineering and technology / 2.8-environmental-biotechnology/Input Fact/guideline-or-database"
-    type: Input Fact
+    weight: 0.60
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(influence|effect|depend(s|ence)\\s+on)\\b.{0,160}?\\b(pH|HRT|SRT|DO|ORP|temperature|external\\s+resistance|dose|contact\\s*time)\\b"
+    negatives: [ ]
+    captures: [ "rel","factor" ]
+
+  - id: "envbio/Analysis/pathways_and_metabolites"
+    type: Analysis
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
-    pattern: 'according\s+to\s+(KEGG|UniProt|guideline)\b(.+?)?'
-    negatives: ['prediction|opinion']
-    captures: ["value"]
+    sections: ["Results","Discussion","Body","Unknown"]
+    pattern: "\\b(pathway|intermediate|metabolite|ring\\s+opening|dechlorination|mineralization)\\b.{0,160}?\\b(HPLC|GC[- ]MS|LC[- ]MS|TOC)\\b"
+    negatives: [ ]
+    captures: [ "topic","evidence" ]
+
+  # ===== DATASET / АРТЕФАКТЫ
+  - id: "envbio/Dataset/seq_and_repo"
+    type: Dataset
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(Supplementary|ENA|SRA|NCBI|BioProject|BioSample|Zenodo|Figshare|FASTQ|\\.csv|\\.xlsx)\\b"
+    negatives: [ ]
+    captures: [ "artifact" ]
+
+  # ===== CONCLUSION
+  - id: "envbio/Conclusion/summary"
+    type: Conclusion
+    weight: 0.60
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+study\\s+demonstrates)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: [ "text" ]

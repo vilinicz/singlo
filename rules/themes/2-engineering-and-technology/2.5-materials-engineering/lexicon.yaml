@@ -1,160 +1,49 @@
 abbr:
-  -
-    - CI
-    - confidence interval
-  -
-    - SD
-    - standard deviation
-  -
-    - SEM
-    - structural equation modeling
-  -
-    - ANOVA
-    - analysis of variance
-  -
-    - SNR
-    - "signal-to-noise ratio"
-  -
-    - ROC
-    - receiver operating characteristic
-  -
-    - AUC
-    - area under the curve
-  -
-    - MAE
-    - mean absolute error
-  -
-    - RMSE
-    - root mean square error
-  -
-    - R2
-    - coefficient of determination
-  -
-    - NLP
-    - natural language processing
-  -
-    - ML
-    - machine learning
-  -
-    - DL
-    - deep learning
-  -
-    - CNN
-    - convolutional neural network
-  -
-    - RNN
-    - recurrent neural network
-  -
-    - CAD
-    - "computer-aided design"
-  -
-    - CAE
-    - "computer-aided engineering"
-  -
-    - CNC
-    - computer numerical control
-  -
-    - PLC
-    - programmable logic controller
-  -
-    - DSP
-    - digital signal processing
-  -
-    - VLSI
-    - "very-large-scale integration"
-  -
-    - FPGA
-    - "field-programmable gate array"
-  -
-    - BOM
-    - bill of materials
-  -
-    - CPS
-    - "cyber-physical system"
+  - [ AWS,  "American Welding Society" ]
+  - [ SMAW, "shielded metal arc welding" ]
+  - [ SAW,  "submerged arc welding" ]
+  - [ GTAW, "gas tungsten arc welding" ]
+  - [ GMAW, "gas metal arc welding" ]
+  - [ FCAW, "flux-cored arc welding" ]
+  - [ HAZ,  "heat-affected zone" ]
+  - [ CVN,  "Charpy V-notch" ]
+  - [ YS,   "yield strength" ]
+  - [ UTS,  "ultimate tensile strength" ]
+  - [ CEN,  "carbon equivalent (Yurioka)" ]
+  - [ CEIIW,"carbon equivalent (IIW)" ]
+  - [ Pcm,  "carbon equivalent (Ito–Bessyo)" ]
+  - [ Ar3,  "austenite-to-ferrite transformation start" ]
+  - [ BS,   "bainite start temperature" ]
+  - [ B50,  "50% bainite temperature" ]
+  - [ BF,   "bainite finish temperature" ]
+  - [ MS,   "martensite start temperature" ]
+  - [ ANN,  "artificial neural network" ]
+
+synonyms:
+  - [ weld metal, WM ]
+  - [ impact toughness, CVN ]
+  - [ strength, tensile strength ]
+  - [ transformation-start, TS ]
+  - [ transformation-finish, TF ]
+  - [ austenite decomposition, phase transformation ]
+  - [ heat input, energy input ]
+  - [ Δ8/5, 8/5 cooling window ]
+
+units:
+  - "MPa"
+  - "°C"
+  - "J"
+  - "wt-%"
+  - "ppm"
+  - "kJ/mm"
+  - "°C/s"
+
 hedging_extra:
+  - approximately
+  - roughly
+  - likely
+  - suggests
+  - appears
   - may
   - might
   - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
-units:
-  - mm
-  - cm
-  - m
-  - kg
-  - ms
-  - s
-  - Hz
-  - kHz
-  - MHz
-  - N
-  - Pa
-  - mol
-  - "%"
-  - MPa
-  - bar
-  - Â°C
-  - RPM
-  - Nm
-  - kW
-  - W
-  - V
-  - A
-  - HV
-  - HRC
-synonyms:
-  -
-    - method
-    - technique
-  -
-    - result
-    - finding
-  -
-    - analysis
-    - examination
-  -
-    - model
-    - framework
-  -
-    - experiment
-    - trial
-  -
-    - significant
-    - notable
-  -
-    - increase
-    - rise
-  -
-    - decrease
-    - reduction
-  -
-    - effect
-    - impact
-  -
-    - evidence
-    - support
-  -
-    - microstructure
-    - microstructures
-  -
-    - alloy
-    - alloys
-  -
-    - composite
-    - composites
-  -
-    - ceramic
-    - ceramics
-  -
-    - fatigue
-    - fatigues
-  -
-    - fracture
-    - fractures

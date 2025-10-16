@@ -1,115 +1,20 @@
-id: Engineering and technology
+id: "2-engineering-and-technology (umbrella)"
 version: 1
-threshold: 0.7
-must:
-  - engineering
+threshold: 0.55
+must: []
 should:
-  -
-    - engineering
-    - 1
-  -
-    - design
-    - 0.9
-  -
-    - manufacturing
-    - 1
-  -
-    - systems
-    - 1
-  -
-    - control
-    - 1
-  -
-    - optimization
-    - 1
-  -
-    - method
-    - 0.6
-  -
-    - dataset
-    - 0.6
-  -
-    - analysis
-    - 0.6
-  -
-    - model
-    - 0.6
-  -
-    - experiment
-    - 0.6
-  -
-    - evidence
-    - 0.6
-  -
-    - result
-    - 0.6
-  -
-    - significant
-    - 0.6
-  -
-    - construction
-    - 1.0
-  -
-    - bim
-    - 1.2
-  -
-    - "building information modeling"
-    - 1.2
-  -
-    - bibliometric
-    - 1.0
-  -
-    - vosviewer
-    - 1.1
-  -
-    - "web of science"
-    - 0.8
-  -
-    - scopus
-    - 0.8
-  -
-    - "co-occurrence"
-    - 0.8
-  -
-    - "co-authorship"
-    - 0.7
-  -
-    - prisma
-    - 0.8
-  -
-    - "keyword analysis"
-    - 0.8
+  # Общие инженерные маркеры (процессы, системы, испытания, требования)
+  - ["design\\s+(requirements|specification|trade[- ]off|review)|system\\s+architecture|prototype|pilot[- ]scale|bench[- ]scale", 0.9]
+  - ["experiment(al)?\\s+setup|test\\s+bench|test\\s+rig|acceptance\\s+test|verification|validation|V&V|qualification|commissioning", 0.9]
+  - ["efficiency|throughput|latency|accuracy|resolution|power\\s+consumption|heat\\s+dissipation|reliability|availability", 0.85]
+  - ["control\\s+system|PID|model[- ]predictive\\s+control|sensor\\s+fusion|calibration|tolerance|uncertainty", 0.85]
+  - ["CAD\\b|CAE\\b|CFD\\b|FEM\\b|finite\\s+element|simulation\\b|digital\\s+twins?", 0.8]
+  - ["bill\\s+of\\s+materials|BOM\\b|process\\s+flow|SOP\\b|work\\s+instruction|quality\\s+plan|risk\\s+management", 0.8]
+
 negative:
-  -
-    - science
-    - 0.8
-  -
-    - mathematics
-    - 0.8
-  -
-    - physics
-    - 0.8
-  -
-    - chemistry
-    - 0.8
-  -
-    - biology
-    - 0.8
-  -
-    - geology
-    - 0.8
-  -
-    - ecology
-    - 0.8
-  -
-    - clinical
-    - 0.8
-  -
-    - patient
-    - 0.8
-  -
-    - therapy
-    - 0.8
-  -
-    - genome
-    - 0.8
+  # Отсечь явные не-инженерные области
+  - ["randomized\\s+controlled\\s+trial|patient|cohort|oocyte|endometrial|ICSI|DSM-5", 0.98]   # клиника/медицина
+  - ["lemma\\b|theorem\\b(?! of)|proof\\b|corollary", 0.98]                                     # чистая математика
+  - ["Shakespeare|sonnet|poem|literary\\s+analysis", 0.98]                                       # гуманитарные
+  - ["jurisprudence|civil\\s+code|penal\\s+code|case\\s+law", 0.98]                              # право
+  - ["Likert|curriculum|classroom|pedagog(y|ical)", 0.95]                                       # педагогика
