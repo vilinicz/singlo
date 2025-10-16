@@ -378,7 +378,7 @@ def dataset_report(limit: int = 5000):
 
     html_rows = [
         f"<tr>"
-        f"<td><code>{r['doc_id']}</code></td>"
+        f"<td><div class='truncate' title='{r['doc_id']}'><code>{r['doc_id']}</code></div></td>"
         f"<td style='text-align:right'>{r['s0_sections']}</td>"
         f"<td style='text-align:right'>{r['s1_nodes']}</td>"
         f"<td style='text-align:right'>{r['s1_edges']}</td>"
@@ -405,6 +405,20 @@ def dataset_report(limit: int = 5000):
       table{{border-collapse:collapse;width:100%}}
       th,td{{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}}
       th{{background:#111a32;color:var(--head)}}
+      /* 50% для первой колонки */
+      th:first-child, td:first-child{{width:50%;max-width:50%}}
+    
+      /* контейнер с обрезкой */
+      .truncate{{
+        display:block;          /* важно: не inline */
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        max-width: 550px;
+      }}
+    
+      /* чтобы <code> не расширял и наследовал поведение */
+      td:first-child code{{white-space:inherit;display:inline;}}
       code{{font-family:ui-monospace,Consolas,monospace}}
     </style></head>
     <body>
@@ -423,7 +437,13 @@ def dataset_report(limit: int = 5000):
           </div>
           <table>
             <thead><tr>
-              <th>doc_id</th><th style="width:110px">S0 sections</th><th style="width:110px">S1 nodes</th><th style="width:110px">S1 edges</th><th>node types</th>
+              <thead><tr>
+                  <th style="width:50%">doc_id</th>
+                  <th style="width:110px">S0 sections</th>
+                  <th style="width:110px">S1 nodes</th>
+                  <th style="width:110px">S1 edges</th>
+                  <th>node types</th>
+                </tr></thead>
             </tr></thead>
             <tbody>{''.join(html_rows) if html_rows else '<tr><td colspan="5">Ничего не найдено в EXPORT_DIR.</td></tr>'}</tbody>
           </table>
