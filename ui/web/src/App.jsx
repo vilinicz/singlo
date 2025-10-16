@@ -599,6 +599,7 @@ export default function App() {
                     <label className="text-sm text-gray-600">Theme:</label>
                     <select
                         value={themeSel}
+                        style={{width: "100%"}}
                         onChange={(e) => setThemeSel(e.target.value)}
                         className="border rounded px-2 py-1 text-sm"
                     >

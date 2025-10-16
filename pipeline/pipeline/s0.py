@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import pymupdf
+import fitz
 
 from .parsers import (
     extract_title_and_authors,
@@ -101,7 +101,7 @@ def _extract_arxiv_id_from_metadata(meta: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def _find_arxiv_id(pdf_path: str, doc: pymupdf.Document, first_page_text: str) -> Optional[str]:
+def _find_arxiv_id(pdf_path: str, doc: fitz.Document, first_page_text: str) -> Optional[str]:
     meta = doc.metadata or {}
     arx = _extract_arxiv_id_from_metadata(meta)
     if arx:
@@ -192,7 +192,7 @@ def build_s0(pdf_path: str, out_dir: str, *, use_latex: bool = True) -> Dict[str
     out_dir_path = Path(out_dir)
     out_dir_path.mkdir(parents=True, exist_ok=True)
 
-    doc = pymupdf.open(pdf_path)
+    doc = fitz.open(pdf_path)
     try:
         page_count = len(doc)
         first_page_text = doc[0].get_text("text") if page_count else ""

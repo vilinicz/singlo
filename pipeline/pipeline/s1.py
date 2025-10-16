@@ -6,8 +6,8 @@ import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-from pipeline.themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
-from pipeline.themes_router import explain_themes_for_debug, build_showcase_text
+from .themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
+from .themes_router import explain_themes_for_debug, build_showcase_text
 
 
 # ---------- Rule model ----------
@@ -123,20 +123,26 @@ def load_rules_merged(paths: List[str]) -> Tuple[Dict[str, Any], set, List[Rule]
       - elements: конкатенация (Rule[]) — дубли id допустимы, но их лучше избегать линтером
       - relations: конкатенация
     """
-    merged_meta: Dict[str, Any] = {"section_weights": {}, "conf_boosts": {}}
+    merged_meta: Dict[str, Any] = {"section_weights": {}, "conf_boosts": {}, "conf_thresholds": {}}
     hedges_all: set = set()
     all_rules: List[Rule] = []
     all_rel: List[Dict[str, Any]] = []
 
     for p in paths:
         meta, hedge_words, rules, relations = load_rules(p)
-        # meta.section_weights
+
+        # section_weights — как было
         _merge_dict_add(merged_meta.setdefault("section_weights", {}), meta.get("section_weights") or {})
-        # meta.conf_boosts
+        # conf_boosts — как было
         _merge_dict_add(merged_meta.setdefault("conf_boosts", {}), meta.get("conf_boosts") or {})
-        # hedges
+
+        # ✅ НОВОЕ: та же логика для conf_thresholds (последний файл побеждает)
+        thr = meta.get("conf_thresholds") or {}
+        if thr:
+            merged_meta.setdefault("conf_thresholds", {}).update(thr)
+
+        # hedges / rules / relations — как было
         hedges_all |= set(hedge_words or [])
-        # elements & relations
         all_rules.extend(rules or [])
         all_rel.extend(relations or [])
 
@@ -213,7 +219,8 @@ def match_rules(doc_id: str,
                 captions: List[Dict[str, Any]],
                 meta: Dict[str, Any],
                 hedge_words: set,
-                rules: List[Rule]) -> List[Dict[str, Any]]:
+                rules: List[Rule],
+                rule_hits: Optional[set] = None) -> List[Dict[str, Any]]:
     section_weights = {_norm(k): float(v) for k, v in (meta.get("section_weights") or {}).items()}
     nodes: List[Dict[str, Any]] = []
     idx = 0
@@ -250,6 +257,8 @@ def match_rules(doc_id: str,
             if not _section_match(sname, rule.sections):
                 continue
             for frag, span, m in _yield_matches(text, rule):
+                if rule_hits is not None:
+                    rule_hits.add(rule.id)  # <— фиксируем «кто стрелял»
                 idx += 1
                 has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
                 node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
@@ -276,6 +285,8 @@ def match_rules(doc_id: str,
             if not _section_match(sname, rule.sections):
                 continue
             for frag, span, m in _yield_matches(text, rule):
+                if rule_hits is not None:
+                    rule_hits.add(rule.id)  # <— фиксируем «кто стрелял»
                 idx += 1
                 has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
                 node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
@@ -670,13 +681,15 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
     hedge_words |= hedge_extra
 
     # --- Кандидаты узлов по правилам ---
+    rule_hits: set = set()
     candidates = match_rules(
         doc_id=doc_id,
         sections=sections,
         captions=captions,
         meta=meta,
         hedge_words=hedge_words,
-        rules=rule_objs
+        rules=rule_objs,
+        rule_hits=rule_hits,
     )
 
     # пост-склейка и анти-дубликаты
@@ -722,6 +735,45 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
         "candidates_head": candidates[:20],
         "gaps_head": gaps[:20]
     }, "theme_routing": theme_dbg, "rules_loaded": rule_files, "lexicons_loaded": lexicon_files}
+
+    # S0: счётчики секций
+    section_counts = {}
+    for sec in sections:
+        name = (sec.get("name") or "Unknown").strip() or "Unknown"
+        section_counts[name] = section_counts.get(name, 0) + 1
+
+    # S1: узлы/рёбра по типам
+    def _tally(docs, key="type"):
+        out = {}
+        for x in docs or []:
+            k = x.get(key, "Unknown")
+            out[k] = out.get(k, 0) + 1
+        return out
+
+    nodes_by_type = _tally(nodes, "type")
+    edges_by_type = _tally(edges, "type")
+
+    # Правила/пакеты
+    rules_fired_list = sorted(list(rule_hits))
+    packs_active = rule_files  # уже есть
+
+    debug.update({
+        "s0_sections": {
+            "total": sum(section_counts.values()),
+            "by_name": section_counts
+        },
+        "s1_counts": {
+            "nodes_total": len(nodes),
+            "nodes_by_type": nodes_by_type,
+            "edges_total": len(edges),
+            "edges_by_type": edges_by_type
+        },
+        "rules": {
+            "packs_active": packs_active,
+            "rules_fired_total": len(rules_fired_list),
+            "rules_fired": rules_fired_list[:500]  # safety truncate
+        }
+    })
 
     # --- Запись артефактов ---
     outp = Path(out_path)
@@ -770,3 +822,20 @@ def _apply_theme_weight_mix(rule_objs: List[Rule], chosen_themes) -> None:
                 scale = _clamp(1.0 + 0.12 * score, 0.85, 1.45)
                 r.weight = float(round(r.weight * scale, 6))
                 break
+
+
+# ---- S1 stats helpers -------------------------------------------------
+def _tally_nodes_by_type(nodes):
+    by_type = {}
+    for n in nodes:
+        t = n.get("type", "Unknown")
+        by_type[t] = by_type.get(t, 0) + 1
+    return by_type
+
+
+def _tally_edges_by_type(edges):
+    by_type = {}
+    for e in edges:
+        t = e.get("type", "Unknown")
+        by_type[t] = by_type.get(t, 0) + 1
+    return by_type

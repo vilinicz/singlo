@@ -1,57 +1,100 @@
+meta:
+  conf_thresholds: { node: 0.35, edge: 0.55 }   # только для темы (а не глобально)
+  section_weights:
+    introduction: 0.90
+    body: 0.85
+    figurecaption: 0.92
+    tablecaption: 0.90
+
 elements:
   - id: "Engineering and technology / 2.1-civil-engineering/Result/strength-or-deflection"
     type: Result
     weight: 0.63
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(compressive|tensile|flexural)\s+strength|deflection\s+(?:is|of)\s+(?P<value>[-+]?\\d+(?:\\.\\d+)?)\s*(?P<unit>MPa|mm)?'
-    negatives: ['below\s+code|insufficient']
-    captures: ["value","unit"]
+    negatives: [ 'below\s+code|insufficient' ]
+    captures: [ "value","unit" ]
   - id: "Engineering and technology / 2.1-civil-engineering/Hypothesis/design-improves-performance"
     type: Hypothesis
     weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: 'we\s+expect\s+that\s+(reinforcement|mix|geometry)\s+(?:improves|reduces)\s+(capacity|settlement|cracking)'
-    negatives: ['no\s+improvement']
-    captures: ["value"]
+    negatives: [ 'no\s+improvement' ]
+    captures: [ "value" ]
   - id: "Engineering and technology / 2.1-civil-engineering/Experiment/structural-test"
     type: Experiment
     weight: 0.62
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(four[- ]point\s+bending|uniaxial\s+compression|shear\s+test|shake\s+table|wind\s+tunnel)\b'
-    negatives: ['modeling\s+only']
-    captures: []
+    negatives: [ 'modeling\s+only' ]
+    captures: [ ]
   - id: "Engineering and technology / 2.1-civil-engineering/Technique/codes-and-fem"
     type: Technique
     weight: 0.66
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(Eurocode|ACI|AASHTO|BIM|FEM|pushover|nonlinear\s+analysis)\b'
-    negatives: ['rule\s+of\s+thumb']
-    captures: []
+    negatives: [ 'rule\s+of\s+thumb' ]
+    captures: [ ]
   - id: "Engineering and technology / 2.1-civil-engineering/Dataset/specimens-or-spans"
     type: Dataset
     weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(?:specimens|spans|piles)\s+(?:n\s*=\s*)?(?P<n>\\d{2,})\b'
-    negatives: ['single\s+specimen']
-    captures: ["n"]
+    negatives: [ 'single\s+specimen' ]
+    captures: [ "n" ]
   - id: "Engineering and technology / 2.1-civil-engineering/Analysis/structural"
     type: Analysis
     weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(moment[- ]curvature|stress[- ]strain|response\s+spectrum|soil\s-structure\s+interaction)\b'
-    negatives: ['qualitative\s+only']
-    captures: []
+    negatives: [ 'qualitative\s+only' ]
+    captures: [ ]
   - id: "Engineering and technology / 2.1-civil-engineering/Conclusion/compliance"
     type: Conclusion
     weight: 0.6
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: '(meets|satisfies|complies\s+with)\s+(Eurocode|ACI|AASHTO)\b'
-    negatives: ['fails\s+to\s+meet']
-    captures: []
+    negatives: [ 'fails\s+to\s+meet' ]
+    captures: [ ]
   - id: "Engineering and technology / 2.1-civil-engineering/Input Fact/code-reference"
     type: Input Fact
     weight: 0.58
-    sections: ["Results","Discussion","FigureCaption","TableCaption","Body","Unknown"]
+    sections: [ "Results","Discussion","FigureCaption","TableCaption","Body","Unknown" ]
     pattern: 'according\s+to\s+(Eurocode|ACI|AASHTO)\s+(?:clause|section)\s+(.+?)'
-    negatives: ['draft|proposal']
-    captures: ["value"]
+    negatives: [ 'draft|proposal' ]
+    captures: [ "value" ]
+
+  # ====== ADDITIONS FOR BIM/BIBLIOMETRIC THEME ===============================
+  - id: "Engineering and technology / 2.1-civil-engineering/Dataset/num-docs"
+    type: Dataset
+    weight: 0.70
+    sections: [ "Introduction","Body","Unknown","FigureCaption","TableCaption" ]
+    pattern: >
+      (?:\b(?:a\s+total\s+of\s+|n\s*=?\s*)?(?P<n1>\d{1,3}(?:,\d{3})*)\s+(?:documents|records|papers|articles)\b)
+      | (?:\blimited\s+the\s+data\s+to\s+(?P<n2>\d{2,5})\s+documents\b)
+      | (?:(?P<n3>\d{1,3}(?:,\d{3})*)(?:\s*,\s*(?:\d{1,3}(?:,\d{3})*)){1,3})\s+(?:documents|records|papers|articles)\b
+    negatives: [ ]
+    captures: [ "n1","n2","n3" ]
+
+  - id: "Engineering and technology / 2.1-civil-engineering/Technique/vosviewer-bibliometric"
+    type: Technique
+    weight: 0.68           # было 0.64 → +0.04
+    sections: [ "Introduction","Body","Unknown","FigureCaption","TableCaption" ]
+    pattern: "\\bvosviewer\\b|\\bbibliometric\\s+(?:analysis|mapping)\\b|\\bbibliometrix\\b|\\bbiblioshiny\\b|\\bgephi\\b|\\bleximancer\\b|\\bco-?occurrence\\b|\\bco-?authorship\\b"
+    negatives: [ ]
+
+  - id: "Engineering and technology / 2.1-civil-engineering/Hypothesis/aim-objective"
+    type: Hypothesis
+    weight: 0.65           # было 0.60 → +0.05
+    sections: [ "Introduction","Body","Unknown" ]
+    pattern: "\\b(?:this\\s+study|we)\\s+(?:aim|aims|aimed|objective(?:s)?|goal(?:s)?)\\s+(?:is|are|was|were)?\\s*to\\s+.+"
+    negatives: [ "\\bnot\\s+to\\b" ]
+
+  - id: "Engineering and technology / 2.1-civil-engineering/Result/bim-contribution"
+    type: "Result"
+    weight: 0.68           # было 0.63 → +0.05
+    sections: [ "Introduction","Body","Unknown","FigureCaption","TableCaption" ]
+    pattern: "\\bbim\\b.{0,100}\\b(?:enable(?:s|d)?|improv(?:e|es|ed|ement)|reduce(?:s|d)|support(?:s|ed)|visualiz(?:e|ation)|optim(?:ize|isation)|shorten(?:s|ed)\\s+time|decrease(?:s|d)\\s+cost)\\b"
+    negatives:
+      - "\\bnot\\s+(?:significant|improv(e|es|ed)|support)\\b"
+      - "\\bno\\s+evidence\\b"

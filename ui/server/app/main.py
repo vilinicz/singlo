@@ -13,9 +13,24 @@ from typing import Optional, List
 # and the actual Python package lives under `/app/pipeline/pipeline`.
 # Hence the absolute module path here is `pipeline.pipeline.themes_router`.
 from pipeline.pipeline.themes_router import preload as themes_preload
+from ui.server.app.testbench import router as test_router
+
 
 # -------------------- App --------------------
 app = FastAPI(title="Singularis API", version="0.1")
+app.include_router(test_router)
+
+# Разрешённые источники (локально: vite/dev сервер)
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+origins = [o.strip() for o in ALLOWED_ORIGINS.split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # ⟵ не '*', а конкретные адреса
+    allow_credentials=True,         # ⟵ нужно для cookies/Authorization
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------- Themes registry (preload once) ----------
 RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")

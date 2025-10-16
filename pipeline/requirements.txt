@@ -22,4 +22,4 @@ rq==1.15.1
 redis>=5.0.7
 
 # Optional PDF utilities if you hook S0 here
-pymupdf>=1.24.9
+PyMuPDF>=1.24.9

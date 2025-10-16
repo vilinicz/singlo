@@ -1,19 +1,15 @@
 id: Engineering and technology
 version: 1
-threshold: 0.8
+threshold: 0.7
 must:
   - engineering
-  - prototype
 should:
   -
     - engineering
     - 1
   -
     - design
-    - 1
-  -
-    - prototype
-    - 1
+    - 0.9
   -
     - manufacturing
     - 1
@@ -50,6 +46,39 @@ should:
   -
     - significant
     - 0.6
+  -
+    - construction
+    - 1.0
+  -
+    - bim
+    - 1.2
+  -
+    - "building information modeling"
+    - 1.2
+  -
+    - bibliometric
+    - 1.0
+  -
+    - vosviewer
+    - 1.1
+  -
+    - "web of science"
+    - 0.8
+  -
+    - scopus
+    - 0.8
+  -
+    - "co-occurrence"
+    - 0.8
+  -
+    - "co-authorship"
+    - 0.7
+  -
+    - prisma
+    - 0.8
+  -
+    - "keyword analysis"
+    - 0.8
 negative:
   -
     - science
@@ -80,4 +109,7 @@ negative:
     - 0.8
   -
     - therapy
+    - 0.8
+  -
+    - genome
     - 0.8
