@@ -81,3 +81,12 @@ negative:
   -
     - therapy
     - 0.8
+  -
+    - bim
+    - 0.8
+  -
+    - construction
+    - 0.8
+  -
+    - aec
+    - 0.8

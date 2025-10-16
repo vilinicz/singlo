@@ -61,13 +61,12 @@ def preload(themes_root: str | Path) -> ThemeRegistry:
     themes: Dict[str, Triggers] = {}
     plain_index: Dict[str, Set[str]] = {}
 
-    for tdir in sorted(p for p in root.iterdir() if p.is_dir()):
-        tname = tdir.name
-        tfile = tdir / "triggers.yaml"
+    for tfile in sorted(root.rglob("triggers.yaml")):
+        tdir = tfile.parent
         if not tfile.exists():
             continue
         cfg = yaml.safe_load(tfile.read_text(encoding="utf-8")) or {}
-        name = cfg.get("name") or tname
+        name = (cfg.get("name") or str(tdir.relative_to(root)).replace("\\", "/"))
         threshold = float(cfg.get("threshold", 0.0))
         must = [str(x) for x in (cfg.get("must") or [])]
 
@@ -166,16 +165,16 @@ def route_themes(
                 break
 
     if not best_so_far:
-        # если ничего не прошло пороги — возьмём лучшую по детальному скору среди кандидатов
+        # считаем «лучшую» только для отладки, но не выбираем её
         fallback_best = None
         for name, _ in candidates:
             trg = registry.themes.get(name)
-            if not trg: continue
+            if not trg:
+                continue
             score, passed = _score_theme_detail(text, trg)
             if (fallback_best is None) or (score > fallback_best.score):
-                fallback_best = ThemeScore(name, score, trg.threshold, True)
-        if fallback_best:
-            picked = [fallback_best]
+                fallback_best = ThemeScore(name, score, trg.threshold, False)
+        picked = [fallback_best] if fallback_best else []
     else:
         picked = sorted(best_so_far, key=lambda x: x.score, reverse=True)[:global_topk]
 
@@ -202,15 +201,27 @@ def select_rule_files(
             files["rules"].append(cp)
 
     # shared-lexicon рядом с themes_root
-    shared_lex = root / "shared-lexicon.yaml"
-    if shared_lex.exists():
-        files["lexicons"].append(shared_lex)
+    shared_candidates = [
+        root / "shared-lexicon.yaml",  # legacy
+        root / "_shared" / "lexicon.yaml"  # новый FOS-путь
+    ]
+    seen = set()
+    for p in shared_candidates:
+        if p.exists():
+            # избегаем дублей, если оба файла есть
+            if p.resolve() not in seen:
+                files["lexicons"].append(p)
+                seen.add(p.resolve())
 
-    for ts in chosen:
+    # подключаем только реально выбранные темы
+    for ts in (t for t in chosen if getattr(t, "chosen", False)):
         tdir = root / ts.name
         r = tdir / "rules.yaml"
         if r.exists():
             files["rules"].append(r)
+        lx = tdir / "lexicon.yaml"
+        if lx.exists():
+            files["lexicons"].append(lx)
         lx = tdir / "lexicon.yaml"
         if lx.exists():
             files["lexicons"].append(lx)
@@ -287,6 +298,7 @@ def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
 
     return (score, True)
 
+
 # -------- verbose scoring for debugging (exported) --------
 
 def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
@@ -349,7 +361,7 @@ def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
 
     # топ-триггеры: сначала should по весу, потом negative по весу
     shoulds = [m for m in out["matched"] if m["kind"] == "should"]
-    negs   = [m for m in out["matched"] if m["kind"] == "negative"]
+    negs = [m for m in out["matched"] if m["kind"] == "negative"]
     shoulds.sort(key=lambda m: float(m["weight"]), reverse=True)
     negs.sort(key=lambda m: float(m["weight"]), reverse=True)
     out["top_triggers"] = shoulds[:8] + negs[:8]

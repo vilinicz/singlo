@@ -123,20 +123,26 @@ def load_rules_merged(paths: List[str]) -> Tuple[Dict[str, Any], set, List[Rule]
       - elements: конкатенация (Rule[]) — дубли id допустимы, но их лучше избегать линтером
       - relations: конкатенация
     """
-    merged_meta: Dict[str, Any] = {"section_weights": {}, "conf_boosts": {}}
+    merged_meta: Dict[str, Any] = {"section_weights": {}, "conf_boosts": {}, "conf_thresholds": {}}
     hedges_all: set = set()
     all_rules: List[Rule] = []
     all_rel: List[Dict[str, Any]] = []
 
     for p in paths:
         meta, hedge_words, rules, relations = load_rules(p)
-        # meta.section_weights
+
+        # section_weights — как было
         _merge_dict_add(merged_meta.setdefault("section_weights", {}), meta.get("section_weights") or {})
-        # meta.conf_boosts
+        # conf_boosts — как было
         _merge_dict_add(merged_meta.setdefault("conf_boosts", {}), meta.get("conf_boosts") or {})
-        # hedges
+
+        # ✅ НОВОЕ: та же логика для conf_thresholds (последний файл побеждает)
+        thr = meta.get("conf_thresholds") or {}
+        if thr:
+            merged_meta.setdefault("conf_thresholds", {}).update(thr)
+
+        # hedges / rules / relations — как было
         hedges_all |= set(hedge_words or [])
-        # elements & relations
         all_rules.extend(rules or [])
         all_rel.extend(relations or [])
 
