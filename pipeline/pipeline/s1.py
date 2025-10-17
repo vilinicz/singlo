@@ -818,46 +818,109 @@ def run_s1(
     hedge_words |= hedge_extra
 
     # ---------- Подготовка секций: роли и фолбэк для «одной секции» ----------
-    def _virtualize_if_single(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Если S0 вернул одну гигантскую секцию (или её имя Unknown/Body),
-        режем по абзацам (до 12 кусков), делаем из них «виртуальные» секции.
-        Это не ломает обычные документы (ветка активируется только для single-section).
-        """
-        if len(sections) != 1:
-            return sections
+    def _split_into_virtuals(text: str, max_vsecs: int) -> List[Dict[str, Any]]:
+        """Разбивает длинный текст на виртуальные секции по абзацам, ограничивая числом блоков."""
+        text = (text or "").strip()
+        if not text:
+            return []
 
-        sec = sections[0]
-        name = (sec.get("name") or "Unknown").strip() or "Unknown"
-        text = (sec.get("text") or "").strip()
-        if len(text) < 1200:
-            # короткие не трогаем — пусть эвристика ролей отработает как есть
-            return sections
-
-        # Разбивка по абзацам (двойные переводы строки/CR), с объединением мелких
+        # делим по "пустой строке"; если абзацев мало — fallback по точкам
         paras = [p.strip() for p in re.split(r'(?:\r?\n){2,}', text) if p.strip()]
         if len(paras) <= 1:
-            # Текст без явных абзацев — оставляем как есть
-            return sections
+            paras = re.split(r'(?<=[\.\?\!])\s+', text)
+            paras = [p.strip() for p in paras if p.strip()]
 
-        # Обрезаем до 12 «виртуальных секций», слияние коротких хвостов
-        MAX_VSECS = 12
-        if len(paras) > MAX_VSECS:
-            # Сливаем концы, чтобы сохранить структуру начала/середины/конца
-            head = paras[:MAX_VSECS - 2]
-            tail = paras[MAX_VSECS - 2:]
-            paras = head + ["\n\n".join(tail)]
+        if len(paras) <= 1:
+            return [{"name": "VirtualSection 1", "text": text}]
 
-        vsecs: List[Dict[str, Any]] = []
-        for i, p in enumerate(paras):
-            vsecs.append({
-                "name": f"VirtualSection {i + 1}",
-                "text": p,
-            })
+        # Если абзацев больше лимита — делаем “голову”, “туловище”, “хвост”
+        if len(paras) > max_vsecs:
+            head = paras[: max(2, max_vsecs // 3)]
+            mid = paras[max(2, max_vsecs // 3): max_vsecs - 1]
+            tail = paras[max_vsecs - 1:]
+            blocks = [
+                "\n\n".join(head),
+                "\n\n".join(mid) if mid else "",
+                "\n\n".join(tail),
+            ]
+            blocks = [b for b in blocks if b]
+        else:
+            blocks = paras
+
+        vsecs = []
+        for i, b in enumerate(blocks, 1):
+            vsecs.append({"name": f"VirtualSection {i}", "text": b})
         return vsecs
 
-    sections_input = _virtualize_if_single(sections_raw)
-    sections = infer_section_roles(sections_input)  # добавляет role/soft_weight/order_idx/pos_frac
+    def virtualize_pathological_sections(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Безопасная виртуализация «плохих» секций:
+          - кейс 1: один большой блок → режем на 6–12 кусков;
+          - кейс 2: несколько секций, но некоторые явно неадекватно длинные (FrontMatter/BackMatter/Unknown/Body/Conclusions)
+                    или просто «самая длинная секция» занимает непропорционально большую долю → режем только их.
+
+        Критерии (подбирались консервативно, чтобы не задеть нормальные доки):
+          - total_chars = сумма длин всех секций
+          - long_if: len(sec) >= max(3000, 0.35*total_chars)    # "аномально длинная"
+          - also_long_if_name: имя в подозрительном наборе и len(sec) >= 2000
+          - few_sections_guard: если секций <= 3 и max_len >= 0.60*total → тоже считаем аномалией
+        """
+        if not sections:
+            return sections
+
+        # Если одна секция — старое правило, но чуть гибче
+        if len(sections) == 1:
+            txt = (sections[0].get("text") or "").strip()
+            if len(txt) < 1200:
+                return sections
+            v = _split_into_virtuals(txt, max_vsecs=12)
+            return v if len(v) > 1 else sections
+
+        # Несколько секций: найдём явных «переростков»
+        lens = [len((s.get("text") or "").strip()) for s in sections]
+        total = sum(lens) or 1
+        max_len = max(lens)
+        suspect_names = {"frontmatter", "backmatter", "unknown", "body", "conclusion", "conclusions"}
+
+        long_threshold_abs = 3000
+        long_threshold_rel = 0.35  # 35% от всего текста
+        few_sections_guard = (len(sections) <= 3 and (max_len / total) >= 0.60)
+
+        # список индексов, которые считаем аномальными
+        bad_idxs = []
+        for i, sec in enumerate(sections):
+            name = (sec.get("name") or "Unknown").strip().lower()
+            L = lens[i]
+            cond_general = L >= max(long_threshold_abs, long_threshold_rel * total)
+            cond_name = (name in suspect_names and L >= 2000)
+            if cond_general or cond_name:
+                bad_idxs.append(i)
+
+        if few_sections_guard and (lens.index(max_len) not in bad_idxs):
+            bad_idxs.append(lens.index(max_len))
+
+        # если нет аномальных — ничего не делаем
+        if not bad_idxs:
+            return sections
+
+        # виртуализируем только аномальные, остальные оставляем
+        out: List[Dict[str, Any]] = []
+        for i, sec in enumerate(sections):
+            if i in bad_idxs:
+                txt = (sec.get("text") or "").strip()
+                # для "хвостовых" секций типа Conclusions достаточно 3–6 кусков,
+                # для прочих — 6–10 (по опыту читается лучше)
+                lower_name = (sec.get("name") or "").lower()
+                max_v = 6 if "conclusion" in lower_name else 10
+                vparts = _split_into_virtuals(txt, max_vsecs=max_v)
+                out.extend(vparts if len(vparts) > 1 else [sec])
+            else:
+                out.append(sec)
+
+        return out
+
+    sections_input = virtualize_pathological_sections(sections_raw)
+    sections = infer_section_roles(sections_input)
 
     # ---------- Матч правил по секциям/капшенам (с учётом role/soft_weight) ----------
     section_weights_meta = {
