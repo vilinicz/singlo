@@ -206,7 +206,7 @@ def run_pipeline(
     rules_path = rules_path or os.getenv("RULES_PATH", "/app/rules/common.yaml")
     themes_root = themes_root or os.getenv("THEMES_ROOT", "/app/rules/themes")
 
-    # нормализация пути
+    # нормализация пути (pdf_path может быть каталогом /app/data/<doc_id> или любым «похожим» значением)
     pdf_path = _ensure_pdf_path(pdf_path)
     export_dir = Path(export_dir).resolve();
     export_dir.mkdir(parents=True, exist_ok=True)
@@ -214,53 +214,76 @@ def run_pipeline(
     themes_root = str(Path(themes_root).resolve())
 
     # --- S0 ---
-    # 1) резолвим реальный PDF-файл
+    t0 = time.time()
+    # 1) резолвим реальный PDF-файл (учитывая doc_id, если передан)
     resolved_pdf = _resolve_pdf_like(pdf_path, doc_id=doc_id)
 
     # 2) выбираем doc_id для папки вывода (до запуска S0)
     doc_id_eff = doc_id or resolved_pdf.stem
-    out_dir = export_dir / doc_id_eff
+    _init_status(doc_id_eff, theme=str(theme) if theme is not None else "auto")
+    # ВАЖНО: S0 сохраняем в DATA_DIR, т.к. фронт и другие части кода ждут s0.json там
+    data_dir = Path(os.getenv("DATA_DIR", "/app/data")).resolve() / doc_id_eff
+    data_dir.mkdir(parents=True, exist_ok=True)
+    # S1/S2 и графы — в EXPORT_DIR
+    out_dir = Path(export_dir).resolve() / doc_id_eff
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 3) S0: теперь передаём корректный .pdf и каталог вывода
-    s0 = build_s0(str(resolved_pdf), str(out_dir))
+    try:
+        # 3) S0: сохраняем артефакты в DATA_DIR/<doc_id>
+        s0_stage_t = time.time()
+        s0 = build_s0(str(resolved_pdf), str(data_dir))
+        # при необходимости фиксируем doc_id в артефактах
+        if doc_id:
+            s0["doc_id"] = doc_id
+        else:
+            doc_id = s0.get("doc_id") or doc_id_eff
+        # сохраняем s0.json
+        s0_path = data_dir / "s0.json"
+        s0_path.write_text(json.dumps(s0, ensure_ascii=False, indent=2), encoding="utf-8")
+        _push_stage(doc_id_eff, "S0", s0_stage_t)
+        _set_artifact(doc_id_eff, "s0", str(s0_path))
 
-    # при необходимости фиксируем doc_id в артефактах
-    if doc_id:
-        s0["doc_id"] = doc_id
-    else:
-        doc_id = s0.get("doc_id") or doc_id_eff
+        # --- normalize theme params ---
+        themes_sel = _normalize_theme_override(theme=theme, theme_override=theme_override)
 
-    # сохраняем s0.json
-    s0_path = out_dir / "s0.json"
-    s0_path.write_text(json.dumps(s0, ensure_ascii=False, indent=2), encoding="utf-8")
+        # --- S1 ---
+        s1_stage_t = time.time()
+        graph_path = out_dir / "graph.json"  # будущее место для S2-выхода
+        run_s1(
+            str(s0_path),
+            rules_path,
+            str(graph_path),
+            themes_root=themes_root,
+            theme_override=themes_sel
+        )
+        s1_graph = out_dir / "s1_graph.json"
+        if not s1_graph.exists():
+            raise RuntimeError(f"s1_graph.json not found at {s1_graph}")
+        _push_stage(doc_id_eff, "S1", s1_stage_t)
+        _set_artifact(doc_id_eff, "s1", str(s1_graph))
 
-    # --- normalize theme params ---
-    themes_sel = _normalize_theme_override(theme=theme, theme_override=theme_override)
+        # --- S2 ---
+        s2_stage_t = time.time()
+        run_s2(str(s1_graph), str(graph_path))  # создаст graph.json и s2_debug.json в out_dir
+        _push_stage(doc_id_eff, "S2", s2_stage_t)
+        _set_artifact(doc_id_eff, "graph", str(graph_path))
+        s2_debug = out_dir / "s2_debug.json"
+        if s2_debug.exists():
+            _set_artifact(doc_id_eff, "s2", str(s2_debug))
 
-    # --- S1 ---
-    graph_path = out_dir / "graph.json"  # будущее место для S2-выхода
-    run_s1(
-        str(s0_path),
-        rules_path,
-        str(graph_path),
-        themes_root=themes_root,
-        theme_override=themes_sel
-    )
+        _finish_status(doc_id_eff, ok=True)
 
-    # --- S2 ---
-    s1_graph = out_dir / "s1_graph.json"
-    if not s1_graph.exists():
-        raise RuntimeError(f"s1_graph.json not found at {s1_graph}")
-    run_s2(str(s1_graph), str(graph_path))  # создаст graph.json и s2_debug.json в out_dir
-
-    return {
-        "doc_id": doc_id,
-        "s0": str(s0_path),
-        "s1": str(out_dir / "s1_graph.json"),
-        "graph": str(graph_path),
-        "s2_debug": str(out_dir / "s2_debug.json"),
-    }
+        return {
+            "doc_id": doc_id_eff,
+            "s0": str(s0_path),
+            "s1": str(s1_graph),
+            "graph": str(graph_path),
+            "s2_debug": str(s2_debug) if s2_debug.exists() else "",
+            "t_start": t0,
+        }
+    except Exception as e:
+        _finish_status(doc_id_eff, ok=False, err_msg=str(e))
+        raise
 
 
 # -------- вспомогательная задача: только S0 --------

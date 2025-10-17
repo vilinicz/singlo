@@ -75,7 +75,14 @@ def extract_graph(doc_id: str, theme: str = Query(default="auto")):
     Кладём задачу в очередь RQ; прогресс смотри через /status/{doc_id}
     """
     q = Queue("singularis", connection=_r())
-    job = q.enqueue("pipeline.worker.run_pipeline", doc_id, theme, job_timeout=600)
+    # Передаём явные именованные аргументы, чтобы worker получил корректные параметры
+    job = q.enqueue(
+        "pipeline.worker.run_pipeline",
+        pdf_path=str(DATA_DIR / doc_id),  # из каталога /app/data/<doc_id>
+        doc_id=doc_id,
+        theme=theme,
+        job_timeout=600,
+    )
     # сразу инициализируем статус, чтобы фронт видел прогресс
     _r().hset(_status_key(doc_id), mapping={
         "state": "queued",
@@ -173,8 +180,14 @@ async def parse_pdf(
         "theme": theme  # <--- пишем для прозрачности
     })
     q = Queue("singularis", connection=r)
-    # ВАЖНО: worker должен принимать theme как второй аргумент (см. ниже про worker)
-    q.enqueue("pipeline.worker.run_pipeline", doc_id, theme, job_timeout=900)
+    # Передаём явные именованные аргументы: путь к данным документа, doc_id и theme
+    q.enqueue(
+        "pipeline.worker.run_pipeline",
+        pdf_path=str(doc_dir),
+        doc_id=doc_id,
+        theme=theme,
+        job_timeout=900,
+    )
 
     return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
 
