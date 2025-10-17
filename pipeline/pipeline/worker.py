@@ -11,19 +11,18 @@ import os
 import time
 import json
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from rq import Worker, Queue
 from rq.connections import Connection
 import redis
 
-from .s1 import run_s1
 from .s0 import build_s0
+from .s1 import run_s1
 from .s2 import run_s2
 
 # темы: реестр и роутинг
 from .themes_router import preload as themes_preload
-
 
 RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")
 THEMES_DIR = os.getenv("THEMES_DIR", str(Path(RULES_BASE_DIR) / "themes"))
@@ -36,9 +35,65 @@ try:
 except Exception:
     THEME_REGISTRY = None
 
+
 # -------- Redis helpers --------
 def _r():
     return redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
+
+
+def _resolve_pdf_like(p: str | Path, doc_id: Optional[str] = None) -> Path:
+    """
+    Принимает путь к .pdf ИЛИ к каталогу ИЛИ «кривой» путь.
+    Возвращает существующий путь к файлу .pdf.
+    Поиск:
+      1) если p — существующий .pdf → его;
+      2) если p — каталог → <p>/input.pdf или первый *.pdf;
+      3) если данных нет, пробуем в DATA_DIR по doc_id: DATA_DIR/doc_id/(input.pdf|*.pdf|doc_id.pdf).
+    """
+    p = Path(str(p))
+    # 1) уже .pdf
+    if p.suffix.lower() == ".pdf" and p.exists():
+        return p.resolve()
+    # 2) каталог
+    if p.exists() and p.is_dir():
+        cand = p / "input.pdf"
+        if cand.exists():
+            return cand.resolve()
+        any_pdf = list(p.glob("*.pdf"))
+        if any_pdf:
+            return any_pdf[0].resolve()
+    # 3) DATA_DIR / doc_id
+    data_dir = Path(os.getenv("DATA_DIR", "/app/data")).resolve()
+    name = doc_id or p.name  # если doc_id не задан — используем имя каталога
+    base = data_dir / name
+    cand1 = base / "input.pdf"
+    if cand1.exists():
+        return cand1.resolve()
+    any_pdf = list(base.glob("*.pdf"))
+    if any_pdf:
+        return any_pdf[0].resolve()
+    cand2 = data_dir / f"{name}.pdf"
+    if cand2.exists():
+        return cand2.resolve()
+    raise FileNotFoundError(f"PDF not found (tried): {p}, {cand1}, {base}/*.pdf, {cand2}")
+
+
+def _ensure_pdf_path(p: str | Path) -> Path:
+    """Принимаем либо путь к .pdf, либо каталог; для каталога ищем input.pdf или любой *.pdf."""
+    if not p:
+        raise TypeError("pdf_path is required")
+    p = Path(p)
+    if p.suffix.lower() == ".pdf":
+        return p.resolve()
+    if p.is_dir():
+        cand = p / "input.pdf"
+        if cand.exists():
+            return cand.resolve()
+        pdfs = list(p.glob("*.pdf"))
+        if pdfs:
+            return pdfs[0].resolve()
+    # если это не .pdf и не каталог — пусть упадёт дальше с FileNotFoundError
+    return p.resolve()
 
 
 def _status_key(doc_id): return f"status:{doc_id}"
@@ -105,83 +160,111 @@ def _parse_theme_override(theme_str: Optional[str]) -> Optional[List[str]]:
     return parts or None
 
 
-# -------- основной pipeline --------
-def run_pipeline(doc_id: str, theme: str = "auto"):
+def _normalize_theme_override(theme: Optional[Union[str, List[str]]],
+                              theme_override: Optional[List[str]]) -> Optional[List[str]]:
     """
-    Полный пайплайн: S0 → S1 → S2
-    Параметры:
-      - doc_id: идентификатор документа (рабочая директория /app/data/{doc_id})
-      - theme : "auto" (роутер тем) или конкр. тема/список тем ("biomed" | "biomed,physics")
+    Принимает theme (строка 'biomed,physics' | список) и/или theme_override (список),
+    возвращает нормализованный список тем или None.
+    Приоритет: theme_override (если задан) > theme.
     """
-    _init_status(doc_id, theme=theme)
+    if theme_override:
+        return [str(t).strip() for t in theme_override if str(t).strip()]
+    if theme is None:
+        return None
+    if isinstance(theme, str):
+        parts = [x.strip() for x in theme.replace(";", ",").split(",") if x.strip()]
+        return parts or None
+    if isinstance(theme, list):
+        parts = [str(x).strip() for x in theme if str(x).strip()]
+        return parts or None
+    return None
 
-    data_dir = Path("/app/data") / doc_id
-    export_dir = Path("/app/export") / doc_id
+
+def run_pipeline(
+        pdf_path: Optional[str] = None,
+        rules_path: Optional[str] = None,
+        export_dir: Optional[str] = None,
+        *,
+        themes_root: Optional[str] = None,
+        theme_override: Optional[List[str]] = None,
+        theme: Optional[Union[str, List[str]]] = None,
+        doc_id: Optional[str] = None,
+):
+    """
+    Универсальный раннер S0→S1→S2.
+
+    pdf_path: путь к PDF
+    rules_path: путь к rules/common.yaml
+    export_dir: базовая директория вывода артефактов (export/)
+    themes_root: директория с themes/* (опционально)
+    theme_override: ['biomed','physics'] — ручной выбор тем (опционально; старое имя)
+    theme: 'biomed,physics' | ['biomed','physics'] — альтернативное имя параметра (опционально)
+    doc_id: форсированный идентификатор для имени папки и артефактов (опционально)
+    """
+    # дефолты из окружения
+    export_dir = export_dir or os.getenv("EXPORT_DIR", "/app/export")
+    rules_path = rules_path or os.getenv("RULES_PATH", "/app/rules/common.yaml")
+    themes_root = themes_root or os.getenv("THEMES_ROOT", "/app/rules/themes")
+
+    # нормализация пути
+    pdf_path = _ensure_pdf_path(pdf_path)
+    export_dir = Path(export_dir).resolve();
     export_dir.mkdir(parents=True, exist_ok=True)
+    rules_path = str(Path(rules_path).resolve())
+    themes_root = str(Path(themes_root).resolve())
 
-    pdf_path = data_dir / "input.pdf"
-    s0_path = data_dir / "s0.json"
-    graph_path = export_dir / "graph.json"
+    # --- S0 ---
+    # 1) резолвим реальный PDF-файл
+    resolved_pdf = _resolve_pdf_like(pdf_path, doc_id=doc_id)
 
-    # Совместимость: базовый путь к правилам (common), может быть добавлен к тематическим
-    rules_path = os.getenv("S1_RULES_PATH", str(Path(RULES_BASE_DIR) / "common.yaml"))
+    # 2) выбираем doc_id для папки вывода (до запуска S0)
+    doc_id_eff = doc_id or resolved_pdf.stem
+    out_dir = export_dir / doc_id_eff
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    try:
-        # ---------- S0 ----------
-        t0 = time.time()
-        if not s0_path.exists():
-            if not pdf_path.exists():
-                raise FileNotFoundError(f"PDF not found: {pdf_path}")
-            build_s0(str(pdf_path), str(data_dir), use_latex=False)
-        _push_stage(doc_id, "S0", t0, notes="real S0")
-        _set_artifact(doc_id, "s0", str(s0_path))
+    # 3) S0: теперь передаём корректный .pdf и каталог вывода
+    s0 = build_s0(str(resolved_pdf), str(out_dir))
 
-        # ---------- S1 ----------
-        t1 = time.time()
-        # распарсить override тем из строки
-        override_list = _parse_theme_override(theme)
+    # при необходимости фиксируем doc_id в артефактах
+    if doc_id:
+        s0["doc_id"] = doc_id
+    else:
+        doc_id = s0.get("doc_id") or doc_id_eff
 
-        run_s1(
-            str(s0_path),
-            rules_path,
-            str(graph_path),
-            themes_root=THEMES_DIR,  # где лежат themes/*
-            theme_override=override_list,  # None => auto
-            theme_registry=THEME_REGISTRY  # заранее предзагруженный реестр
-        )
-        _push_stage(doc_id, "S1", t1, notes=f"regex extraction (theme={theme})")
-        _set_artifact(doc_id, "s1_graph", str(export_dir / "s1_graph.json"))
+    # сохраняем s0.json
+    s0_path = out_dir / "s0.json"
+    s0_path.write_text(json.dumps(s0, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        # ---------- S2 ----------
-        t2 = time.time()
-        run_s2(str(export_dir))
-        _push_stage(doc_id, "S2", t2, notes="semantic linking")
-        _set_artifact(doc_id, "graph", str(graph_path))
+    # --- normalize theme params ---
+    themes_sel = _normalize_theme_override(theme=theme, theme_override=theme_override)
 
-        # ---------- finalize ----------
-        t3 = time.time()
-        _push_stage(doc_id, "finalize", t3)
-        _finish_status(doc_id, ok=True)
-        return {"doc_id": doc_id, "graph": str(graph_path)}
+    # --- S1 ---
+    graph_path = out_dir / "graph.json"  # будущее место для S2-выхода
+    run_s1(
+        str(s0_path),
+        rules_path,
+        str(graph_path),
+        themes_root=themes_root,
+        theme_override=themes_sel
+    )
 
-    except Exception as e:
-        # если упало — создаём пустой граф для фронта
-        try:
-            export_dir.mkdir(parents=True, exist_ok=True)
-            Path(graph_path).write_text(json.dumps({
-                "doc_id": doc_id,
-                "nodes": [],
-                "edges": [],
-                "error": str(e)
-            }, indent=2), encoding="utf-8")
-        except Exception:
-            pass
-        _finish_status(doc_id, ok=False, err_msg=str(e))
-        raise
+    # --- S2 ---
+    s1_graph = out_dir / "s1_graph.json"
+    if not s1_graph.exists():
+        raise RuntimeError(f"s1_graph.json not found at {s1_graph}")
+    run_s2(str(s1_graph), str(graph_path))  # создаст graph.json и s2_debug.json в out_dir
+
+    return {
+        "doc_id": doc_id,
+        "s0": str(s0_path),
+        "s1": str(out_dir / "s1_graph.json"),
+        "graph": str(graph_path),
+        "s2_debug": str(out_dir / "s2_debug.json"),
+    }
 
 
 # -------- вспомогательная задача: только S0 --------
-def run_s0(doc_id: str):
+def run_s0_only(doc_id: str):
     data_dir = Path("/app/data") / doc_id
     pdf_path = data_dir / "input.pdf"
     if not pdf_path.exists():

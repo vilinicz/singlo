@@ -8,7 +8,7 @@ import traceback
 import json
 import shutil
 import hashlib
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 from tools.report import generate_report  # см. ниже пункт 2 — CLI уже писали, он реиспользуем
 from pipeline.pipeline.worker import run_pipeline  # если у вас есть синхронный раннер
@@ -39,6 +39,8 @@ DATASET_ROOT = Path("/app/dataset")  # пробросим в Docker
 WORKDIR = Path("/app/workdir").resolve()
 DATA_DIR = Path(os.getenv("DATA_DIR", "/app/data")).resolve()  # ⟵ добавь это
 EXPORT_DIR = Path(os.getenv("EXPORT_DIR", "/app/export")).resolve()  # ⟵ и это (полезно для отчётов)
+RULES_PATH = os.getenv("RULES_PATH", "/app/rules/common.yaml")
+THEMES_ROOT = os.getenv("THEMES_ROOT", "/app/rules/themes")
 
 # Какие имена файлов считаем артефактами
 S0_NAMES = ("s0.json",)
@@ -190,13 +192,28 @@ def run_over_dataset(
 
         try:
             _prepare_data_dir(doc_id, pdf)
-            rv = run_pipeline(doc_id=doc_id, theme=theme)  # ← ключевой момент
+
+            pdf_path = str(Path(DATA_DIR) / doc_id)
+            if not Path(pdf_path).exists():
+                raise FileNotFoundError(f"PDF not found for doc_id={doc_id}: {pdf_path}")
+
+            rv = run_pipeline(
+                pdf_path=pdf_path,
+                rules_path=RULES_PATH,
+                export_dir=EXPORT_DIR,
+                themes_root=THEMES_ROOT,
+                theme=theme,  # строка 'biomed,physics' или список — обе формы поддерживаются
+                doc_id=doc_id,  # чтобы артефакты легли в export/<doc_id>
+            )  # ← ключевой момент
             elapsed_ms = int((time.perf_counter() - t_file) * 1000)
             ok_count += 1
             processed.append({
                 "pdf": rel,
                 "doc_id": doc_id,
-                "workdir": rv.get("workdir") or f"/app/data/{doc_id}",
+                # worker возвращает граф и пути к артефактам; workdir может отсутствовать
+                "graph": rv.get("graph"),
+                "s0": rv.get("s0"),
+                "s1": rv.get("s1"),
                 "elapsed_ms": elapsed_ms,
             })
             logger.info(f"[{seen}] OK doc_id={doc_id} | {elapsed_ms} ms")
@@ -233,7 +250,7 @@ def _safe_load_json(p: Path):
         return None
 
 
-def _find_first(dirpath: Path, candidates: tuple[str, ...]) -> Path | None:
+def _find_first(dirpath: Path, candidates: Tuple[str, ...]) -> Path | None:
     for name in candidates:
         p = dirpath / name
         if p.exists():
