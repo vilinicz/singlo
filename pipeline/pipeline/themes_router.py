@@ -1,27 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-themes_router.py — быстрый роутер тем (top-k) с инвертированным индексом и ранним стопом.
+themes_router.py — быстрый роутер тем (top-k) с инвертированным индексом, ранним стопом и расширенной отладкой.
 
-Ключевые идеи:
-- При preload() читаем themes/*/triggers.yaml и строим реестр:
-  - plain_index: token(str) -> set(theme)
-  - registry[theme]: {must[], should_pairs[(tok,wt)], negative_pairs[(tok,wt)], threshold}
-  - regex buckets: для should/negative с regex-токенами
-- route_themes() сначала собирает кандидатов по пересечению plain-токенов (top-M),
-  затем детально скорит только их; ранний стоп: как только есть k тем со score>=stop_threshold — выходим.
-
-API:
+Публичный API (совместим с прежним):
   preload(themes_root) -> ThemeRegistry
-  route_themes(s0, registry, global_topk=2, stop_threshold=1.8, override=None) -> [ThemeScore]
+  route_themes(s0, registry, global_topk=2, stop_threshold=1.8, override=None) -> List[ThemeScore]
+  select_rule_files(themes_root, chosen, common_path=None) -> Dict[str, List[Path]]
+  explain_themes_for_debug(s0, registry, chosen) -> List[Dict[str, Any]]
 
-Ручной override: список имён тем -> возвращаем сразу их.
+Новое (для отладки и s1_debug):
+  route_themes_with_candidates(s0, registry, ...) -> (chosen: List[ThemeScore], candidates: List[ThemeScore])
+  explain_routing_full(s0, registry, chosen, candidates, top_n=5) -> Dict[str, Any]
 """
 
 from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Set
+from typing import Dict, List, Tuple, Optional, Set, Any
 
 import yaml
 
@@ -52,6 +48,8 @@ class ThemeScore:
     score: float
     threshold: float
     chosen: bool
+    hits: int = 0        # грубое количество plain-хитов (для приоритизации кандидатов)
+    passed_must: bool = True
 
 
 # -------- public API --------
@@ -78,10 +76,9 @@ def preload(themes_root: str | Path) -> ThemeRegistry:
                     try:
                         regex.append((re.compile(tok, re.IGNORECASE | re.MULTILINE), wt))
                     except re.error:
-                        # пропускаем битые шаблоны
                         continue
                 else:
-                    plain.append((tok.lower(), wt))
+                    plain.append((_normalize_token(tok), wt))
             return plain, regex
 
         sh_plain, sh_regex = split_pairs(cfg.get("should"))
@@ -98,11 +95,11 @@ def preload(themes_root: str | Path) -> ThemeRegistry:
         )
         themes[name] = trig
 
-        # наполняем инвертированный индекс plain-токенов
+        # инвертированный индекс по plain-токенам should/negative
         for tok, _ in sh_plain:
             plain_index.setdefault(tok, set()).add(name)
         for tok, _ in ng_plain:
-            plain_index.setdefault(tok, set()).add(name)  # negative тоже как сигнал присутствия
+            plain_index.setdefault(tok, set()).add(name)
 
     return ThemeRegistry(root, themes, plain_index)
 
@@ -111,74 +108,17 @@ def route_themes(
         s0: Dict,
         registry: ThemeRegistry,
         global_topk: int = 2,
-        stop_threshold: float = 1.8,  # ранний стоп: «достаточно высокий» скор
-        max_candidates: int = 20,  # ограничиваем детальную проверку до top-M
+        stop_threshold: float = 1.8,
+        max_candidates: int = 20,
         override: Optional[List[str]] = None,
 ) -> List[ThemeScore]:
     """
-    Возвращает top-k тем. Не перебирает все темы: сначала собирает кандидатов из plain-индекса.
+    Быстрая маршрутизация: возвращает только выбранные темы (совместимо со старым кодом).
     """
-    # 0) override
-    if override:
-        chosen = []
-        for nm in override:
-            if nm in registry.themes:
-                chosen.append(ThemeScore(nm, 999.0, 0.0, True))
-        return chosen
-
-    # 1) витрина
-    text = build_showcase_text(s0)
-    text_lower = text.lower()
-
-    # 2) кандидаты: bag of tokens (plain)
-    hits: Dict[str, int] = {}  # theme -> count of intersected tokens
-    # простая токенизация по словам/биграммам (минимум): для plain-токенов достаточно подстроки
-    # пройдёмся по всем токенам индекса, но отфильтруем дешёво — только те, что реально встречаются
-    # Чтобы не перебирать все ключи, извлечём слова из текста и проверим их в индексе:
-    vocab = set(_quick_tokens(text_lower))
-    for tok in vocab:
-        if tok in registry.plain_index:
-            for th in registry.plain_index[tok]:
-                hits[th] = hits.get(th, 0) + 1
-
-    # 3) грубая приоритизация кандидатов и отсечение
-    candidates = sorted(hits.items(), key=lambda kv: kv[1], reverse=True)[:max_candidates]
-    if not candidates:
-        # fallback: если ни одного plain-хита (редко), проверим хотя бы первые N тем детально
-        candidates = [(name, 0) for name in list(registry.themes.keys())[:max_candidates]]
-
-    # 4) детальный скоринг только по кандидатам, с ранним стопом
-    picked: List[ThemeScore] = []
-    best_so_far: List[ThemeScore] = []
-
-    for name, _cnt in candidates:
-        trg = registry.themes.get(name)
-        if not trg:
-            continue
-        score, passed = _score_theme_detail(text, trg)
-        chosen = passed and (score >= trg.threshold)
-        ts = ThemeScore(name=name, score=score, threshold=trg.threshold, chosen=chosen)
-        if chosen:
-            best_so_far.append(ts)
-            # ранний стоп: как только у нас есть k тем со скором >= stop_threshold — хватит
-            if len([x for x in best_so_far if x.score >= stop_threshold]) >= global_topk:
-                break
-
-    if not best_so_far:
-        # считаем «лучшую» только для отладки, но не выбираем её
-        fallback_best = None
-        for name, _ in candidates:
-            trg = registry.themes.get(name)
-            if not trg:
-                continue
-            score, passed = _score_theme_detail(text, trg)
-            if (fallback_best is None) or (score > fallback_best.score):
-                fallback_best = ThemeScore(name, score, trg.threshold, False)
-        picked = [fallback_best] if fallback_best else []
-    else:
-        picked = sorted(best_so_far, key=lambda x: x.score, reverse=True)[:global_topk]
-
-    return picked
+    chosen, _cands = route_themes_with_candidates(
+        s0, registry, global_topk=global_topk, stop_threshold=stop_threshold, max_candidates=max_candidates, override=override
+    )
+    return chosen
 
 
 def select_rule_files(
@@ -189,7 +129,7 @@ def select_rule_files(
     root = Path(themes_root)
     files: Dict[str, List[Path]] = {"rules": [], "lexicons": []}
 
-    # common.yaml: либо явно указали, либо ищем у родителя themes_root
+    # common.yaml
     if common_path is not None:
         cp = Path(common_path)
         if cp.exists():
@@ -200,20 +140,19 @@ def select_rule_files(
         if cp.exists():
             files["rules"].append(cp)
 
-    # shared-lexicon рядом с themes_root
+    # shared-lexicon (две возможные локации)
     shared_candidates = [
-        root / "shared-lexicon.yaml",  # legacy
-        root / "_shared" / "lexicon.yaml"  # новый FOS-путь
+        root / "shared-lexicon.yaml",
+        root / "_shared" / "lexicon.yaml"
     ]
     seen = set()
     for p in shared_candidates:
         if p.exists():
-            # избегаем дублей, если оба файла есть
             if p.resolve() not in seen:
                 files["lexicons"].append(p)
                 seen.add(p.resolve())
 
-    # подключаем только реально выбранные темы
+    # тематические пакеты
     for ts in (t for t in chosen if getattr(t, "chosen", False)):
         tdir = root / ts.name
         r = tdir / "rules.yaml"
@@ -222,11 +161,74 @@ def select_rule_files(
         lx = tdir / "lexicon.yaml"
         if lx.exists():
             files["lexicons"].append(lx)
-        lx = tdir / "lexicon.yaml"
-        if lx.exists():
-            files["lexicons"].append(lx)
 
     return files
+
+
+# -------- new: routing with candidates (for debug) --------
+
+def route_themes_with_candidates(
+        s0: Dict,
+        registry: ThemeRegistry,
+        global_topk: int = 2,
+        stop_threshold: float = 1.8,
+        max_candidates: int = 20,
+        override: Optional[List[str]] = None,
+) -> Tuple[List[ThemeScore], List[ThemeScore]]:
+    """
+    Возвращает (chosen, candidates). Candidates — просмотренные темы (с hits/score/passed_must).
+    """
+    # 0) override
+    if override:
+        chosen = []
+        for nm in override:
+            if nm in registry.themes:
+                chosen.append(ThemeScore(nm, 999.0, 0.0, True, hits=999))
+        return chosen, chosen
+
+    # 1) витрина
+    text = build_showcase_text(s0)
+    text_lower = text.lower()
+
+    # 2) кандидаты: пересечение с plain-индексом
+    hits: Dict[str, int] = {}
+    vocab = set(_quick_tokens(text_lower))
+    for tok in vocab:
+        if tok in registry.plain_index:
+            for th in registry.plain_index[tok]:
+                hits[th] = hits.get(th, 0) + 1
+
+    candidates = sorted(hits.items(), key=lambda kv: kv[1], reverse=True)[:max_candidates]
+    if not candidates:
+        candidates = [(name, 0) for name in list(registry.themes.keys())[:max_candidates]]
+
+    # 3) детальный скоринг
+    chosen: List[ThemeScore] = []
+    detailed: List[ThemeScore] = []
+    early_passed = 0
+
+    for name, cnt in candidates:
+        trg = registry.themes.get(name)
+        if not trg:
+            continue
+        score, passed, _ = _score_theme_detail_verbose(text, trg)
+        ts = ThemeScore(name=name, score=score, threshold=trg.threshold, chosen=False, hits=int(cnt), passed_must=passed)
+        if passed and (score >= trg.threshold):
+            ts.chosen = True
+            chosen.append(ts)
+            if score >= stop_threshold:
+                early_passed += 1
+        detailed.append(ts)
+        if early_passed >= global_topk:
+            break
+
+    if not chosen and detailed:
+        # для диагностики оставим «лучшего» как невыбранного
+        pass
+
+    # итог: top-k из выбранных
+    chosen = sorted([t for t in chosen if t.chosen], key=lambda x: x.score, reverse=True)[:global_topk]
+    return chosen, detailed
 
 
 # -------- internals --------
@@ -237,7 +239,10 @@ def build_showcase_text(s0: Dict) -> str:
         nm = (sec.get("name") or "").lower()
         if nm.startswith("abstract") or nm.startswith("introduction"):
             parts.append(sec.get("text") or "")
-    for c in (s0.get("captions") or [])[:10]:
+        # добавим ещё вероятно-важные хвосты, если есть
+        if ("conclusion" in nm) or ("discussion" in nm):
+            parts.append(sec.get("text") or "")
+    for c in (s0.get("captions") or [])[:12]:
         parts.append(c.get("text") or "")
     return _normalize(" ".join(parts))
 
@@ -249,8 +254,14 @@ def _normalize(t: str) -> str:
     return t
 
 
+def _normalize_token(tok: str) -> str:
+    tok = (tok or "").strip().lower()
+    tok = re.sub(r"[^a-z0-9\-]+", "", tok)
+    return tok
+
+
 def _quick_tokens(t: str) -> List[str]:
-    # примитивная токенизация слов ≥3 символов
+    # простые токены: слова ≥3 символов и термины с дефисом/цифрой
     return re.findall(r"[a-z][a-z0-9\-]{2,}", t)
 
 
@@ -266,8 +277,7 @@ def _contains_regex(rx: re.Pattern, text: str) -> bool:
 
 
 def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
-    # must
-    for tok in trg.must:
+    for tok in (trg.must or []):
         if _looks_regex(tok):
             try:
                 if re.search(tok, text, re.IGNORECASE | re.MULTILINE) is None:
@@ -279,23 +289,18 @@ def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
                 return (0.0, False)
 
     score = 0.0
-    # should plain
-    for tok, wt in trg.should_plain:
+    for tok, wt in (trg.should_plain or []):
         if tok in text:
             score += wt
-    # negative plain
-    for tok, wt in trg.neg_plain:
+    for tok, wt in (trg.neg_plain or []):
         if tok in text:
             score -= wt
-    # should regex
-    for rx, wt in trg.should_regex:
+    for rx, wt in (trg.should_regex or []):
         if _contains_regex(rx, text):
             score += wt
-    # negative regex
-    for rx, wt in trg.neg_regex:
+    for rx, wt in (trg.neg_regex or []):
         if _contains_regex(rx, text):
             score -= wt
-
     return (score, True)
 
 
@@ -303,20 +308,13 @@ def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
 
 def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
     """
-    Подробно считает скор темы и возвращает matched-триггеры.
-    Возвращает:
-      {
-        "score": float,
-        "passed_must": bool,
-        "matched": [
-           {"kind":"should","mode":"plain","token":"cohort","weight":1.1},
-           {"kind":"negative","mode":"regex","token":"eigen(value|vector)","weight":1.0},
-           ...
-        ],
-        "unmet_must": ["..."],                # если must не прошли
-        "top_triggers": [ ... ]               # отсортированные matched по |weight|, сначала should, затем negative
-      }
+    Совместимая версия: подробно считает скор и matched-триггеры.
     """
+    det = _score_theme_detail_verbose(text, trg)[2]
+    return det
+
+
+def _score_theme_detail_verbose(text: str, trg: Triggers) -> Tuple[float, bool, Dict[str, Any]]:
     out = {"score": 0.0, "passed_must": True, "matched": [], "unmet_must": [], "top_triggers": []}
 
     # must
@@ -332,34 +330,28 @@ def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
             out["passed_must"] = False
             out["unmet_must"].append(tok)
 
-    # если must завалены, дальше всё равно посчитаем — полезно для отладки
     score = 0.0
 
-    # should plain
     for tok, wt in (trg.should_plain or []):
         if tok in text:
             score += wt
             out["matched"].append({"kind": "should", "mode": "plain", "token": tok, "weight": wt})
 
-    # negative plain
     for tok, wt in (trg.neg_plain or []):
         if tok in text:
             score -= wt
             out["matched"].append({"kind": "negative", "mode": "plain", "token": tok, "weight": wt})
 
-    # should regex
     for rx, wt in (trg.should_regex or []):
         if _contains_regex(rx, text):
             score += wt
             out["matched"].append({"kind": "should", "mode": "regex", "token": rx.pattern, "weight": wt})
 
-    # negative regex
     for rx, wt in (trg.neg_regex or []):
         if _contains_regex(rx, text):
             score -= wt
             out["matched"].append({"kind": "negative", "mode": "regex", "token": rx.pattern, "weight": wt})
 
-    # топ-триггеры: сначала should по весу, потом negative по весу
     shoulds = [m for m in out["matched"] if m["kind"] == "should"]
     negs = [m for m in out["matched"] if m["kind"] == "negative"]
     shoulds.sort(key=lambda m: float(m["weight"]), reverse=True)
@@ -367,24 +359,12 @@ def score_theme_detail_verbose(text: str, trg: Triggers) -> Dict[str, Any]:
     out["top_triggers"] = shoulds[:8] + negs[:8]
 
     out["score"] = float(score)
-    return out
+    return score, out["passed_must"], out
 
 
 def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[ThemeScore]) -> List[Dict[str, Any]]:
     """
-    Возвращает подробный блок для s1_debug:
-    [
-      {
-        "name": "biomed",
-        "score": 2.7,
-        "threshold": 1.6,
-        "chosen": true,
-        "top_triggers": [...],
-        "unmet_must": [...],
-        "matched_count": 5
-      },
-      ...
-    ]
+    Совместимая функция: подробности только по выбранным темам.
     """
     text = build_showcase_text(s0)
     out = []
@@ -404,3 +384,53 @@ def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[The
             "matched_count": len(det.get("matched", [])),
         })
     return out
+
+
+# -------- new: full debug block (chosen + rejected top candidates) --------
+
+def explain_routing_full(
+    s0: Dict,
+    registry: ThemeRegistry,
+    chosen: List[ThemeScore],
+    candidates: List[ThemeScore],
+    top_n: int = 5
+) -> Dict[str, Any]:
+    """
+    Возвращает полный блок для s1_debug:
+      {
+        "chosen": [... как в explain_themes_for_debug ...],
+        "rejected_top": [
+           {"name":..., "score":..., "threshold":..., "hits":..., "passed_must":..., "top_triggers":[...], "unmet_must":[...]},
+           ...
+        ]
+      }
+    """
+    text = build_showcase_text(s0)
+    chosen_block = explain_themes_for_debug(s0, registry, chosen)
+
+    # невыбранные топ-кандидаты
+    rejected = [c for c in (candidates or []) if not c.chosen]
+    rejected = sorted(rejected, key=lambda x: (x.score, x.hits), reverse=True)[:top_n]
+
+    rej_block = []
+    for r in rejected:
+        trg = registry.themes.get(r.name)
+        if not trg:
+            rej_block.append({
+                "name": r.name, "score": r.score, "threshold": r.threshold,
+                "hits": r.hits, "passed_must": r.passed_must
+            })
+            continue
+        det = score_theme_detail_verbose(text, trg)
+        rej_block.append({
+            "name": r.name,
+            "score": r.score,
+            "threshold": r.threshold,
+            "hits": r.hits,
+            "passed_must": r.passed_must,
+            "top_triggers": det.get("top_triggers", []),
+            "unmet_must": det.get("unmet_must", []),
+            "matched_count": len(det.get("matched", [])),
+        })
+
+    return {"chosen": chosen_block, "rejected_top": rej_block}

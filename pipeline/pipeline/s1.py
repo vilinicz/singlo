@@ -7,10 +7,42 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from .themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
-from .themes_router import explain_themes_for_debug, build_showcase_text
-
+from .themes_router import explain_themes_for_debug, build_showcase_text, route_themes_with_candidates, explain_routing_full
 
 # ---------- Rule model ----------
+
+_SECTION_ROLE_PATTERNS: List[Tuple[str, str]] = [
+    # (regex, role) — порядок имеет значение (первые совпадения важнее)
+    (r'^\s*abstract\b', 'Abstract'),
+    (r'^\s*(background|overview|aims?)\b', 'Introduction'),
+    (r'^\s*(introduction|literature review|related work)\b', 'Introduction'),
+    (r'^\s*(materials?\s+and\s+methods|methodology|methods?)\b', 'Methods'),
+    (r'^\s*(results?(?:\s+and\s+discussion)?)\b', 'Results'),
+    (r'^\s*discussion\b', 'Discussion'),
+    (r'^\s*(conclusion|conclusions|summary|closing remarks)\b', 'Conclusion'),
+    (r'^\s*(acknowledg(e)?ments?|references?|bibliography)\b', 'BackMatter'),
+    # частые вариации в прикладных доменах
+    (r'^\s*(experiments?|evaluation|findings?)\b', 'Results'),
+    (r'^\s*(analysis|empirical analysis)\b', 'Analysis'),
+    (r'^\s*(case study|case studies)\b', 'Results'),
+    (r'^\s*(contribution[s]?\b|use[s]?\b).*construction phase', 'Results'),  # из BIM-пейпера
+]
+
+# веса (важность) по ролям — входят в итоговый conf через умножение
+_SECTION_ROLE_WEIGHTS: Dict[str, float] = {
+    'Abstract': 0.65,
+    'Introduction': 0.70,
+    'Methods': 0.85,
+    'Results': 1.00,
+    'Discussion': 0.95,
+    'Analysis': 0.90,
+    'Conclusion': 0.80,
+    'Body': 0.60,  # неизвестное тело текста
+    'BackMatter': 0.30,  # благодарности/списки литературы
+    'Unknown': 0.50,
+}
+
+
 @dataclass
 class Rule:
     id: str
@@ -65,6 +97,106 @@ def _polarity_from_text(text: str) -> str:
 
 def _make_node_id(doc_id: str, ntype: str, idx: int) -> str:
     return f"{doc_id}:{ntype}:{idx:04d}"
+
+
+def _normalize_title(name: str) -> str:
+    name = (name or "").strip()
+    name = re.sub(r'\s+', ' ', name)
+    return name
+
+
+def _match_role_by_title(name: str) -> str:
+    low = name.lower()
+    for rx, role in _SECTION_ROLE_PATTERNS:
+        if re.search(rx, low):
+            return role
+    return 'Unknown'
+
+
+def infer_section_roles(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Вход: секции из s0.json: [{name, text, ...}]
+    Выход: те же секции, но с полями:
+      - role: одна из {Abstract, Introduction, Methods, Results, Discussion, Analysis, Conclusion, Body, BackMatter, Unknown}
+      - soft_weight: от 0..1 (вес роли)
+      - order_idx: индекс секции
+      - pos_frac: позиция в документе [0..1] (по индексу)
+    Логика:
+      1) Сначала пытаемся распознать роль по названию (широкие паттерны).
+      2) Для Unknown/Body подмешиваем позиционную эвристику:
+         - первые 10–20% → чаще Introduction/Background
+         - последние 15–20% → чаще Conclusion/Discussion
+         - середина → Methods/Results/Analysis (по ключевым словам в тексте, если попадётся)
+    """
+    n = max(len(sections), 1)
+    out = []
+    for idx, sec in enumerate(sections):
+        title = _normalize_title(sec.get('name', ''))
+        role = _match_role_by_title(title)
+        pos_frac = idx / max(n - 1, 1)  # 0..1
+        text = (sec.get('text') or '')
+        text_low = text.lower()
+
+        # ключевые индикаторы внутри текста, если заголовок странный
+        has_p_value = bool(re.search(r'\bp\s*[<≤]\s*0\.\d+', text_low))
+        has_percent = bool(re.search(r'\b\d{1,3}\s*%(\b|[^a-z])', text_low))
+        has_method_kw = any(
+            k in text_low for k in ['we used', 'we employ', 'protocol', 'dataset', 'cohort', 'participants'])
+        has_result_kw = any(
+            k in text_low for k in ['we found', 'our results', 'the results', 'improved', 'decrease', 'increase'])
+        has_concl_kw = any(
+            k in text_low for k in ['in conclusion', 'we conclude', 'conclusion', 'limitations', 'future work'])
+        has_disc_kw = any(k in text_low for k in ['we discuss', 'discussion', 'interpretation'])
+
+        # позиционная эвристика — только если роль не распознана по заголовку
+        if role in ('Unknown', 'Body'):
+            if pos_frac <= 0.15:
+                # начало документа
+                if has_method_kw and not (has_result_kw or has_p_value or has_percent):
+                    role = 'Methods'  # иногда методологию выносят очень рано
+                else:
+                    role = 'Introduction'
+            elif pos_frac >= 0.80:
+                # конец документа
+                if has_concl_kw:
+                    role = 'Conclusion'
+                elif has_disc_kw or has_result_kw:
+                    role = 'Discussion'
+                else:
+                    role = 'Conclusion'
+            else:
+                # середина
+                if has_result_kw or has_p_value or has_percent:
+                    role = 'Results'
+                elif has_method_kw:
+                    role = 'Methods'
+                elif 'analysis' in text_low:
+                    role = 'Analysis'
+                else:
+                    role = 'Body'
+
+        soft_weight = _SECTION_ROLE_WEIGHTS.get(role, _SECTION_ROLE_WEIGHTS['Unknown'])
+        out.append({
+            **sec,
+            'role': role,
+            'soft_weight': soft_weight,
+            'order_idx': idx,
+            'pos_frac': pos_frac
+        })
+    return out
+
+
+def section_matches_rule(sec_role: str, sec_name: str, rule_sections: List[str]) -> bool:
+    """
+    Мягкое сопоставление секции с ожидаемыми из правила.
+    Правило может перечислять как "Methods/Results/..." так и "Body/Unknown".
+    Совпадение по роли → True. Дополнительно допускаем "подстроку" по названию.
+    """
+    rs = [s.lower() for s in (rule_sections or [])]
+    if sec_role and sec_role.lower() in rs:
+        return True
+    low_name = (sec_name or '').lower()
+    return any(s in low_name for s in rs)
 
 
 # ---------- Load rules with validation ----------
@@ -616,53 +748,59 @@ def _safe_preload(themes_root: str | Path) -> ThemeRegistry:
 
 
 # ---------- Runner ----------
-def run_s1(s0_path: str, rules_path: str, out_path: str, *,
-           themes_root: str = "/app/rules/themes",
-           theme_override: Optional[List[str]] = None,
-           theme_registry: Optional[ThemeRegistry] = None) -> Dict[str, Any]:
+def run_s1(
+        s0_path: str,
+        rules_path: str,
+        out_path: str,
+        *,
+        themes_root: str = "/app/rules/themes",
+        theme_override: Optional[List[str]] = None,
+        theme_registry: Optional[ThemeRegistry] = None,
+) -> Dict[str, Any]:
     """
-    1) грузит s0.json и rules (common.yaml + learned packs);
-    2) матч правил по секциям/капшенам -> кандидаты узлов;
-    3) постобработка (склейка/анти-дубликат/супресс перекрытий);
-    4) пороги -> nodes;
-    5) линковка -> edges;
-    6) собирает debug, включая gaps;
-    7) пишет s1_graph.json и s1_debug.json.
+    1) грузит s0.json и rules (common.yaml + тематические пакеты);
+    2) нормализует секции (role + soft_weight) и, при необходимости, виртуализирует одну большую секцию;
+    3) матч правил по секциям/капшенам -> кандидаты узлов (с учётом роли секции в conf);
+    4) постобработка (склейка/анти-дубликат/супресс перекрытий) и пороги -> nodes;
+    5) линковка -> edges (и порог по рёбрам);
+    6) gaps для AutoRule, отладка по темам, статистики;
+    7) запись s1_graph.json и s1_debug.json.
     """
-    # --- Загрузка артефактов S0 ---
+
+    # ---------- Загрузка S0 ----------
     s0 = json.loads(Path(s0_path).read_text(encoding="utf-8"))
     doc_id = s0.get("doc_id") or Path(s0_path).parent.name
-    sections = s0.get("sections", []) or []
+    sections_raw = s0.get("sections", []) or []
     captions = s0.get("captions", []) or []
 
-    # --- Тематический роутинг ---
+    # ---------- Тематический роутер (top-k) ----------
     registry = theme_registry if theme_registry is not None else _safe_preload(themes_root)
     chosen = route_themes(
-        s0, registry=registry,
-        global_topk=2, stop_threshold=1.8,
-        override=theme_override
+        s0,
+        registry=registry,
+        global_topk=2,
+        stop_threshold=1.8,
+        override=theme_override,
     )
 
-    # --- выбрать файлы правил/лексиконов по выбранным темам ---
     files = select_rule_files(
-        themes_root=themes_root,  # напр. "/app/rules/themes"
+        themes_root=themes_root,
         chosen=chosen,
-        common_path=rules_path  # напр. "/app/rules/common.yaml"
+        common_path=rules_path,
     )
-
     rule_files = [str(p) for p in files.get("rules", [])]
     lexicon_files = [str(p) for p in files.get("lexicons", [])]
 
-    # --- мерж правил из нескольких файлов ---
-    meta, hedge_words, rule_objs, relations = load_rules_merged(rule_files)
+    # ---------- Загрузка и мерж правил ----------
+    meta, hedge_words_base, rule_objs, relations = load_rules_merged(rule_files)
 
-    # --- домножаем веса тематических правил на theme_score ---
+    # Домножаем веса тематических правил на score темы
     _apply_theme_weight_mix(rule_objs, chosen)
 
-    # --- подмешиваем shared-lexicon и тематические лексиконы ---
-    abbr_map = {}
-    synonyms = set()
-    hedge_extra = set()
+    # ---------- Сбор и подмешивание лексиконов ----------
+    abbr_map: Dict[str, str] = {}
+    synonyms: set = set()
+    hedge_extra: set = set()
 
     for lp in lexicon_files:
         lx = load_lexicon_yaml(lp)
@@ -676,73 +814,168 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
             if isinstance(w, str):
                 hedge_extra.add(w.lower())
 
-    # hedging = из правил + из лексиконов
-    hedge_words = set(hedge_words or [])
+    hedge_words = set(hedge_words_base or [])
     hedge_words |= hedge_extra
 
-    # --- Кандидаты узлов по правилам ---
-    rule_hits: set = set()
-    candidates = match_rules(
-        doc_id=doc_id,
-        sections=sections,
-        captions=captions,
-        meta=meta,
-        hedge_words=hedge_words,
-        rules=rule_objs,
-        rule_hits=rule_hits,
-    )
+    # ---------- Подготовка секций: роли и фолбэк для «одной секции» ----------
+    def _virtualize_if_single(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Если S0 вернул одну гигантскую секцию (или её имя Unknown/Body),
+        режем по абзацам (до 12 кусков), делаем из них «виртуальные» секции.
+        Это не ломает обычные документы (ветка активируется только для single-section).
+        """
+        if len(sections) != 1:
+            return sections
 
-    # пост-склейка и анти-дубликаты
-    candidates = merge_fragment_nodes(candidates, max_gap=20)
+        sec = sections[0]
+        name = (sec.get("name") or "Unknown").strip() or "Unknown"
+        text = (sec.get("text") or "").strip()
+        if len(text) < 1200:
+            # короткие не трогаем — пусть эвристика ролей отработает как есть
+            return sections
+
+        # Разбивка по абзацам (двойные переводы строки/CR), с объединением мелких
+        paras = [p.strip() for p in re.split(r'(?:\r?\n){2,}', text) if p.strip()]
+        if len(paras) <= 1:
+            # Текст без явных абзацев — оставляем как есть
+            return sections
+
+        # Обрезаем до 12 «виртуальных секций», слияние коротких хвостов
+        MAX_VSECS = 12
+        if len(paras) > MAX_VSECS:
+            # Сливаем концы, чтобы сохранить структуру начала/середины/конца
+            head = paras[:MAX_VSECS - 2]
+            tail = paras[MAX_VSECS - 2:]
+            paras = head + ["\n\n".join(tail)]
+
+        vsecs: List[Dict[str, Any]] = []
+        for i, p in enumerate(paras):
+            vsecs.append({
+                "name": f"VirtualSection {i + 1}",
+                "text": p,
+            })
+        return vsecs
+
+    sections_input = _virtualize_if_single(sections_raw)
+    sections = infer_section_roles(sections_input)  # добавляет role/soft_weight/order_idx/pos_frac
+
+    # ---------- Матч правил по секциям/капшенам (с учётом role/soft_weight) ----------
+    section_weights_meta = {
+        _norm(k): float(v) for k, v in (meta.get("section_weights") or {}).items()
+    }
+    conf_boosts = (meta.get("conf_boosts") or {})
+    caption_boost = float(conf_boosts.get("caption", 0.08))
+    capture_bonus = float(conf_boosts.get("capture", 0.05))
+    short_penalty = float(conf_boosts.get("short_penalty", 0.06))
+
+    def conf_for(rule: Rule, sec_name: str, sec_role: str, sec_soft_w: float, text: str, *, has_captures: bool,
+                 is_caption: bool) -> float:
+        # вес секции — это max(вес из meta по имени, soft_weight по роли)
+        w_sec_meta = section_weights_meta.get(_norm(sec_name), 0.6)
+        w_sec_role = float(sec_soft_w or 0.6)
+        w_sec = max(w_sec_meta, w_sec_role)
+        if is_caption:
+            w_sec = min(1.0, w_sec + caption_boost)
+
+        pen = 0.1 if _contains_hedge(text, hedge_words) else 0.0
+        base = float(rule.weight) * w_sec - pen
+
+        if has_captures:
+            base += capture_bonus
+        if len((text or "").strip()) < 40:
+            base -= short_penalty
+
+        return max(0.0, min(1.0, base))
+
+    nodes: List[Dict[str, Any]] = []
+    rule_hits: set = set()
+    idx = 0
+
+    # 1) секции
+    for sec in sections:
+        sname = sec.get("name") or "Unknown"
+        srole = sec.get("role") or "Unknown"
+        sw = float(sec.get("soft_weight", 0.6))
+        text = sec.get("text") or ""
+        if not text:
+            continue
+
+        for rule in rule_objs:
+            # мягкое сопоставление: по роли и/или подстроке названия
+            if not section_matches_rule(srole, sname, list(rule.sections or [])):
+                continue
+
+            for frag, span, m in _yield_matches(text, rule):
+                rule_hits.add(rule.id)
+
+                idx += 1
+                has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
+                node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
+                nodes.append({
+                    "id": _make_node_id(doc_id, rule.type, idx),
+                    "type": rule.type,
+                    "label": rule.id,
+                    "text": node_text,
+                    "conf": round(conf_for(rule, sname, srole, sw, frag, has_captures=has_caps, is_caption=False), 3),
+                    "polarity": _polarity_from_text(frag),
+                    "prov": {"section": sname, "span": [int(span[0]), int(span[1])]},
+                })
+
+    # 2) капшены (сильные секции)
+    for cap in captions:
+        sname = "FigureCaption" if str(cap.get("id", "")).lower().startswith("figure") else "TableCaption"
+        text = cap.get("text", "") or ""
+        if not text:
+            continue
+
+        # для капшенов роль не вычисляем — считаем их «сильными» за счёт caption_boost
+        for rule in rule_objs:
+            if not _section_match(sname, rule.sections):
+                continue
+
+            for frag, span, m in _yield_matches(text, rule):
+                rule_hits.add(rule.id)
+
+                idx += 1
+                has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
+                node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
+                nodes.append({
+                    "id": _make_node_id(doc_id, rule.type, idx),
+                    "type": rule.type,
+                    "label": rule.id,
+                    "text": node_text,
+                    "conf": round(conf_for(rule, sname, "Caption", 1.0, frag, has_captures=has_caps, is_caption=True),
+                                  3),
+                    "polarity": _polarity_from_text(frag),
+                    "prov": {"section": sname, "caption_id": cap.get("id")},
+                })
+
+    # ---------- Постпроцесс кандидатов ----------
+    candidates = merge_fragment_nodes(nodes, max_gap=20)
     candidates = drop_nested_overlaps(candidates)
     candidates = suppress_overlaps(candidates, iou_thr=0.45)
 
-    # --- Пороги для узлов ---
+    # ---------- Пороги для узлов ----------
     node_thr = float((meta.get("conf_thresholds") or {}).get("node", 0.40))
-    nodes = [n for n in candidates if float(n.get("conf", 0.0)) >= node_thr]
+    nodes_final = [n for n in candidates if float(n.get("conf", 0.0)) >= node_thr]
 
-    # --- Линковка внутри статьи и порог по рёбрам ---
-    edges = link_inside(doc_id, nodes, meta)
+    # ---------- Линковка и порог по рёбрам ----------
+    edges = link_inside(doc_id, nodes_final, meta)
     edge_thr = float((meta.get("conf_thresholds") or {}).get("edge", 0.55))
-    edges = [e for e in edges if float(e.get("conf", 0.0)) >= edge_thr]
+    edges_final = [e for e in edges if float(e.get("conf", 0.0)) >= edge_thr]
 
-    # --- Сбор семян для авто-правил (gaps) ---
+    # ---------- Gaps для AutoRule ----------
     try:
         gaps = gather_gaps(sections, meta, max_gaps=50)
     except Exception:
         gaps = []
 
-    # --- Итог для фронта (S1) ---
-    s1_graph = {
-        "doc_id": doc_id,
-        "nodes": nodes,
-        "edges": edges
-    }
+    # ---------- Итоги и отладка ----------
+    s1_graph = {"doc_id": doc_id, "nodes": nodes_final, "edges": edges_final}
 
-    # подробный блок по темам: скор, выбранность, топ-триггеры
-    theme_dbg = explain_themes_for_debug(s0, registry, chosen)
+    chosen, cand = route_themes_with_candidates(s0, registry, global_topk=2, stop_threshold=1.8)
+    theme_dbg_full = explain_routing_full(s0, registry, chosen, cand, top_n=5)
 
-    # --- Отладочная сводка ---
-    debug = {"doc_id": doc_id, "summary": {
-        "candidates_total": len(candidates),
-        "nodes_after_threshold": len(nodes),
-        "edges_after_threshold": len(edges),
-        "node_threshold": node_thr,
-        "edge_threshold": edge_thr,
-        "section_names": list({(s.get("name") or "Unknown") for s in sections}),
-        "gap_count": len(gaps)
-    }, "samples": {
-        "candidates_head": candidates[:20],
-        "gaps_head": gaps[:20]
-    }, "theme_routing": theme_dbg, "rules_loaded": rule_files, "lexicons_loaded": lexicon_files}
-
-    # S0: счётчики секций
-    section_counts = {}
-    for sec in sections:
-        name = (sec.get("name") or "Unknown").strip() or "Unknown"
-        section_counts[name] = section_counts.get(name, 0) + 1
-
-    # S1: узлы/рёбра по типам
     def _tally(docs, key="type"):
         out = {}
         for x in docs or []:
@@ -750,32 +983,44 @@ def run_s1(s0_path: str, rules_path: str, out_path: str, *,
             out[k] = out.get(k, 0) + 1
         return out
 
-    nodes_by_type = _tally(nodes, "type")
-    edges_by_type = _tally(edges, "type")
+    section_counts = {}
+    for sec in sections_raw:
+        nm = (sec.get("name") or "Unknown").strip() or "Unknown"
+        section_counts[nm] = section_counts.get(nm, 0) + 1
 
-    # Правила/пакеты
-    rules_fired_list = sorted(list(rule_hits))
-    packs_active = rule_files  # уже есть
-
-    debug.update({
-        "s0_sections": {
-            "total": sum(section_counts.values()),
-            "by_name": section_counts
+    debug = {
+        "doc_id": doc_id,
+        "summary": {
+            "candidates_total": len(candidates),
+            "nodes_after_threshold": len(nodes_final),
+            "edges_after_threshold": len(edges_final),
+            "node_threshold": node_thr,
+            "edge_threshold": edge_thr,
+            "section_names": list({(s.get("name") or "Unknown") for s in sections_raw}),
+            "gap_count": len(gaps),
         },
+        "samples": {
+            "candidates_head": candidates[:20],
+            "gaps_head": gaps[:20],
+        },
+        "theme_routing": theme_dbg_full,
+        "rules_loaded": rule_files,
+        "lexicons_loaded": lexicon_files,
+        "s0_sections": {"total": sum(section_counts.values()), "by_name": section_counts},
         "s1_counts": {
-            "nodes_total": len(nodes),
-            "nodes_by_type": nodes_by_type,
-            "edges_total": len(edges),
-            "edges_by_type": edges_by_type
+            "nodes_total": len(nodes_final),
+            "nodes_by_type": _tally(nodes_final, "type"),
+            "edges_total": len(edges_final),
+            "edges_by_type": _tally(edges_final, "type"),
         },
         "rules": {
-            "packs_active": packs_active,
-            "rules_fired_total": len(rules_fired_list),
-            "rules_fired": rules_fired_list[:500]  # safety truncate
-        }
-    })
+            "packs_active": rule_files,
+            "rules_fired_total": len(rule_hits),
+            "rules_fired": sorted(list(rule_hits))[:500],
+        },
+    }
 
-    # --- Запись артефактов ---
+    # ---------- Запись ----------
     outp = Path(out_path)
     out_dir = outp.parent
     out_dir.mkdir(parents=True, exist_ok=True)
