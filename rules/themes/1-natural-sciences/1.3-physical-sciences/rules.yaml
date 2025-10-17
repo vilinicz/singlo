@@ -12,7 +12,7 @@ elements:
     type: Result
     weight: 0.62
     sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(scales\\s+as|behaves\\s+as|asymptotic(?:ally)?)\\b.{0,120}?(O\\([^)]{1,40}\\)|\\Omega\\([^)]{1,40}\\)|\\Theta\\([^)]{1,40}\\)|e^{-?[\\d\\w\\+\\-\\*/]+})"
+    pattern: "\\b(scales\\s+as|behaves\\s+as|asymptotic(?:ally)?)\\b.{0,120}?(O\\([^)]{1,40}\\)|\\\\Omega\\([^)]{1,40}\\)|\\\\Theta\\([^)]{1,40}\\)|e^{-?[\\d\\w\\+\\-\\*/]+})"
     negatives: [ ]
     captures: [ "verb", "form" ]
 
@@ -113,7 +113,7 @@ elements:
     type: Analysis
     weight: 0.60
     sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(slow[- ]roll|\\b\\epsilon_H|\\b\\eta_H)\\b.{0,160}?"
+    pattern: "\\b(slow[- ]roll|\\b\\\\epsilon_H|\\b\\\\eta_H)\\b.{0,160}?"
     negatives: [ ]
     captures: [ "param" ]
 
