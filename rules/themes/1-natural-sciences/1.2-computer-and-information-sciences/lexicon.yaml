@@ -1,48 +1,51 @@
 abbr:
-  - [ GPU, "graphics processing unit" ]
-  - [ TPU, "tensor processing unit" ]
-  - [ IR,  "intermediate representation" ]
-  - [ JAX, JAX ]
-  - [ ROCm, ROCm ]
-  - [ CUDA, CUDA ]
-  - [ NCCL, NCCL ]
-  - [ LLM, "large language model" ]
-  - [ mAP, "mean average precision" ]
-  - [ AUC, "area under the curve" ]
-  - [ MMLU, "massive multitask language understanding" ]
-  - [ SOTA, "state of the art" ]
-  - [ FLOPS, FLOPS ]
-  - [ BFS, BFS ]
-  - [ DFS, DFS ]
+  - [ LCS,   "longest common substring" ]
+  - [ LLM,   "large language model" ]
+  - [ PPO,   "proximal policy optimization" ]
+  - [ RL,    "reinforcement learning" ]
+  - [ AST,   "abstract syntax tree" ]
+  - [ IR,    "intermediate representation" ]
+  - [ RAG,   "retrieval-augmented generation" ]
+  - [ OOD,   "out-of-distribution" ]
+  - [ SOTA,  "state of the art" ]
+  - [ TPU,   "tensor processing unit" ]
+  - [ FLOPs, "floating point operations" ]
+  - [ mAP,   "mean average precision" ]
+  - [ IoU,   "intersection over union" ]
 
 synonyms:
-  - [ algorithm, method ]
-  - [ heuristic, strategy ]
-  - [ runtime, latency ]
-  - [ throughput, speed ]
-  - [ kernel, operator ]
-  - [ dataset, benchmark ]
-  - [ evaluation, testing ]
-  - [ baseline, comparator ]
-  - [ optimizer, optimization ]
-  - [ training, learning ]
-  - [ inference, serving ]
+  - [ time complexity, runtime complexity ]
+  - [ memory, space ]
+  - [ speedup, throughput increase ]
+  - [ accuracy, exact match ]
+  - [ pass@1, top-1 pass rate ]
+  - [ pass@k, top-k pass rate ]
+  - [ ablation, component analysis ]
+  - [ self-improvement, self-evolution ]
+  - [ unit tests, test suite ]
+  - [ repository, repo ]
+
+units:
+  - "%"
+  - "x"
+  - "×"
+  - "MB"
+  - "GB"
+  - "ms"
+  - "s"
+  - "tokens"
+  - "params"
 
 hedging_extra:
   - approximately
   - roughly
   - tends to
   - likely
-  - suggest(s)
+  - suggests
   - appears
   - may
   - might
   - could
-
-units:
-  - "%"
-  - "x"
-  - ms
-  - s
-  - MB
-  - GB
+  - generally
+  - nominally
+  - around

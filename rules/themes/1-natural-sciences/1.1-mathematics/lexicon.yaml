@@ -1,45 +1,31 @@
 abbr:
-  - [ QFI, "Quantum Fisher Information" ]
-  - [ NEPG, "non-energy-preserving gate" ]
-  - [ UD,  "Unitary Defect" ]
-  - [ PDE, PDE ]
-  - [ ODE, ODE ]
-  - [ FFT, FFT ]
-  - [ DFT, DFT ]
-  - [ SVD, "singular value decomposition" ]
-  - [ PCA, "principal component analysis" ]
-
-hedging_extra:
-  - may
-  - might
-  - could
-  - suggests
-  - appears
-  - approximately
-  - likely
-  - possibly
-  - indicative
-  - tends to
-  - roughly
-  - around
-
-units:
-  - "%"
-  - rad
-  - deg
+  - [ R^n, "Euclidean n-dimensional space" ]
+  - [ FA,  "functional analysis" ]
+  - [ Dvoretzky, "Dvoretzky's theorem context" ]
+  - [ JL,  "Johnson–Lindenstrauss" ]
 
 synonyms:
-  - [ method, technique ]
-  - [ result, finding ]
-  - [ analysis, examination ]
-  - [ model, framework ]
-  - [ experiment, simulation ]
-  - [ theorem, theorems ]
-  - [ lemma, lemmas ]
-  - [ proposition, propositions ]
-  - [ corollary, corollaries ]
-  - [ inequality, bound ]
-  - [ asymptotic, limiting ]
-  - [ unitary, "unitary gate" ]
-  - [ Hamiltonian, Hamiltonians ]
-  - [ eigenvalue, eigenvalues ]
+  - [ convex body, convex set ]
+  - [ inner product, dot product ]
+  - [ norm, \\|\\|\\cdot\\|\\| ]
+  - [ small-ball probability, anti-concentration ]
+  - [ covering numbers, metric entropy ]
+  - [ chaining, majorizing measures ]
+  - [ Hilbert space, \\mathcal{H} ]
+  - [ Banach space, \\mathcal{B} ]
+
+hedging_extra:
+  - asymptotically
+  - up to constants
+  - essentially
+  - typically
+  - nearly
+  - in general
+  - with high probability
+  - whp
+
+units:
+  - "O(·)"
+  - "Ω(·)"
+  - "Θ(·)"
+  - "e^{-·}"

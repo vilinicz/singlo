@@ -1,136 +1,120 @@
 elements:
-  # ===== RESULT (утверждения/границы/точные решения)
-  - id: "phys/Result/theorem_like_statement"
+  # ===== HYPOTHESIS
+  - id: "phys/Hypothesis/model_predicts_or_bounds"
+    type: Hypothesis
+    weight: 0.62
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|propose|predict|argue))\\b.{0,40}?that\\s+(.{1,180}?(rate|bound|scal(es|ing)|alignment|evolution).{0,80}?(increases|decreases|holds|is\\s+of\\s+order\\s+(O\\(|Ω\\(|Θ\\(|\\\\Omega\\(|\\\\Theta\\()))"
+    negatives: [ ]
+    captures: ["cue","verb","text"]
+
+  # ===== INPUT FACT (условия/параметры/определения)
+  - id: "phys/InputFact/cosmology_setup"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(FLRW|Friedmann|Hubble|H\\s?=|scale\\s*factor\\s*a\\b|w\\s?=\\s?-?\\d+(?:\\.\\d+)?)\\b"
+    negatives: [ ]
+    captures: ["context"]
+
+  - id: "phys/InputFact/quantum_setup"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(Hamiltonian|HS\\b|HB\\b|\\[U,\\s*H\\]=0|CPTP|Kraus\\s+operators|battery\\s+state|levels?\\s+N\\b|frequency\\s+\\bω\\b)\\b"
+    negatives: [ ]
+    captures: ["context"]
+
+  - id: "phys/InputFact/simulation_samples"
+    type: "Input Fact"
+    weight: 0.56
+    sections: ["Methods","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(TNG300|EAGLE|Horizon[- ]AGN|z\\s*=\\s*\\d+(?:\\.\\d+)?|stellar\\s+mass|morpholog(y|ical)|v/\\s*\\sigma|\\bkappa[_-]?rot)\\b"
+    negatives: [ ]
+    captures: ["sim"]
+
+  # ===== TECHNIQUE (методы/аппараты/алгоритмы)
+  - id: "phys/Technique/superpotential_or_hj"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(superpotential|Hamilton[- ]Jacobi|first[- ]order\\s+system|slow[- ]roll\\s+parameters?\\s+\\b\\\\epsilon_H|\\b\\\\eta_H)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "phys/Technique/ia_measurement"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(weak\\s+lensing|intrinsic\\s+alignment|projected\\s+correlation|\\bξ̃g\\+,?2\\b|wg\\+|Landy[- ]Szalay|jackknife|multipole)\\b"
+    negatives: [ ]
+    captures: ["method"]
+
+  - id: "phys/Technique/energy_conserving_mapping"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(energy[- ]preserving|global\\s+unitary|Choi\\s+infidelity|Quantum\\s+Fisher\\s+Information|variational|Lagrangian\\s+optimization)\\b"
+    negatives: [ ]
+    captures: ["method"]
+
+  # ===== EXPERIMENT / NUMERICS
+  - id: "phys/Experiment/simulation_or_numeric_protocol"
+    type: Experiment
+    weight: 0.56
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(simulation(s)?|numerical|Monte\\s*Carlo|projected|box\\s*size|resolution|benchmark)\\b"
+    negatives: [ ]
+    captures: ["proto"]
+
+  # ===== RESULT (ключевые метрики/границы/скейлинги)
+  - id: "phys/Result/cosmology_bound_or_phase"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","Abstract","FigureCaption","TableCaption"]
+    pattern: "\\b(we\\s+(show|prove|find))\\b.{0,120}?(de\\s*Sitter|w\\s*\\approx\\s*-?1|H\\s*=|N\\s*=?\\s*\\d+|interpolat(es|ing)\\s+between\\s+de\\s*Sitter)\\b"
+    negatives: [ ]
+    captures: ["cue","finding"]
+
+  - id: "phys/Result/quantum_defect_or_resource_bound"
     type: Result
     weight: 0.66
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Abstract"]
-    pattern: "\\b(we\\s+(?:prove|show|derive|establish)|it\\s+follows\\s+that)\\b.{0,160}?\\b(result|solution|bound|inequality|expression)\\b"
-    negatives: [ "conjecture", "open\\s+problem", "counterexample" ]
-    captures: [ "cue", "kind" ]
+    sections: ["Results","Discussion","Body","Unknown","Abstract","FigureCaption","TableCaption"]
+    pattern: "\\b(unitary\\s+defect|UD\\b|Choi\\s+infidelit(y|ies)\\s*\\b\\\\epsilon_C\\b)\\b.{0,120}?(N\\s*\\sim\\s*1/\\sqrt\\(\\\\epsilon_C\\)|\\\\langle E\\rangle|\\\\langle E^2\\rangle|bound|optimal\\s+state)"
+    negatives: [ ]
+    captures: ["metric","relation"]
 
-  - id: "phys/Result/complexity_or_asymptotic_rate"
+  - id: "phys/Result/ia_signal_trend"
     type: Result
     weight: 0.62
-    sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(scales\\s+as|behaves\\s+as|asymptotic(?:ally)?)\\b.{0,120}?(O\\([^)]{1,40}\\)|\\\\Omega\\([^)]{1,40}\\)|\\\\Theta\\([^)]{1,40}\\)|e^{-?[\\d\\w\\+\\-\\*/]+})"
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(positive|negative|null)\\s+(alignment|signal)\\b.{0,120}?(disks?|ellipticals?|z\\s*=|TNG300|EAGLE|Horizon[- ]AGN)"
     negatives: [ ]
-    captures: [ "verb", "form" ]
+    captures: ["sign","what","context"]
 
-  - id: "phys/Result/cosmology_w_near_minus_one"
-    type: Result
-    weight: 0.64
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption"]
-    pattern: "\\bw\\s*=\\s*-?1(?:\\s*[\\+−-]\\s*\\d?\\.\\d+)?|equation\\s+of\\s+state\\s+(?:is|approaches)\\s+(-?1(?:\\.\\d+)?)"
-    negatives: [ ]
-    captures: [ "value" ]
-
-  - id: "phys/Result/phase_interpolation"
-    type: Result
-    weight: 0.63
-    sections: ["Results","Discussion","Body","Unknown","Abstract"]
-    pattern: "\\b(interpolat(es|ing)|connects)\\b.{0,120}?\\b(de\\s*Sitter|AdS)\\b.{0,80}?\\b(de\\s*Sitter|AdS)\\b"
-    negatives: [ ]
-    captures: [ "verb", "from", "to" ]
-
-  # ===== HYPOTHESIS (конъектуры/рабочие гипотезы/модели)
-  - id: "phys/Hypothesis/conjecture"
-    type: Hypothesis
-    weight: 0.61
-    sections: ["Introduction","Discussion","Body","Unknown","Abstract"]
-    pattern: "\\b(conjecture|we\\s+hypothesi[zs]e|we\\s+propose\\s+that)\\b\\s+(.{1,160}?)\\."
-    negatives: [ "disprove|counterexample" ]
-    captures: [ "cue", "text" ]
-
-  - id: "phys/Hypothesis/model_assumption"
-    type: Hypothesis
-    weight: 0.58
-    sections: ["Introduction","Methods","Body","Unknown"]
-    pattern: "\\b(assume|suppose|let)\\b\\s+(.{1,160}?)\\."
-    negatives: [ ]
-    captures: [ "cue", "text" ]
-
-  # ===== INPUT FACT (условия/метрики/метрика/Лагранжиан)
-  - id: "phys/InputFact/lagrangian_hamiltonian"
-    type: "Input Fact"
-    weight: 0.64
-    sections: ["Methods","Body","Unknown","Appendix"]
-    pattern: "\\b(Lagrangian|Hamiltonian)\\b.{0,80}?(=|:)\\s*(.{1,160}?)\\."
-    negatives: [ ]
-    captures: [ "kind", "eq", "expr" ]
-
-  - id: "phys/InputFact/metric_ansatz_flrw"
-    type: "Input Fact"
-    weight: 0.65
-    sections: ["Introduction","Methods","Body","Unknown","Appendix"]
-    pattern: "\\b(FLRW|Friedmann|metric|ansatz)\\b.{0,120}?\\b(ds\\^?2|ds2|d{sS}\\^?2)\\b"
-    negatives: [ ]
-    captures: [ "cue", "metric" ]
-
-  - id: "phys/InputFact/superpotential_definition"
-    type: "Input Fact"
-    weight: 0.63
-    sections: ["Methods","Body","Unknown","Appendix"]
-    pattern: "\\b(superpotential|W)\\b.{0,80}?\\b(defined|is\\s+defined|satisf(?:y|ies))\\b.{0,160}?"
-    negatives: [ ]
-    captures: [ "cue" ]
-
-  # ===== TECHNIQUE (методы: superpotential / Hamilton–Jacobi / вариационный)
-  - id: "phys/Technique/superpotential_method"
-    type: Technique
-    weight: 0.66
-    sections: ["Methods","Body","Unknown","Abstract"]
-    pattern: "\\b(method\\s+of\\s+the\\s+superpotential|Hamilton[- ]Jacobi\\s+approach|variational\\s+principle)\\b"
-    negatives: [ ]
-    captures: [ "method" ]
-
-  - id: "phys/Technique/domain_wall_correspondence"
-    type: Technique
-    weight: 0.60
-    sections: ["Methods","Body","Unknown","Discussion"]
-    pattern: "\\b(domain[- ]wall\\s+correspondence|holographic\\s+dual|AdS/CFT)\\b"
-    negatives: [ ]
-    captures: [ "method" ]
-
-  # ===== EXPERIMENT (в физ.теории — численные эксперименты/симуляции)
-  - id: "phys/Experiment/numerical_simulation"
-    type: Experiment
-    weight: 0.58
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption","Appendix"]
-    pattern: "\\b(numerical|computational)\\s+(experiment|simulation|integration|verification)\\b"
-    negatives: [ ]
-    captures: [ "kind", "what" ]
-
-  # ===== ANALYSIS (параметрические режимы, стационарные точки, устойчивость)
-  - id: "phys/Analysis/fixed_points_stability"
+  # ===== ANALYSIS (зависимости/масштабы/робастность)
+  - id: "phys/Analysis/scaling_and_dependence"
     type: Analysis
-    weight: 0.61
-    sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(fixed\\s+point|critical\\s+point|attractor|repulsive|saddle)\\b.{0,160}?\\b(stability|stable|unstable)\\b"
+    weight: 0.58
+    sections: ["Discussion","Body","Unknown"]
+    pattern: "\\b(depends\\s+on|robust|sensitive\\s+to|influence\\s+of|re[- ]weighting|non[- ]linear\\s+scales)\\b"
     negatives: [ ]
-    captures: [ "fp", "stability" ]
+    captures: ["topic"]
 
-  - id: "phys/Analysis/slow_roll_parameters"
-    type: Analysis
-    weight: 0.60
-    sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "\\b(slow[- ]roll|\\b\\\\epsilon_H|\\b\\\\eta_H)\\b.{0,160}?"
-    negatives: [ ]
-    captures: [ "param" ]
-
-  # ===== DATASET (редко: каталоги/наблюдения/каталоги кривых света)
-  - id: "phys/Dataset/observational_catalog"
+  # ===== DATASET / артефакты
+  - id: "phys/Dataset/references_and_repo"
     type: Dataset
     weight: 0.52
-    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "\\b(catalogue|catalog|survey|data\\s+release)\\b.{0,120}?\\b(Planck|WMAP|SDSS|DES|Euclid|HST)\\b"
+    sections: ["Methods","Results","Body","Unknown","Appendix","FigureCaption","TableCaption"]
+    pattern: "\\b(arXiv|DOI|Zenodo|Figshare|simulation\\s+ID|publicly\\s+available\\s+data|supplementary)\\b"
     negatives: [ ]
-    captures: [ "name" ]
+    captures: ["artifact"]
 
   # ===== CONCLUSION
   - id: "phys/Conclusion/summary"
     type: Conclusion
-    weight: 0.60
+    weight: 0.58
     sections: ["Conclusion","Discussion","Body","Unknown"]
-    pattern: "\\b(we\\s+conclude|in\\s+conclusion|we\\s+summarize)\\b.{0,200}?\\."
+    pattern: "\\b(in\\s+conclusion|we\\s+conclude|our\\s+results\\s+show|these\\s+findings\\s+pave\\s+the\\s+way)\\b.{0,200}?\\."
     negatives: [ ]
-    captures: [ "text" ]
+    captures: ["text"]
