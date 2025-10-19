@@ -1,112 +1,112 @@
 elements:
-  # ===== RESULT (мат. утверждения, оценки, границы, скорости сходимости)
-  - id: "Natural sciences / 1.1-mathematics/Result/theorem-like"
+  # ===== HYPOTHESIS (интуитивные формулировки / conjecture-стиль)
+  - id: "math/Hypothesis/asymptotic_behavior_or_bound"
+    type: Hypothesis
+    weight: 0.60
+    sections: ["Introduction","Discussion","Abstract","Body","Unknown"]
+    pattern: "\\b(we\\s+(hypothes[ie]ze|conjecture|expect|propose))\\b.{0,40}?that\\s+(.{1,180}?(bound|rate|dimension|threshold|concentration).{0,80}?(scales|behaves|is\\s+on\\s+the\\s+order\\s+of)\\s+O?\\([^)]{1,30}\\))"
+    negatives: [ ]
+    captures: ["cue","verb","text"]
+
+  # ===== INPUT FACT (условия/обозначения)
+  - id: "math/InputFact/let_assume_setup"
+    type: "Input Fact"
+    weight: 0.58
+    sections: ["Introduction","Methods","Body","Unknown","Abstract"]
+    pattern: "\\b(Let|Assume|Fix|Given)\\b.{0,20}?\\b(K|E|X|A)\\b.{0,6}?\\b(be|denote|\\=)\\b.{0,180}?(convex\\s+body|Banach\\s+space|Hilbert\\s+space|subset\\s+of\\s+\\mathbb\\{R\\}|norm|measure)"
+    negatives: [ ]
+    captures: ["verb","symbol","is","context"]
+
+  - id: "math/InputFact/parameters_and_ranges"
+    type: "Input Fact"
+    weight: 0.56
+    sections: ["Methods","Body","Unknown"]
+    pattern: "\\b(for\\s+(some|any|every))\\b.{0,15}?\\b(n|k|\\d+)\\b.{0,120}?(\\bin\\b\\s*\\{?\\d[\\d,\\s]*\\}?|\\b\\ge\\s*\\d+|\\ble\\s*\\d+|\\bin\\s*\\mathbb\\{N\\})"
+    negatives: [ ]
+    captures: ["quant","param","range"]
+
+  # ===== TECHNIQUE (методы/неравенства/леммы)
+  - id: "math/Technique/key_inequalities_and_tools"
+    type: Technique
+    weight: 0.62
+    sections: ["Methods","Body","Unknown","Appendix","Abstract"]
+    pattern: "\\b(concentration\\s+inequality|isoperimetric\\s+inequality|Sudakov|Talagrand|Poincar[eé]|log[- ]Sobolev|chaining|Johnson[- ]Lindenstrauss|Dvoretzky)\\b"
+    negatives: [ ]
+    captures: ["tool"]
+
+  - id: "math/Technique/auxiliary_lemma"
+    type: Technique
+    weight: 0.60
+    sections: ["Methods","Body","Unknown","Appendix"]
+    pattern: "\\b(Lemma|Auxiliary\\s+lemma)\\s*\\d*\\b.{0,120}?(yields|implies|gives)\\b"
+    negatives: [ ]
+    captures: ["lemma","verb"]
+
+  # ===== EXPERIMENT (редко: численные иллюстрации / симуляции)
+  - id: "math/Experiment/numerical_or_simulation"
+    type: Experiment
+    weight: 0.54
+    sections: ["Methods","Results","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(numerical\\s+(example|experiment)|simulation|Monte\\s*Carlo|synthetic\\s+data)\\b"
+    negatives: [ ]
+    captures: ["exp"]
+
+  # ===== RESULT (формулировки теорем/лемм/следствий)
+  - id: "math/Result/theorem_statement"
     type: Result
     weight: 0.66
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "(theorem|lemma|proposition|corollary)\\s+(?:\\d+\\.?\\d*\\s*[:.)-])?.{0,180}?(holds|is\\s+true|we\\s+prove|we\\s+show)"
-    negatives: [ "counterexample", "open\\s+problem", "conjecture" ]
-    captures: [ "kind", "cue" ]
-
-  - id: "Natural sciences / 1.1-mathematics/Result/bound-or-rate"
-    type: Result
-    weight: 0.65
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "we\\s+(?:prove|show|derive|establish).{0,120}?((?:upper|lower)\\s+bound|inequality|rate\\s+of\\s+convergence).{0,160}?((?:O|\\\\Omega|\\\\Theta)\\([^)]{1,40}\\)|[-+]?\\d+(?:\\.\\d+)?)"
-    negatives: [ "conjecture", "open\\s+question" ]
-    captures: [ "kind", "value" ]
-
-  - id: "Natural sciences / 1.1-mathematics/Result/definition-implies-result"
-    type: Result
-    weight: 0.60
-    sections: ["Results","Discussion","Body","Unknown"]
-    pattern: "(definition).{0,120}?implies.{0,160}?(theorem|bound|inequality|result)"
+    sections: ["Results","Body","Abstract","Unknown"]
+    pattern: "\\b(Theorem|Proposition|Corollary)\\s*\\d*\\b.{0,10}?(\\.|\\:).{0,5}(?:\\s|$)"
     negatives: [ ]
-    captures: [ "trigger", "result_kind" ]
+    captures: ["kind"]
 
-  # ===== HYPOTHESIS (конъектуры/рабочие гипотезы)
-  - id: "Natural sciences / 1.1-mathematics/Hypothesis/conjecture"
-    type: Hypothesis
+  - id: "math/Result/explicit_bound_or_rate"
+    type: Result
+    weight: 0.64
+    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(we\\s+prove|we\\s+show|it\\s+holds\\s+that)\\b.{0,120}?(\\bO\\([^)]{1,30}\\)|\\b\\Omega\\([^)]{1,30}\\)|\\b\\Theta\\([^)]{1,30}\\)|\\bexp\\(-?[^)]{1,30}\\))"
+    negatives: [ ]
+    captures: ["cue","bound"]
+
+  - id: "math/Result/dimension_or_probability_scale"
+    type: Result
     weight: 0.62
-    sections: ["Introduction","Results","Discussion","Body","Unknown"]
-    pattern: "(conjecture|we\\s+hypothesi[zs]e|we\\s+conjecture)\\s+that\\s+(.{1,160}?)\\."
-    negatives: [ "disproven", "counterexample" ]
-    captures: [ "cue", "value" ]
+    sections: ["Results","Body","Unknown"]
+    pattern: "\\b(Dvoretzky\\s+dimension|dimension|probabilit(y|ies))\\b.{0,120}?(\\b\\approx\\s*|=|\\bis\\s+of\\s+order\\s+)\\s*(O\\([^)]{1,30}\\)|\\Theta\\([^)]{1,30}\\)|\\d+(?:\\.\\d+)?)"
+    negatives: [ ]
+    captures: ["what","rel","value"]
 
-  - id: "Natural sciences / 1.1-mathematics/Hypothesis/open-problem"
-    type: Hypothesis
+  # ===== ANALYSIS (сравнения, асимптотика, острые/скрытые константы)
+  - id: "math/Analysis/asymptotics_and_sharpness"
+    type: Analysis
     weight: 0.58
     sections: ["Discussion","Body","Unknown"]
-    pattern: "(open\\s+problem|remains\\s+open).{0,160}?(whether|if)\\s+(.{1,120}?)\\."
+    pattern: "\\b(asymptotic|sharp|up\\s*to\\s*constants|matching\\s*lower\\s*bound|tight|up\\s*to\\s*log)\\b"
     negatives: [ ]
-    captures: [ "cue", "whether", "value" ]
+    captures: ["topic"]
 
-  # ===== INPUT FACT (условия, допущения, «пусть/предположим»)
-  - id: "Natural sciences / 1.1-mathematics/Input Fact/assumption"
-    type: Input Fact
-    weight: 0.60
-    sections: ["Methods","Results","Body","Unknown","Appendix"]
-    pattern: "(assume|suppose|let)\\s+(.{1,160}?)\\."
-    negatives: [ ]
-    captures: [ "cue", "value" ]
-
-  - id: "Natural sciences / 1.1-mathematics/Input Fact/citation-theorem"
-    type: Input Fact
-    weight: 0.60
-    sections: ["Methods","Results","Body","Unknown","Appendix"]
-    pattern: "according\\s+to\\s+(the\\s+)?(theorem|lemma|proposition)\\s+of\\s+(.{1,120}?)\\b"
-    negatives: [ "conjecture" ]
-    captures: [ "kind", "ref_kind", "author" ]
-
-  # ===== TECHNIQUE (методы/приёмы доказательств)
-  - id: "Natural sciences / 1.1-mathematics/Technique/proof-technique"
-    type: Technique
-    weight: 0.65
-    sections: ["Methods","Results","Body","Unknown","Appendix"]
-    pattern: "(we\\s+(?:propose|present|introduce|use|apply))\\s+(an?\\s+)?(algorithm|method|proof\\s+technique|variational\\s+principle|Fourier\\s+analysis|spectral\\s+decomposition|convex\\s+optimization)\\b"
-    negatives: [ "trivial", "folklore" ]
-    captures: [ "cue", "det", "tech" ]
-
-  # ===== ANALYSIS (оценки сложности/асимптотика)
-  - id: "Natural sciences / 1.1-mathematics/Analysis/complexity"
+  - id: "math/Analysis/dependence_on_parameters"
     type: Analysis
-    weight: 0.61
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "(complexity|cost)\\s+(?:is|of|\\s*:)\\s*(O\\([^)]{1,40}\\)|\\\\Omega\\([^)]{1,40}\\)|\\\\Theta\\([^)]{1,40}\\))"
-    negatives: [ "empirical\\s+only" ]
-    captures: [ "value" ]
-
-  - id: "Natural sciences / 1.1-mathematics/Analysis/asymptotic-behavior"
-    type: Analysis
-    weight: 0.60
-    sections: ["Results","Discussion","Body","Unknown","Appendix"]
-    pattern: "(asymptotic|limiting|large-?N)\\s+behaviou?r.{0,160}?(is|becomes|scales\\s+as)\\s+(.{1,80}?)\\."
-    negatives: [ ]
-    captures: [ "cue", "verb", "value" ]
-
-  # ===== EXPERIMENT (численные эксперименты в теор. статьях)
-  - id: "Natural sciences / 1.1-mathematics/Experiment/numerical"
-    type: Experiment
     weight: 0.58
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "(numerical|computational)\\s+(experiment|simulation|verification)\\b"
-    negatives: [ "purely\\s+heuristic" ]
-    captures: [ "kind", "what" ]
-
-  # ===== DATASET (для математики — редкость, оставим узкое правило)
-  - id: "Natural sciences / 1.1-mathematics/Dataset/benchmarks"
-    type: Dataset
-    weight: 0.52
-    sections: ["Results","Discussion","Body","Unknown","FigureCaption","TableCaption"]
-    pattern: "(benchmark|instance\\s+set|test\\s+suite)\\s+(?:of\\s+)?(?P<n>\\d{2,})\\s+(instances|graphs|problems)"
-    negatives: [ "toy\\s+example" ]
-    captures: [ "n" ]
-
-  # ===== CONCLUSION
-  - id: "Natural sciences / 1.1-mathematics/Conclusion/summary"
-    type: Conclusion
-    weight: 0.60
-    sections: ["Conclusion","Discussion","Body","Unknown"]
-    pattern: "we\\s+conclude\\s+(that|with)\\s+(.{1,160}?)\\."
+    sections: ["Discussion","Body","Unknown","FigureCaption","TableCaption"]
+    pattern: "\\b(depends\\s+on|dependence\\s+on|scales\\s+with|as\\s+n\\s*\\to\\s*\\infty|for\\s+large\\s+n)\\b"
     negatives: [ ]
-    captures: [ "cue", "value" ]
+    captures: ["phrase"]
+
+  # ===== DATASET (редко: таблицы/фигуры/приложения)
+  - id: "math/Dataset/figs_tables_appendix"
+    type: Dataset
+    weight: 0.50
+    sections: ["Body","Appendix","FigureCaption","TableCaption","Unknown"]
+    pattern: "\\b(Figure\\s*\\d+|Table\\s*\\d+|Appendix|Supplementary)\\b"
+    negatives: [ ]
+    captures: ["artifact"]
+
+  # ===== CONCLUSION (краткая сводка результата)
+  - id: "math/Conclusion/summary"
+    type: Conclusion
+    weight: 0.56
+    sections: ["Conclusion","Discussion","Body","Unknown"]
+    pattern: "\\b(we\\s+conclude|in\\s+conclusion|this\\s+establishes|our\\s+main\\s+result\\s+is)\\b.{0,200}?\\."
+    negatives: [ ]
+    captures: ["text"]

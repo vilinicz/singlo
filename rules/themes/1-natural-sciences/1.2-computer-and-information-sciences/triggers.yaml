@@ -1,54 +1,27 @@
-id: "Natural sciences / 1.2-computer-and-information-sciences"
-version: 2
-threshold: 0.60
+id: "1.2-computer-and-information-sciences (umbrella)"
+version: 1
+threshold: 0.58
 must: []
 should:
-  # Алгоритмы и анализ
-  - ["algorithm",                1.0]
-  - ["complexity",               0.9]
-  - ["runtime",                  0.9]
-  - ["O(",                       0.8]
-  - ["speedup",                  0.9]
-  - ["throughput",               0.7]
-  - ["latency",                  0.7]
+  # Общие CS-маркеры: задачи, модели, данные, код, эксперименты
+  - ["algorithm|data\\s*structure|time\\s+complexity|space\\s+complexity|pseudocode|runtime|throughput|latency", 0.96]
+  - ["benchmark|dataset|corpus|leaderboard|SOTA|baseline|ablation|generalization|inference|training|evaluation", 0.94]
+  - ["code\\s+generation|program\\s+synthesis|static\\s+analysis|compiler|intermediate\\s+representation|AST\\b", 0.9]
+  - ["agent|reinforcement\\s+learning|policy|trajectory|reward|self[- ]play|self[- ]improve|evolutionary", 0.88]
+  - ["graph\\s+algorithm|dynamic\\s+programming|suffix\\s+(array|tree)|hash\\s+map|priority\\s+queue|heap|trie", 0.86]
+  - ["GitHub|arXiv|DOI|Zenodo|Figshare|pip\\s+install|requirements\\.txt|MIT\\s+License", 0.8]
 
-  # ML/LLM/оптимизация
-  - ["neural network",           0.8]
-  - ["transformer",              0.8]
-  - ["attention",                0.8]
-  - ["kernel",                   0.7]
-  - ["GPU",                      0.6]
-  - ["TPU",                      0.6]
-  - ["optimizer",                0.6]
-  - ["AdamW",                    0.6]
-  - ["PyTorch",                  0.6]
-  - ["JAX",                      0.6]
-  - ["compiler",                 0.6]
-  - ["autotuning",               0.6]
-
-  # Эксперименты/оценка
-  - ["benchmark",                0.9]
-  - ["dataset",                  0.7]
-  - ["evaluation",               0.8]
-  - ["ablation",                 0.8]
-  - ["baseline",                 0.8]
-  - ["state-of-the-art",         0.8]
-  - ["SOTA",                     0.8]
-  - ["accuracy",                 0.8]
-  - ["F1",                       0.7]
-  - ["top-1",                    0.6]
-  - ["improvement",              0.7]
-  - ["code",                     0.5]
-  - ["implementation",           0.5]
+  # Подобласти (сигналы/ML/NLP/Vision/InfoTheory)
+  - ["neural\\s+network|transformer|attention|loss\\s+function|optimizer|fine[- ]tuning|prompt|RAG", 0.9]
+  - ["NLP\\b|tokenizer|BLEU\\b|ROUGE\\b|BERT|LLM\\b|instruction\\s+tuning", 0.86]
+  - ["computer\\s+vision|mAP\\b|IoU\\b|COCO\\b|ImageNet|segmentation|detection", 0.84]
+  - ["Shannon|mutual\\s+information|entropy|rate\\s+distortion|channel\\s+capacity", 0.8]
 
 negative:
-  # Соседние домены, снижаем шум
-  - ["patient",                  0.9]
-  - ["clinical",                 0.9]
-  - ["cohort",                   0.9]
-  - ["assay",                    0.8]
-  - ["PCR",                      0.8]
-  - ["in vivo",                  0.8]
-  - ["randomized trial",         0.8]
-  - ["finite element",           0.6]   # уводит к мех/физике
-  - ["bifurcation",              0.6]
+  # Сильное отсечение соседних разделов
+  - ["randomized\\s+controlled\\s+trial|patient|oocyte|endometrial|clinical", 0.98]
+  - ["wastewater|bioremediation|MFC\\b|constructed\\s+wetland|nitrification", 0.98]
+  - ["nanoparticle|TEM\\b|XRD\\b|FTIR\\b|spectroscopy", 0.98]
+  - ["SMAW|GMAW|HAZ\\b|Charpy|AASHTO|Atterberg", 0.98]
+  - ["theorem\\b|lemma\\b(?! of)|Banach\\s+space|Hilbert\\s+space", 0.95]  # 1.1 Mathematics (чистая математика)
+  - ["questionnaire|Likert|curriculum|classroom|pedagog", 0.95]

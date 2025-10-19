@@ -1,41 +1,33 @@
 abbr:
   - [ FLRW, "Friedmann–Lemaître–Robertson–Walker" ]
-  - [ FRW,  "Friedmann–Robertson–Walker" ]
-  - [ AdS,  "anti de Sitter" ]
-  - [ dS,   "de Sitter" ]
-  - [ EoS,  "equation of state" ]
-  - [ HJ,   "Hamilton–Jacobi" ]
-  - [ QFT,  "quantum field theory" ]
-  - [ QG,   "quantum gravity" ]
+  - [ IA,   "intrinsic alignment" ]
   - [ QFI,  "Quantum Fisher Information" ]
+  - [ CPTP, "completely positive trace-preserving" ]
+  - [ UD,   "Unitary Defect" ]
 
 synonyms:
-  - [ spacetime, space-time ]
-  - [ eigenvalue, eigenvalues ]
-  - [ eigenvector, eigenvectors ]
-  - [ potential, "scalar potential" ]
   - [ de Sitter, dS ]
-  - [ anti de Sitter, AdS ]
-  - [ slow roll, slow-roll ]
-  - [ superpotential, W ]
-  - [ scale factor, a ]
-  - [ Hubble, H ]
+  - [ Hubble parameter, H ]
+  - [ scalar field, \\phi ]
+  - [ superpotential, W(\\phi) ]
+  - [ energy-preserving, energy conserving ]
+  - [ weak lensing, cosmic shear ]
+  - [ ellipticals, early-type galaxies ]
+  - [ disks, late-type galaxies ]
+  - [ frequency, \\omega ]
+
+units:
+  - "Ω(·)"
+  - "Θ(·)"
+  - "O(·)"
+  - "e^{-·}"
+  - "z"
+  - "Mpc/h"
 
 hedging_extra:
   - approximately
-  - roughly
-  - tends to
-  - likely
-  - suggests
-  - appears
-  - may
-  - might
-  - could
-  - nominally
-
-units:
-  - "%"
-  - "x"
-  - s
-  - yr
-  - km/s/Mpc
+  - with high probability
+  - asymptotically
+  - up to constants
+  - consistent with
+  - robust to

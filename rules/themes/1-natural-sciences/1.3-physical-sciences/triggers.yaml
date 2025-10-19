@@ -1,35 +1,21 @@
-id: "Natural sciences / 1.3-physical-sciences"
-version: 2
-threshold: 0.60
+id: "1.3-physical-sciences (umbrella)"
+version: 1
+threshold: 0.58
 must: []
 should:
-  # Космология / матфизика / QFT-маркеры
-  - ["Hamiltonian",                 0.9]
-  - ["Lagrangian",                  0.9]
-  - ["superpotential",              0.9]
-  - ["eigenvalue|eigenvector",      0.8]
-  - ["potential\\b",                0.7]
-  - ["field\\s+(equation|theory)",  0.7]
-  - ["scalar\\s+field",             0.8]
-  - ["axion|dilaton",               0.7]
-  - ["domain[- ]wall",              0.7]
-  - ["Friedmann|FLRW|FRW",         0.9]
-  - ["Hubble",                      0.8]
-  - ["de\\s*Sitter|\\bAdS\\b",      0.8]
-  - ["inflation|slow[- ]roll",      0.8]
-  - ["e[- ]folds?|e\\s*folds?",     0.7]
-  - ["equation\\s+of\\s+state|\\bw\\s*≈?\\s*-?1", 0.7]
-  - ["Hamilton[- ]Jacobi",          0.6]
-  - ["variational|Noether",         0.6]
-  - ["cosmolog(y|ical)",            0.8]
-  - ["metric|spacetime|FLRW",       0.7]
-  - ["first[- ]order\\s+system",    0.6]
-  - ["exact\\s+solution|analytic(al)?\\s+solution", 0.7]
+  # Космология/теор. физика
+  - ["FLRW|Friedmann|Hubble\\s+parameter\\s+H\\b|de\\s*Sitter|slow[- ]roll|inflation(ary)?", 0.96]
+  - ["superpotential\\b|Hamilton[- ]Jacobi|scalar\\s+field\\s+\\(?\\phi|V\\(\\phi\\)|W\\(\\phi\\)", 0.94]
+  # Квантовая информация/термодинамика
+  - ["energy[- ]preserving|non[- ]energy[- ]preserving|battery[- ]assisted|Choi\\s+infidelity|Quantum\\s+Fisher\\s+Information|unitary\\s+defect", 0.92]
+  - ["Hamiltonian\\s+H[SB]?\\b|commutes\\s+with|CPTP\\s+map|Kraus\\s+operators|\\[U,\\s*H\\]", 0.88]
+  # Астрофизика/слабое линзирование
+  - ["intrinsic\\s+alignment(s)?|weak\\s+lensing|\\bIA\\b|TNG300|EAGLE|Horizon[- ]AGN|ellipticals?|disks?\\b|v/\\s*\\sigma|\\bkappa[_-]?rot", 0.9]
+  # Общая «физическая» матчасть
+  - ["simulation\\b|hydrodynamical\\s+simulation|projected\\s+correlation|power\\s+spectrum|spectral\\s+lines?", 0.8]
 
 negative:
-  # Соседние домены
-  - ["patient|clinical|trial|cohort", 0.9]
-  - ["PCR|assay|biopsy",              0.8]
-  - ["manufacturing|prototype",       0.7]
-  - ["dataset\\s+of\\s+images",       0.6]
-  - ["p\\s*[<≤]\\s*0\\.",             0.7]
+  - ["randomized\\s+controlled\\s+trial|patient|oocyte|ICSI|endometrial|DSM-5", 0.98]   # клиника/биомедицина
+  - ["questionnaire|Likert|curriculum|classroom|pedagog", 0.96]                         # педагогика/соцгуманитарные
+  - ["jurisprudence|civil\\s+code|case\\s+law|penal\\s+code", 0.98]                      # право
+  - ["AASHTO|Atterberg|GMAW|SMAW|sewage|bioreactor", 0.97]                              # инженерка вне 1.3
