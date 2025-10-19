@@ -1,4 +1,4 @@
-# pipeline/s1.py  — S1 + S1.5 (тонкий LLM-рефайн узлов/рёбер)
+# pipeline/s1_legacy.py  — S1 + S1.5 (тонкий LLM-рефайн узлов/рёбер)
 from __future__ import annotations
 import json
 import re
