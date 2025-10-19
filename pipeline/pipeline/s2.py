@@ -1,7 +1,6 @@
 # pipeline/pipeline/s2.py
 from __future__ import annotations
-import json, os, time, pathlib
-from pathlib import Path
+import json, os, pathlib, re
 from typing import Dict, Any, List, Tuple
 from collections import defaultdict
 from .llm_layer import refine_graph, _log as llm_log
@@ -31,6 +30,23 @@ DEFAULT_EDGE_FOR_PAIR = {
 }
 
 
+SPACE = re.compile(r"\s+")
+PUNCT = re.compile(r"[“”\"'`]+")
+def norm_text(s: str) -> str:
+    s = s.strip().lower()
+    s = PUNCT.sub("", s)
+    s = SPACE.sub(" ", s)
+    return s
+
+def dedup_key(node):
+    t = node["type"]
+    imrad = (node.get("prov",{}) or {}).get("imrad","OTHER")
+    key = (t, norm_text(node["text"]))
+    if t == "Hypothesis":
+        # разделяем гипотезы, если они из разных контекстов INTRO vs DISCUSSION
+        key = (t, norm_text(node["text"]), imrad in ("INTRO","DISCUSSION"))
+    return key
+
 def _default_edge_type(pair: tuple, frm: dict, to: dict) -> str:
     # Для R→H учитываем полярность
     if pair == ("Result", "Hypothesis"):
@@ -50,44 +66,6 @@ def _write_json(path: str, obj: Any):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
 
-
-def _collect_sections(s0: Dict[str, Any]) -> List[str]:
-    names = []
-    for sec in s0.get("sections", []):
-        name = (sec.get("name") or "").strip()
-        if name:
-            names.append(name)
-    # de-dup preserving order
-    out = []
-    seen = set()
-    for n in names:
-        k = n.lower()
-        if k not in seen:
-            out.append(n)
-            seen.add(k)
-    return out
-
-
-# ---- нормализация типов (на всякий случай) ----
-_TMAP = {
-    "InputFact": "InputFact",
-    "Fact": "InputFact",
-    "Observation": "Experiment",
-    "Method": "Technique",
-    "Technique": "Technique",
-    "Experiment": "Experiment",
-    "Result": "Result",
-    "Dataset": "Dataset",
-    "Analysis": "Analysis",
-    "Conclusion": "Conclusion",
-    "Hypothesis": "Hypothesis",
-}
-_ALLOWED = set(["InputFact", "Hypothesis", "Experiment", "Technique", "Result", "Dataset", "Analysis", "Conclusion"])
-
-
-def _map_type(t: str) -> str:
-    t = (t or "").strip()
-    return _TMAP.get(t, t if t in _ALLOWED else "Result")
 
 
 # Синонимы и «наследие» старых правил → канон
@@ -180,34 +158,36 @@ def _txt(n: Dict[str, Any]) -> str:
 # ── dedup_nodes: сохраняем исходный тип в type_raw для дебага ────────────────
 def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Дедуп по (type, merge_key|text). Сохраняем первую ноду как «главную»,
-    остальные аккумулируем в prov_multi, conf = max().
-    Пишем исходный тип в 'type_raw' (для отладки нормализации).
+    Дедуп по ключу из dedup_key(): (type, norm_text(text), SPECIAL for Hypothesis/IMRAD).
+    Сохраняем максимально уверенный узел; аккумулируем провенанс; полярность — neutral, если расходится.
     """
-    out: List[Dict[str, Any]] = []
-    seen: Dict[Tuple[str, str], int] = {}
+    buckets: Dict[Tuple, List[Dict[str, Any]]] = defaultdict(list)
     for n in nodes:
         m = dict(n)
-        m["type_raw"] = m.get("type")  # ← сохраняем оригинал
+        m["type_raw"] = m.get("type")
         m["type"] = normalize_type(m.get("type"))
-        merge_key = None
-        try:
-            merge_key = ((m.get("norm") or {}).get("merge_key") or "").strip().lower()
-        except Exception:
-            merge_key = ""
-        basis = merge_key if merge_key else (m.get("text") or "").strip()
-        key = (m["type"], basis)
-        if key in seen:
-            i = seen[key]
-            out[i]["conf"] = float(max(out[i].get("conf", 0.0), float(m.get("conf", 0.0))))
-            if m.get("prov"):
-                out[i].setdefault("prov_multi", []).append(m["prov"])
-            # если у исходной «главной» не было type_raw — заполним
-            if not out[i].get("type_raw"):
-                out[i]["type_raw"] = n.get("type")
-        else:
-            out.append(m)
-            seen[key] = len(out) - 1
+        k = dedup_key(m)  # <— используем спец-ключ
+        buckets[k].append(m)
+
+    out: List[Dict[str, Any]] = []
+    for _, arr in buckets.items():
+        if len(arr) == 1:
+            out.append(arr[0])
+            continue
+        # берём самый уверенный как главный
+        arr.sort(key=lambda x: float(x.get("conf", 0.0)), reverse=True)
+        top = dict(arr[0])
+        # провенанс: складываем в prov_multi, а основной prov оставляем от «главного»
+        provs = [a.get("prov") for a in arr if a.get("prov")]
+        if provs:
+            top["prov_multi"] = provs
+        # полярность: если разношёрстная — neutral
+        pols = { (a.get("polarity") or "neutral") for a in arr }
+        if len(pols) > 1:
+            top["polarity"] = "neutral"
+        # conf: максимум
+        top["conf"] = float(max(float(a.get("conf", 0.0)) for a in arr))
+        out.append(top)
     return out
 
 
@@ -295,28 +275,6 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
             add(f, h, "informs")
 
     return edges
-
-
-def assign_column_positions(nodes: List[Dict[str, Any]],
-                            x_step: int = 320, y_step: int = 120,
-                            x0: int = 60, y0: int = 40) -> List[Dict[str, Any]]:
-    """
-    Раскладываем узлы по 8 колонкам (preset layout).
-    Сортировка внутри колонки — по убыванию conf.
-    """
-    rows = defaultdict(int)
-    # Стабильная сортировка: сперва по колонке, затем по conf убыв.
-    nodes_sorted = sorted(
-        nodes,
-        key=lambda n: (TYPE_INDEX.get(n["type"], 999), -(n.get("conf") or 0.0))
-    )
-    for n in nodes_sorted:
-        col = TYPE_INDEX.get(n["type"], len(TYPE_ORDER) - 1)
-        row = rows[col]
-        rows[col] += 1
-        n["data"] = {**(n.get("data") or {}), "col": col, "row": row}
-        n["position"] = {"x": x0 + col * x_step, "y": y0 + row * y_step}
-    return nodes_sorted
 
 def _layout_columns(doc_id: str,
                     nodes: list[dict],
@@ -490,28 +448,21 @@ def run_s2(export_dir: str):
     # ожидается, что dedup_nodes уже есть в модуле
     nodes = dedup_nodes(nodes)  # noqa: F405
 
-    # --- 2) приведение рёбер к консистентному виду + фильтрация мусора ---
-    def _clean_edges(nodes_list: list, edges_list: list) -> list:
-        idset = {n.get("id") for n in nodes_list if n.get("id")}
-        cleaned = []
-        for e in edges_list:
-            f, t = e.get("from"), e.get("to")
-            if not f or not t or f not in idset or t not in idset:
-                continue
-            et = e.get("type") or ""
-            et = et.lower().strip()
-            if et not in ALLOWED_EDGE_TYPES_LOCAL:
-                # минимальный ремап (оставим 'relates' по умолчанию)
-                et = "relates"
-            conf = float(e.get("conf", 0.0))
-            cleaned.append({"from": f, "to": t, "type": et, "conf": conf, "prov": e.get("prov")})
-        return cleaned
+    # 2) релинковка и нормализация рёбер по типам узлов
+    edges = relink_edges(nodes, edges)
 
-    edges = _clean_edges(nodes, edges)
+    # 2.1) убрать дубликаты (from,to,type) — оставить максимальный conf
+    best = {}
+    for e in edges:
+        key = (e["from"], e["to"], e["type"])
+        if key not in best or float(e.get("conf", 0.0)) > best[key]["conf"]:
+            best[key] = {"from": e["from"], "to": e["to"], "type": e["type"], "conf": float(e.get("conf", 0.0)),
+                         "prov": e.get("prov")}
+    edges = list(best.values())
 
-    # --- 3) каркас рёбер, если пусто ---
+    # 3) каркас, если пусто
     if not edges:
-        edges = ensure_minimal_backbone(nodes, edges)  # noqa: F405
+        edges = ensure_minimal_backbone(nodes, edges)
 
     # --- 4) оценка «нужен ли LLM» ---
     # Связность: доля узлов, у которых есть хотя бы 1 смежное ребро
@@ -666,8 +617,22 @@ def run_s2(export_dir: str):
     if refined_edges is not None:
         edges = refined_edges
 
-    # финальная зачистка на всякий случай
-    edges = _clean_edges(nodes, edges)
+    # финальная зачистка: порог + дедуп по (from,to,type)
+    edges = [e for e in edges if float(e.get("conf", 0.0)) >= 0.55]
+
+    tmp = {}
+    for e in edges:
+        k = (e["from"], e["to"], e["type"])
+        if k not in tmp or float(e.get("conf", 0.0)) > tmp[k]["conf"]:
+            tmp[k] = {
+                "from": e["from"],
+                "to": e["to"],
+                "type": e["type"],
+                "conf": float(e.get("conf", 0.0)),
+                "prov": e.get("prov"),
+            }
+    edges = list(tmp.values())
+
     if not edges:
         edges = ensure_minimal_backbone(nodes, edges)  # noqa: F405
 
@@ -675,68 +640,3 @@ def run_s2(export_dir: str):
     graph = _layout_columns(doc_id, nodes, edges)  # noqa: F405
     _write_json(str(out_path), graph)  # noqa: F405
 
-
-def _prepare_llm_payload(doc_id: str, nodes: List[dict], edges: List[dict], s0_sections: List[str] | None = None,
-                         topk_by_type: dict | None = None, text_trunc: int = 220) -> dict:
-    """
-    Сжимает граф для LLM:
-      - нормализует типы,
-      - берёт top-K узлов по типу,
-      - обрезает текст, сокращает prov,
-      - возвращает компактный JSON для refine_graph.
-    """
-    topk_by_type = topk_by_type or {
-        "Result": 25, "Hypothesis": 15, "Experiment": 12, "Technique": 12,
-        "Dataset": 10, "Analysis": 10, "Input Fact": 10, "Conclusion": 8
-    }
-
-    # нормализация типов и сортировка по conf, потом по «салентности секции»
-    sec_weight = {"Results": 1.0, "Discussion": 0.95, "FigureCaption": 0.95, "TableCaption": 0.95,
-                  "Abstract": 0.85, "Conclusion": 0.85, "Methods": 0.8, "Body": 0.6, "Unknown": 0.5}
-
-    def _score(n):
-        sec = ((n.get("prov") or {}).get("section") if isinstance(n.get("prov"), dict) else
-               (n.get("prov_multi") or [{}])[0].get("section", "Unknown"))
-        return (float(n.get("conf", 0.0)), float(sec_weight.get((sec or "Unknown"), 0.5)))
-
-    buckets: dict[str, list[dict]] = {t: [] for t in TYPE_ORDER}
-    for n in nodes:
-        t = normalize_type(n.get("type"))
-        n2 = dict(n)
-        n2["type"] = t
-        buckets.setdefault(t, []).append(n2)
-
-    pick_nodes: list[dict] = []
-    for t, arr in buckets.items():
-        arr = sorted(arr, key=_score, reverse=True)[: topk_by_type.get(t, 10)]
-        for n in arr:
-            txt = (n.get("text") or "").strip()
-            if len(txt) > text_trunc:
-                txt = txt[:text_trunc].rstrip() + "…"
-            prov = n.get("prov")
-            if isinstance(prov, list) and prov:
-                prov = prov[0]
-            n_small = {
-                "id": n.get("id"),
-                "type": t,
-                "text": txt,
-                "polarity": n.get("polarity", "neutral"),
-                "conf": float(n.get("conf", 0.0)),
-                "prov": {"section": (prov or {}).get("section", "Unknown"),
-                         "span": (prov or {}).get("span", None)}
-            }
-            pick_nodes.append(n_small)
-
-    # Рёбра оставляем только те, что соединяют отобранные ноды
-    ids_ok = {n["id"] for n in pick_nodes if n.get("id")}
-    pick_edges = [
-        {"from": e["from"], "to": e["to"], "type": e.get("type", ""), "conf": float(e.get("conf", 0.0))}
-        for e in edges if e.get("from") in ids_ok and e.get("to") in ids_ok
-    ]
-
-    return {
-        "doc_id": doc_id,
-        "nodes": pick_nodes,
-        "edges": pick_edges,
-        "s0_context": (s0_sections or [])[:6]  # например: абстракт, концл, top captions
-    }
