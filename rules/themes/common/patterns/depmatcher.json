@@ -1,0 +1,40 @@
+[
+  {
+    "label": "Result",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["increase","decrease","improve","support","refute","demonstrate","show"]}}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "nsubj", "RIGHT_ATTRS": {"DEP": "nsubj"}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "dobj",  "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","attr","pobj","dative"]}}}
+      ],
+      "edges": [
+        {"source": "verb", "target": "nsubj"},
+        {"source": "verb", "target": "dobj"}
+      ]
+    }
+  },
+  {
+    "label": "Hypothesis",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["hypothesize","propose","suggest","assume"]}}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "mark", "RIGHT_ATTRS": {"LOWER": "that"}}
+      ],
+      "edges": [
+        {"source": "verb", "target": "mark"}
+      ]
+    }
+  },
+  {
+    "label": "Technique",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["use","apply","employ","implement"]}}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "dobj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","pobj"]}}}
+      ],
+      "edges": [
+        {"source": "verb", "target": "dobj"}
+      ]
+    }
+  }
+]

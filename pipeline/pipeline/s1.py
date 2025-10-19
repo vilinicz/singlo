@@ -30,14 +30,12 @@ Fallback (если рёбер нет, а узлы есть):
 from __future__ import annotations
 
 import json
-import math
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional, Iterable, Set
 
-import spacy
-from spacy.matcher import Matcher, DependencyMatcher
 from spacy.tokens import Doc
+from spacy.matcher import Matcher, DependencyMatcher  # только для type hints
+from .spacy_loader import load_spacy_model, load_spacy_patterns
 
 # ─────────────────────────────────────────────────────────────
 # Конфигурация
@@ -125,12 +123,6 @@ def _load_json(p: Path) -> Any:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def _ensure_list(x: Any) -> List:
-    if x is None: return []
-    if isinstance(x, list): return x
-    return [x]
-
-
 def _canon_type(label: str) -> Optional[str]:
     k = label.lower().replace(" ", "")
     return TYPE_CANON.get(k)
@@ -155,7 +147,8 @@ def _polarity(text: str) -> str:
     return "neutral"
 
 
-def _hedge_penalty(tokens_lower: List[str]) -> float:
+def _hedge_penalty_from_doc(nlp_doc: Doc) -> float:
+    tokens_lower = [t.text.lower() for t in nlp_doc]
     return HEDGE_PENALTY if _contains_any(tokens_lower, HEDGING) else 0.0
 
 
@@ -196,103 +189,6 @@ def _captions_to_sent_like(s0: Dict) -> List[Tuple[str, Dict]]:
     return out
 
 # ─────────────────────────────────────────────────────────────
-# Загрузка spaCy-паттернов
-# ─────────────────────────────────────────────────────────────
-
-def _load_spacy_model() -> tuple[spacy.language.Language, bool, str]:
-    """
-    Пытаемся загрузить модель из ENV (SPACY_MODEL) или en_core_web_sm.
-    Если не получилось — fallback на spacy.blank('en').
-    Возвращаем (nlp, dep_enabled, model_name).
-    """
-    name = os.getenv("SPACY_MODEL", "en_core_web_sm")
-    try:
-        # оставляем теггер/парсер, вырубаем тяжёлое
-        nlp = spacy.load(name, disable=["ner", "textcat"])
-        dep_enabled = nlp.has_pipe("parser")
-        return nlp, dep_enabled, name
-    except Exception:
-        # мягкая деградация: только токенизация (Matcher по TEXT будет работать, DependencyMatcher — нет)
-        nlp = spacy.blank("en")
-        if not nlp.has_pipe("sentencizer"):
-            nlp.add_pipe("sentencizer")
-        return nlp, False, f"blank:en (fallback; missing {name})"
-
-
-def _load_spacy_patterns(nlp,
-                         themes_root: str,
-                         theme_override: Optional[List[str]] = None
-                         ) -> Tuple[Matcher, DependencyMatcher, Dict[str, float]]:
-    """
-    Загружает паттерны из themes/<topic>/patterns/{matcher.json, depmatcher.json}
-    Если темы не заданы → используем только themes/common.
-    Возвращает (matcher, depmatcher, type_boosts) — где type_boosts можно использовать как доп. веса типа.
-    Формат matcher.json: [{ "label": "Result", "pattern": [...] }, ...]
-    Формат depmatcher.json: [{ "label": "Technique", "pattern": { "nodes": [...], "edges": [...] } }, ...]
-    """
-    matcher = Matcher(nlp.vocab)
-    depmatcher = DependencyMatcher(nlp.vocab)
-
-    roots = []
-    themes_root_path = Path(themes_root or "/app/rules/themes")
-    if theme_override:
-        for t in theme_override:
-            roots.append(themes_root_path / t / "patterns")
-    # common всегда подключаем
-    roots.append(themes_root_path / "common" / "patterns")
-
-    added = 0
-    for r in roots:
-        if not r.exists():
-            continue
-        # Matcher
-        mfile = r / "matcher.json"
-        if mfile.exists():
-            try:
-                items = _load_json(mfile)
-                if isinstance(items, list):
-                    for it in items:
-                        label = _canon_type(str(it.get("label", "")))
-                        pattern = it.get("pattern")
-                        if not label or not pattern:
-                            continue
-                        matcher.add(label, [pattern])
-                        added += 1
-            except Exception:
-                pass
-        # DependencyMatcher
-        dfile = r / "depmatcher.json"
-        if dfile.exists():
-            try:
-                items = _load_json(dfile)
-                if isinstance(items, list):
-                    for it in items:
-                        label = _canon_type(str(it.get("label", "")))
-                        pat = it.get("pattern")
-                        if not label or not pat:
-                            continue
-                        depmatcher.add(label, [pat])
-                        added += 1
-            except Exception:
-                pass
-
-    # Доп. бусты типов можно хранить в themes/<topic>/lexicon.json → {"type_boosts":{"Result":1.02,...}}
-    type_boosts: Dict[str, float] = {}
-    for r in roots:
-        lfile = r.parent / "lexicon.json"
-        if lfile.exists():
-            try:
-                lex = _load_json(lfile)
-                for k, v in (lex.get("type_boosts") or {}).items():
-                    t = _canon_type(str(k))
-                    if t:
-                        type_boosts[t] = float(v)
-            except Exception:
-                pass
-
-    return matcher, depmatcher, type_boosts
-
-# ─────────────────────────────────────────────────────────────
 # Оценка и выбор типа для предложения
 # ─────────────────────────────────────────────────────────────
 
@@ -307,14 +203,15 @@ def _score_sentence(nlp_doc: Doc,
     Возвращает (best_type, conf, debug_hits)
     conf ∈ [0, +∞), порог отсечки на уровне узла — CONF_NODE_MIN
     """
-    hits = {}  # type -> raw score
+    hits: Dict[str, float] = {}  # type -> raw score
+
     # 1) token-level hits
     for label, start, end in matcher(nlp_doc):
         tname = nlp_doc.vocab.strings[label]
         tname = _canon_type(tname) or tname
         if tname not in NODE_TYPES:
             continue
-        hits[tname] = hits.get(tname, 0) + 1.0
+        hits[tname] = hits.get(tname, 0.0) + 1.0
 
     # 2) dependency hits (только если есть парсер)
     if dep_enabled:
@@ -323,7 +220,7 @@ def _score_sentence(nlp_doc: Doc,
             tname = _canon_type(tname) or tname
             if tname not in NODE_TYPES:
                 continue
-            hits[tname] = hits.get(tname, 0) + 1.2  # чуть сильнее, чем token-matcher
+            hits[tname] = hits.get(tname, 0.0) + 1.2  # чуть сильнее, чем token-matcher
 
     if not hits:
         return None, 0.0, {"hits": {}}
@@ -338,14 +235,13 @@ def _score_sentence(nlp_doc: Doc,
     theme_mult = {t: type_boosts.get(t, 1.0) for t in hits.keys()}
 
     # 6) hedge penalty
-    tokens_lower = [t.text.lower() for t in nlp_doc]
-    hedge = _hedge_penalty(tokens_lower)
+    hedge = _hedge_penalty_from_doc(nlp_doc)
 
     # 7) numeric bonus для некоторых типов
     num_bonus = NUMERIC_BONUS if _has_numeric(text) else 0.0
 
     # 8) итоговый скор
-    scored = {}
+    scored: Dict[str, float] = {}
     for t, raw in hits.items():
         val = raw * prior_mult.get(t, 1.0) * base_mult.get(t, 1.0) * theme_mult.get(t, 1.0)
         if t in ("Result", "Analysis", "Dataset"):
@@ -370,7 +266,8 @@ def _score_sentence(nlp_doc: Doc,
 
 def _node_id(doc_id: str, tname: str, idx: int) -> str:
     slug = doc_id.replace("/", "-").replace(":", "-")
-    return f"{slug}:{tname.replace(' ', ''):%s}" % (f"{idx:04d}")
+    tslug = (tname or "").replace(" ", "")
+    return f"{slug}:{tslug}:{idx:04d}"
 
 
 def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
@@ -527,8 +424,8 @@ def run_s1(s0_path: str,
     captions_sent_like = _captions_to_sent_like(s0)
 
     # загрузка spaCy и паттернов (с фолбэком)
-    nlp, dep_enabled, model_name = _load_spacy_model()
-    matcher, depmatcher, type_boosts = _load_spacy_patterns(
+    nlp, dep_enabled, model_name = load_spacy_model()
+    matcher, depmatcher, type_boosts = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
 
@@ -547,7 +444,7 @@ def run_s1(s0_path: str,
                 text = (sent.get("text") or "").strip()
                 if not text:
                     continue
-                # ВАЖНО: полный прогон пайплайна, а не make_doc
+                # ВАЖНО: полный прогон пайплайна (POS/DEP для DependencyMatcher)
                 doc = nlp(text)
                 tname, conf, dbg = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
                 if not tname or conf < CONF_NODE_MIN:
@@ -572,7 +469,7 @@ def run_s1(s0_path: str,
         text = (cap.get("text") or "").strip()
         if not text:
             continue
-        imrad = "RESULTS" if sec_name.startswith("Figure") else "RESULTS"
+        imrad = "RESULTS"  # для фигур/таблиц в большинстве случаев ближе к результатам
         doc = nlp(text)
         tname, conf, dbg = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
         if not tname or conf < CONF_NODE_MIN:

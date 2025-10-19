@@ -48,7 +48,7 @@ class ThemeScore:
     score: float
     threshold: float
     chosen: bool
-    hits: int = 0        # грубое количество plain-хитов (для приоритизации кандидатов)
+    hits: int = 0  # грубое количество plain-хитов (для приоритизации кандидатов)
     passed_must: bool = True
 
 
@@ -116,11 +116,13 @@ def route_themes(
     Быстрая маршрутизация: возвращает только выбранные темы (совместимо со старым кодом).
     """
     chosen, _cands = route_themes_with_candidates(
-        s0, registry, global_topk=global_topk, stop_threshold=stop_threshold, max_candidates=max_candidates, override=override
+        s0, registry, global_topk=global_topk, stop_threshold=stop_threshold, max_candidates=max_candidates,
+        override=override
     )
     return chosen
 
 
+# legacy
 def select_rule_files(
         themes_root: str | Path,
         chosen: List[ThemeScore],
@@ -165,6 +167,45 @@ def select_rule_files(
     return files
 
 
+def select_pattern_files(
+        themes_root: str | Path,
+        chosen: List[ThemeScore],
+) -> Dict[str, List[Path]]:
+    """
+    Возвращает json-файлы с паттернами spaCy для выбранных тем + common:
+      {
+        "matcher": [Path(.../common/patterns/matcher.json), Path(.../<topic>/patterns/matcher.json), ...],
+        "depmatcher": [...],
+        "lexicons": [Path(.../common/lexicon.json?), Path(.../<topic>/lexicon.json?) ...]
+      }
+    """
+    root = Path(themes_root)
+    out: Dict[str, List[Path]] = {"matcher": [], "depmatcher": [], "lexicons": []}
+
+    # common
+    cpat = root / "common" / "patterns"
+    if (cpat / "matcher.json").exists():
+        out["matcher"].append(cpat / "matcher.json")
+    if (cpat / "depmatcher.json").exists():
+        out["depmatcher"].append(cpat / "depmatcher.json")
+    # общий лексикон (опционально)
+    for p in [root / "shared-lexicon.json", root / "_shared" / "lexicon.json", root / "common" / "lexicon.json"]:
+        if p.exists(): out["lexicons"].append(p)
+
+    # per-theme
+    for ts in (t for t in chosen if getattr(t, "chosen", False)):
+        tdir = root / ts.name
+        pdir = tdir / "patterns"
+        if (pdir / "matcher.json").exists():
+            out["matcher"].append(pdir / "matcher.json")
+        if (pdir / "depmatcher.json").exists():
+            out["depmatcher"].append(pdir / "depmatcher.json")
+        lx = tdir / "lexicon.json"
+        if lx.exists(): out["lexicons"].append(lx)
+
+    return out
+
+
 # -------- new: routing with candidates (for debug) --------
 
 def route_themes_with_candidates(
@@ -186,9 +227,10 @@ def route_themes_with_candidates(
                 chosen.append(ThemeScore(nm, 999.0, 0.0, True, hits=999))
         return chosen, chosen
 
-    # 1) витрина
-    text = build_showcase_text(s0)
-    text_lower = text.lower()
+        # 1) витрина (buckets)
+    texts = build_showcase_buckets(s0)  # {"intro","results","rest","captions","all"}
+    text_all = texts["all"]  # единая витрина для токенизации и индекса
+    text_lower = text_all.lower()
 
     # 2) кандидаты: пересечение с plain-индексом
     hits: Dict[str, int] = {}
@@ -202,7 +244,7 @@ def route_themes_with_candidates(
     if not candidates:
         candidates = [(name, 0) for name in list(registry.themes.keys())[:max_candidates]]
 
-    # 3) детальный скоринг
+    # 3) детальный скоринг по buckets
     chosen: List[ThemeScore] = []
     detailed: List[ThemeScore] = []
     early_passed = 0
@@ -211,8 +253,9 @@ def route_themes_with_candidates(
         trg = registry.themes.get(name)
         if not trg:
             continue
-        score, passed, _ = _score_theme_detail_verbose(text, trg)
-        ts = ThemeScore(name=name, score=score, threshold=trg.threshold, chosen=False, hits=int(cnt), passed_must=passed)
+        score, passed, _ = _score_theme_detail_verbose_buckets(texts, trg)
+        ts = ThemeScore(name=name, score=score, threshold=trg.threshold, chosen=False, hits=int(cnt),
+                        passed_must=passed)
         if passed and (score >= trg.threshold):
             ts.chosen = True
             chosen.append(ts)
@@ -222,28 +265,46 @@ def route_themes_with_candidates(
         if early_passed >= global_topk:
             break
 
-    if not chosen and detailed:
-        # для диагностики оставим «лучшего» как невыбранного
-        pass
-
     # итог: top-k из выбранных
     chosen = sorted([t for t in chosen if t.chosen], key=lambda x: x.score, reverse=True)[:global_topk]
     return chosen, detailed
 
 
-# -------- internals --------
-
+# -------- legacy: internals --------
 def build_showcase_text(s0: Dict) -> str:
+    # 1) Abstract/Intro + Discussion/Conclusions
     parts: List[str] = []
     for sec in s0.get("sections", []):
         nm = (sec.get("name") or "").lower()
         if nm.startswith("abstract") or nm.startswith("introduction"):
             parts.append(sec.get("text") or "")
-        # добавим ещё вероятно-важные хвосты, если есть
         if ("conclusion" in nm) or ("discussion" in nm):
             parts.append(sec.get("text") or "")
+
+    # 2) немного Methods/Results — первые 2 предложения (если есть разметка)
+    for sec in s0.get("sections", []):
+        nm = (sec.get("name") or "").lower()
+        if ("materials and methods" in nm) or nm.startswith("materials") or nm == "methods":
+            sents = []
+            for blk in sec.get("blocks", []):
+                for s in blk.get("sentences", [])[:2]:
+                    sents.append(s.get("text") or "")
+                    if len(sents) >= 2: break
+                if len(sents) >= 2: break
+            if sents: parts.append(" ".join(sents))
+        if ("results" in nm):
+            sents = []
+            for blk in sec.get("blocks", []):
+                for s in blk.get("sentences", [])[:2]:
+                    sents.append(s.get("text") or "")
+                    if len(sents) >= 2: break
+                if len(sents) >= 2: break
+            if sents: parts.append(" ".join(sents))
+
+    # 3) captions
     for c in (s0.get("captions") or [])[:12]:
         parts.append(c.get("text") or "")
+
     return _normalize(" ".join(parts))
 
 
@@ -276,6 +337,11 @@ def _contains_regex(rx: re.Pattern, text: str) -> bool:
         return False
 
 
+def _has_plain_token(tok: str, text: str) -> bool:
+    # \b по ASCII-словам. В _normalize мы уже свели регистр/дефисы, так что этого достаточно.
+    return re.search(rf"\b{re.escape(tok)}\b", text) is not None
+
+
 def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
     for tok in (trg.must or []):
         if _looks_regex(tok):
@@ -285,15 +351,15 @@ def _score_theme_detail(text: str, trg: Triggers) -> Tuple[float, bool]:
             except re.error:
                 return (0.0, False)
         else:
-            if tok.lower() not in text:
+            if not _has_plain_token(tok.lower(), text):
                 return (0.0, False)
 
     score = 0.0
     for tok, wt in (trg.should_plain or []):
-        if tok in text:
+        if _has_plain_token(tok, text):
             score += wt
     for tok, wt in (trg.neg_plain or []):
-        if tok in text:
+        if _has_plain_token(tok, text):
             score -= wt
     for rx, wt in (trg.should_regex or []):
         if _contains_regex(rx, text):
@@ -325,7 +391,7 @@ def _score_theme_detail_verbose(text: str, trg: Triggers) -> Tuple[float, bool, 
             except re.error:
                 ok = False
         else:
-            ok = (tok.lower() in text)
+            ok = _has_plain_token(tok.lower(), text)
         if not ok:
             out["passed_must"] = False
             out["unmet_must"].append(tok)
@@ -333,12 +399,12 @@ def _score_theme_detail_verbose(text: str, trg: Triggers) -> Tuple[float, bool, 
     score = 0.0
 
     for tok, wt in (trg.should_plain or []):
-        if tok in text:
+        if _has_plain_token(tok, text):
             score += wt
             out["matched"].append({"kind": "should", "mode": "plain", "token": tok, "weight": wt})
 
     for tok, wt in (trg.neg_plain or []):
-        if tok in text:
+        if _has_plain_token(tok, text):
             score -= wt
             out["matched"].append({"kind": "negative", "mode": "plain", "token": tok, "weight": wt})
 
@@ -362,18 +428,77 @@ def _score_theme_detail_verbose(text: str, trg: Triggers) -> Tuple[float, bool, 
     return score, out["passed_must"], out
 
 
+def _score_theme_detail_verbose_buckets(texts: Dict[str, str], trg: Triggers) -> Tuple[float, bool, Dict[str, Any]]:
+    # как твой _score_theme_detail_verbose, но вместо одного текста — словарь витрин
+    # scheme: all (база), intro (x1.10), results (x1.08), captions (x1.08)
+    M_IN, M_RS, M_CP = 1.10, 1.08, 1.08
+
+    def hit_plain(tok, t):
+        return _has_plain_token(tok, t)
+
+    def hit_rx(rx, t):
+        return _contains_regex(rx, t)
+
+    # must на общей витрине
+    passed = True
+    for tok in (trg.must or []):
+        if _looks_regex(tok):
+            ok = re.search(tok, texts["all"], re.IGNORECASE | re.MULTILINE) is not None
+        else:
+            ok = _has_plain_token(tok.lower(), texts["all"])
+        if not ok:
+            passed = False
+
+    score = 0.0;
+    matched = []
+
+    def add_if(found, wt, kind, mode, token):
+        nonlocal score, matched
+        if found:
+            score += wt
+            matched.append({"kind": kind, "mode": mode, "token": token, "weight": wt})
+
+    # plain
+    for tok, wt in (trg.should_plain or []):
+        add_if(hit_plain(tok, texts["all"]), wt, "should", "plain", tok)
+        add_if(hit_plain(tok, texts["intro"]), wt * (M_IN - 1), "should", "plain", tok)
+        add_if(hit_plain(tok, texts["results"]), wt * (M_RS - 1), "should", "plain", tok)
+        add_if(hit_plain(tok, texts["captions"]), wt * (M_CP - 1), "should", "plain", tok)
+
+    for tok, wt in (trg.neg_plain or []):
+        add_if(hit_plain(tok, texts["all"]), -wt, "negative", "plain", tok)
+        add_if(hit_plain(tok, texts["intro"]), -wt * (M_IN - 1), "negative", "plain", tok)
+        add_if(hit_plain(tok, texts["results"]), -wt * (M_RS - 1), "negative", "plain", tok)
+        add_if(hit_plain(tok, texts["captions"]), -wt * (M_CP - 1), "negative", "plain", tok)
+
+    # regex
+    for rx, wt in (trg.should_regex or []):
+        add_if(hit_rx(rx, texts["all"]), wt, "should", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["intro"]), wt * (M_IN - 1), "should", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["results"]), wt * (M_RS - 1), "should", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["captions"]), wt * (M_CP - 1), "should", "regex", rx.pattern)
+
+    for rx, wt in (trg.neg_regex or []):
+        add_if(hit_rx(rx, texts["all"]), -wt, "negative", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["intro"]), -wt * (M_IN - 1), "negative", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["results"]), -wt * (M_RS - 1), "negative", "regex", rx.pattern)
+        add_if(hit_rx(rx, texts["captions"]), -wt * (M_CP - 1), "negative", "regex", rx.pattern)
+
+    matched.sort(key=lambda m: float(m["weight"]), reverse=True)
+    det = {"score": float(score), "passed_must": passed, "matched": matched, "top_triggers": matched[:8],
+           "unmet_must": []}
+    return score, passed, det
+
+
 def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[ThemeScore]) -> List[Dict[str, Any]]:
-    """
-    Совместимая функция: подробности только по выбранным темам.
-    """
-    text = build_showcase_text(s0)
+    texts = build_showcase_buckets(s0)
     out = []
     for t in (chosen or []):
         trg = registry.themes.get(t.name)
         if not trg:
             out.append({"name": t.name, "score": t.score, "threshold": t.threshold, "chosen": t.chosen})
             continue
-        det = score_theme_detail_verbose(text, trg)
+        det = _score_theme_detail_verbose_buckets(texts, trg)[2]
         out.append({
             "name": t.name,
             "score": t.score,
@@ -386,14 +511,37 @@ def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[The
     return out
 
 
+def build_showcase_buckets(s0: Dict) -> Dict[str, str]:
+    intro, results, rest, caps = [], [], [], []
+    for sec in s0.get("sections", []):
+        nm = (sec.get("name") or "").lower()
+        t = _normalize(sec.get("text") or "")
+        if not t: continue
+        if nm.startswith("abstract") or nm.startswith("introduction"):
+            intro.append(t)
+        elif "results" in nm:
+            results.append(t)
+        else:
+            rest.append(t)
+    for c in (s0.get("captions") or []):
+        caps.append(_normalize(c.get("text") or ""))
+    return {
+        "intro": " ".join(intro),
+        "results": " ".join(results),
+        "rest": " ".join(rest),
+        "captions": " ".join(caps),
+        "all": " ".join([*intro, *results, *rest, *caps]),
+    }
+
+
 # -------- new: full debug block (chosen + rejected top candidates) --------
 
 def explain_routing_full(
-    s0: Dict,
-    registry: ThemeRegistry,
-    chosen: List[ThemeScore],
-    candidates: List[ThemeScore],
-    top_n: int = 5
+        s0: Dict,
+        registry: ThemeRegistry,
+        chosen: List[ThemeScore],
+        candidates: List[ThemeScore],
+        top_n: int = 5
 ) -> Dict[str, Any]:
     """
     Возвращает полный блок для s1_debug:
@@ -405,10 +553,9 @@ def explain_routing_full(
         ]
       }
     """
-    text = build_showcase_text(s0)
+    texts = build_showcase_buckets(s0)
     chosen_block = explain_themes_for_debug(s0, registry, chosen)
 
-    # невыбранные топ-кандидаты
     rejected = [c for c in (candidates or []) if not c.chosen]
     rejected = sorted(rejected, key=lambda x: (x.score, x.hits), reverse=True)[:top_n]
 
@@ -421,7 +568,7 @@ def explain_routing_full(
                 "hits": r.hits, "passed_must": r.passed_must
             })
             continue
-        det = score_theme_detail_verbose(text, trg)
+        det = _score_theme_detail_verbose_buckets(texts, trg)[2]
         rej_block.append({
             "name": r.name,
             "score": r.score,

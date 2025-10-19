@@ -1,0 +1,9 @@
+{
+  "type_boosts": {
+    "Result": 1.06,
+    "Experiment": 1.05,
+    "Dataset": 1.04,
+    "Technique": 1.03,
+    "Analysis": 1.02
+  }
+}

@@ -1,0 +1,40 @@
+[
+  {
+    "label": "Result",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["increase","decrease","improve","associate","correlate","demonstrate","show"]}}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "nsubj", "RIGHT_ATTRS": {"DEP": "nsubj"}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","attr","pobj"]}}}
+      ],
+      "edges": [
+        {"source": "verb", "target": "nsubj"},
+        {"source": "verb", "target": "obj"}
+      ]
+    }
+  },
+  {
+    "label": "Technique",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["use","apply","employ","implement","analyze","model"]}}},
+        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","pobj"]}}}
+      ],
+      "edges": [
+        {"source": "verb", "target": "obj"}
+      ]
+    }
+  },
+  {
+    "label": "Experiment",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "trial", "RIGHT_ATTRS": {"LOWER": {"IN": ["trial","study"]}}},
+        {"RIGHT_ID": "rand",  "RIGHT_ATTRS": {"LOWER": {"IN": ["randomized","randomised","controlled","placebo-controlled"]}}}
+      ],
+      "edges": [
+        {"source": "trial", "target": "rand"}
+      ]
+    }
+  }
+]

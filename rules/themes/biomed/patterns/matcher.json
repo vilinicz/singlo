@@ -1,0 +1,120 @@
+[
+
+  {
+    "label": "Dataset",
+    "pattern": [
+      {"LOWER": {"IN": ["n","n="]}},
+      {"IS_PUNCT": true, "OP": "?"},
+      {"LIKE_NUM": true},
+      {"IS_PUNCT": true, "OP": "*"},
+      {"LOWER": {"IN": ["patients","participants","subjects","cases","controls"]}}
+    ]
+  },
+  {
+    "label": "Dataset",
+    "pattern": [
+      {"LOWER": {"IN": ["cohort","multicenter","multicentre","registry","retrospective","prospective"]}},
+      {"LOWER": {"IN": ["study","trial","analysis","dataset","series"]}}
+    ]
+  },
+  {
+    "label": "Experiment",
+    "pattern": [
+      {"LOWER": {"IN": ["randomized","randomised","double-blind","placebo-controlled","controlled"]}},
+      {"LOWER": {"IN": ["trial","study","rct","crossover","parallel"]}}
+    ]
+  },
+  {
+    "label": "Experiment",
+    "pattern": [
+      {"LOWER": {"IN": ["in","on","with"]}, "OP": "?"},
+      {"LOWER": {"IN": ["vivo","vitro","silico"]}}
+    ]
+  },
+
+  {
+    "label": "Technique",
+    "pattern": [
+      {"LOWER": {"IN": ["pcr","rt-pcr","qpcr","western","elisa","rna-seq","chip-seq","crispr","flow","cytometry"]}}
+    ]
+  },
+  {
+    "label": "Technique",
+    "pattern": [
+      {"LOWER": {"IN": ["cox","kaplan–meier","kaplan-meier","log-rank","logrank","anova","glm","mixed-effects","linear","logistic"]}},
+      {"LOWER": {"IN": ["regression","model","analysis","test","tests"]}}
+    ]
+  },
+
+  {
+    "label": "Analysis",
+    "pattern": [
+      {"LOWER": {"IN": ["hazard","odds","relative","risk","rate"]}},
+      {"LOWER": {"IN": ["ratio","ratios","reduction","difference"]}}
+    ]
+  },
+  {
+    "label": "Analysis",
+    "pattern": [
+      {"LOWER": {"IN": ["confidence","ci"]}},
+      {"LOWER": {"IN": ["interval","intervals"]}},
+      {"TEXT": {"REGEX": "^[\\[(]$"}, "OP": "?"},
+      {"TEXT": {"REGEX": "^\\d+(\\.\\d+)?$"}},
+      {"TEXT": ","},
+      {"TEXT": {"REGEX": "^\\d+(\\.\\d+)?$"}},
+      {"TEXT": {"REGEX": "^[\\])]$"}, "OP": "?"}
+    ]
+  },
+
+  {
+    "label": "Result",
+    "pattern": [
+      {"LOWER": {"IN": ["p","p-value","pvalue"]}},
+      {"IS_PUNCT": true, "OP": "?"},
+      {"TEXT": {"REGEX": "^(<|=|<=)$"}},
+      {"IS_SPACE": true, "OP": "*"},
+      {"TEXT": {"REGEX": "^0?\\.\\d+$"}}
+    ]
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {"LOWER": {"IN": ["significant","significantly"]}},
+      {"LOWER": {"IN": ["higher","lower","increase","decrease","reduction","improvement","association"]}}
+    ]
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {"LIKE_NUM": true},
+      {"TEXT": "%"},
+      {"LOWER": "of"},
+      {"LOWER": {"IN": ["patients","participants","cases","measurements","samples"]}}
+    ]
+  },
+
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
+      {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","suggest"]}},
+      {"LOWER": "that", "OP": "?"}
+    ]
+  },
+
+  {
+    "label": "Input Fact",
+    "pattern": [
+      {"LOWER": {"IN": ["according","per","as"]}},
+      {"LOWER": {"IN": ["guidelines","who","nih","ema","fda","consensus","previous","prior","studies","literature"]}}
+    ]
+  },
+
+  {
+    "label": "Conclusion",
+    "pattern": [
+      {"LOWER": {"IN": ["in","overall","in","to"]}},
+      {"LOWER": {"IN": ["conclusion","summary","sum","conclude","conclusion,","summary,"]}}
+    ]
+  }
+]
