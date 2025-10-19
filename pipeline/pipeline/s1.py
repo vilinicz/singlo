@@ -1,18 +1,20 @@
-# pipeline/s1.py
+# pipeline/s1.py  — S1 + S1.5 (тонкий LLM-рефайн узлов/рёбер)
 from __future__ import annotations
 import json
 import re
 import yaml
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
 from .themes_router import preload as themes_preload, route_themes, select_rule_files, ThemeRegistry
-from .themes_router import explain_themes_for_debug, build_showcase_text, route_themes_with_candidates, explain_routing_full
+from .themes_router import explain_themes_for_debug, build_showcase_text, route_themes_with_candidates, \
+    explain_routing_full
 
 # ---------- Rule model ----------
 
 _SECTION_ROLE_PATTERNS: List[Tuple[str, str]] = [
-    # (regex, role) — порядок имеет значение (первые совпадения важнее)
     (r'^\s*abstract\b', 'Abstract'),
     (r'^\s*(background|overview|aims?)\b', 'Introduction'),
     (r'^\s*(introduction|literature review|related work)\b', 'Introduction'),
@@ -21,14 +23,12 @@ _SECTION_ROLE_PATTERNS: List[Tuple[str, str]] = [
     (r'^\s*discussion\b', 'Discussion'),
     (r'^\s*(conclusion|conclusions|summary|closing remarks)\b', 'Conclusion'),
     (r'^\s*(acknowledg(e)?ments?|references?|bibliography)\b', 'BackMatter'),
-    # частые вариации в прикладных доменах
     (r'^\s*(experiments?|evaluation|findings?)\b', 'Results'),
     (r'^\s*(analysis|empirical analysis)\b', 'Analysis'),
     (r'^\s*(case study|case studies)\b', 'Results'),
-    (r'^\s*(contribution[s]?\b|use[s]?\b).*construction phase', 'Results'),  # из BIM-пейпера
+    (r'^\s*(contribution[s]?\b|use[s]?\b).*construction phase', 'Results'),
 ]
 
-# веса (важность) по ролям — входят в итоговый conf через умножение
 _SECTION_ROLE_WEIGHTS: Dict[str, float] = {
     'Abstract': 0.65,
     'Introduction': 0.70,
@@ -37,8 +37,8 @@ _SECTION_ROLE_WEIGHTS: Dict[str, float] = {
     'Discussion': 0.95,
     'Analysis': 0.90,
     'Conclusion': 0.80,
-    'Body': 0.60,  # неизвестное тело текста
-    'BackMatter': 0.30,  # благодарности/списки литературы
+    'Body': 0.60,
+    'BackMatter': 0.30,
     'Unknown': 0.50,
 }
 
@@ -78,20 +78,12 @@ def _contains_hedge(text: str, hedge_words: set) -> bool:
 
 def _polarity_from_text(text: str) -> str:
     t = (text or "").lower()
-    neg = [
-        "no evidence", "did not", "does not",
-        "fail to", "fails to", "not significant", " ns ",
-        "decrease in", "decreased", "reduced"
-    ]
-    pos = [
-        "significant", "improved", "increase", "increased",
-        "higher", "better", "enhanced", "fits well",
-        "goodness of fit", "matches the data", "demonstrate that", "we show that"
-    ]
-    if any(p in t for p in pos):
-        return "positive"
-    if any(n in t for n in neg):
-        return "negative"
+    neg = ["no evidence", "did not", "does not", "fail to", "fails to", "not significant", " ns ", "decrease in",
+           "decreased", "reduced"]
+    pos = ["significant", "improved", "increase", "increased", "higher", "better", "enhanced", "fits well",
+           "goodness of fit", "matches the data", "demonstrate that", "we show that"]
+    if any(p in t for p in pos): return "positive"
+    if any(n in t for n in neg): return "negative"
     return "neutral"
 
 
@@ -133,7 +125,7 @@ def infer_section_roles(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for idx, sec in enumerate(sections):
         title = _normalize_title(sec.get('name', ''))
         role = _match_role_by_title(title)
-        pos_frac = idx / max(n - 1, 1)  # 0..1
+        pos_frac = idx / max(n - 1, 1)
         text = (sec.get('text') or '')
         text_low = text.lower()
 
@@ -151,21 +143,12 @@ def infer_section_roles(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         # позиционная эвристика — только если роль не распознана по заголовку
         if role in ('Unknown', 'Body'):
             if pos_frac <= 0.15:
-                # начало документа
-                if has_method_kw and not (has_result_kw or has_p_value or has_percent):
-                    role = 'Methods'  # иногда методологию выносят очень рано
-                else:
-                    role = 'Introduction'
+                role = 'Methods' if has_method_kw and not (
+                            has_result_kw or has_p_value or has_percent) else 'Introduction'
             elif pos_frac >= 0.80:
-                # конец документа
-                if has_concl_kw:
-                    role = 'Conclusion'
-                elif has_disc_kw or has_result_kw:
-                    role = 'Discussion'
-                else:
-                    role = 'Conclusion'
+                role = 'Conclusion' if has_concl_kw else (
+                    'Discussion' if (has_disc_kw or has_result_kw) else 'Conclusion')
             else:
-                # середина
                 if has_result_kw or has_p_value or has_percent:
                     role = 'Results'
                 elif has_method_kw:
@@ -176,13 +159,7 @@ def infer_section_roles(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                     role = 'Body'
 
         soft_weight = _SECTION_ROLE_WEIGHTS.get(role, _SECTION_ROLE_WEIGHTS['Unknown'])
-        out.append({
-            **sec,
-            'role': role,
-            'soft_weight': soft_weight,
-            'order_idx': idx,
-            'pos_frac': pos_frac
-        })
+        out.append({**sec, 'role': role, 'soft_weight': soft_weight, 'order_idx': idx, 'pos_frac': pos_frac})
     return out
 
 
@@ -193,8 +170,7 @@ def section_matches_rule(sec_role: str, sec_name: str, rule_sections: List[str])
     Совпадение по роли → True. Дополнительно допускаем "подстроку" по названию.
     """
     rs = [s.lower() for s in (rule_sections or [])]
-    if sec_role and sec_role.lower() in rs:
-        return True
+    if sec_role and sec_role.lower() in rs: return True
     low_name = (sec_name or '').lower()
     return any(s in low_name for s in rs)
 
@@ -262,13 +238,9 @@ def load_rules_merged(paths: List[str]) -> Tuple[Dict[str, Any], set, List[Rule]
 
     for p in paths:
         meta, hedge_words, rules, relations = load_rules(p)
-
-        # section_weights — как было
         _merge_dict_add(merged_meta.setdefault("section_weights", {}), meta.get("section_weights") or {})
-        # conf_boosts — как было
         _merge_dict_add(merged_meta.setdefault("conf_boosts", {}), meta.get("conf_boosts") or {})
 
-        # ✅ НОВОЕ: та же логика для conf_thresholds (последний файл побеждает)
         thr = meta.get("conf_thresholds") or {}
         if thr:
             merged_meta.setdefault("conf_thresholds", {}).update(thr)
@@ -294,65 +266,47 @@ def _yield_matches(text: str, rule: Rule):
 
 # --- Sentence expansion (robust to 60.0 and line breaks) ---
 SENT_END = re.compile(r'[.!?]')
-DOT_IN_NUMBER = re.compile(r'(\d)\.(\d)')  # 60.0 — не конец
-HARD_BREAK = re.compile(r'(\n{2,}|[\r])')  # абзац
+DOT_IN_NUMBER = re.compile(r'(\d)\.(\d)')
+HARD_BREAK = re.compile(r'(\n{2,}|[\r])')
 
 
 def expand_to_sentence_robust(text: str, span: Tuple[int, int], max_len: int = 600) -> str:
     n = len(text)
     start, end = span
-
-    # влево
     l = start
     while l > 0:
         ch = text[l - 1]
-        if HARD_BREAK.match(text[l - 2:l + 1] if l >= 2 else ''):
-            break
+        if HARD_BREAK.match(text[l - 2:l + 1] if l >= 2 else ''): break
         if SENT_END.match(ch):
-            if l - 2 >= 0 and not DOT_IN_NUMBER.match(text[l - 2:l + 1]):
-                break
+            if l - 2 >= 0 and not DOT_IN_NUMBER.match(text[l - 2:l + 1]): break
         l -= 1
-        if start - l > max_len:
-            break
-
-    # вправо
+        if start - l > max_len: break
     r = end
     while r < n:
         ch = text[r]
-        if HARD_BREAK.match(text[r:r + 2]):
-            break
+        if HARD_BREAK.match(text[r:r + 2]): break
         if SENT_END.match(ch):
             if not (r - 1 >= 0 and DOT_IN_NUMBER.match(text[r - 1:r + 1])):
                 r += 1
                 break
         r += 1
-        if r - end > max_len:
-            break
-
+        if r - end > max_len: break
     frag = text[l:r].strip()
     return frag
 
 
 # --- Number/percent tidy (fix '% of' spacing safely) ---
 def tidy_numbers_and_percents(frag: str) -> str:
-    # "40 . 0" → "40.0"
     frag = re.sub(r'(\d)\s*\.\s*(\d)', r'\1.\2', frag)
-    # если после % идёт буква (of/units/words) — ставим ОДИН пробел
     frag = re.sub(r'(?<=\d%)\s*(?=[A-Za-z])', ' ', frag)
-    # если после % идёт пунктуация/скобка — пробел убираем
     frag = re.sub(r'(?<=\d%)\s+(?=[)\]\}\.,;:])', '', frag)
-    # нормализуем множественные пробелы
     frag = re.sub(r'[ \t]{2,}', ' ', frag)
     return frag.strip()
 
 
-def match_rules(doc_id: str,
-                sections: List[Dict[str, Any]],
-                captions: List[Dict[str, Any]],
-                meta: Dict[str, Any],
-                hedge_words: set,
-                rules: List[Rule],
-                rule_hits: Optional[set] = None) -> List[Dict[str, Any]]:
+def match_rules(doc_id: str, sections: List[Dict[str, Any]], captions: List[Dict[str, Any]],
+                meta: Dict[str, Any], hedge_words: set, rules: List[Rule], rule_hits: Optional[set] = None) -> List[
+    Dict[str, Any]]:
     section_weights = {_norm(k): float(v) for k, v in (meta.get("section_weights") or {}).items()}
     nodes: List[Dict[str, Any]] = []
     idx = 0
@@ -362,35 +316,25 @@ def match_rules(doc_id: str,
     capture_bonus = float(conf_boosts.get("capture", 0.05))
     short_penalty = float(conf_boosts.get("short_penalty", 0.06))
 
-    # helper to compute confidence
     def conf_for(rule: Rule, sec_name: str, text: str, *, has_captures: bool, is_caption: bool) -> float:
         w_rule = rule.weight
         w_sec = section_weights.get(_norm(sec_name), 0.6)
-        if is_caption:
-            w_sec = min(1.0, w_sec + caption_boost)
+        if is_caption: w_sec = min(1.0, w_sec + caption_boost)
         pen = 0.1 if _contains_hedge(text, hedge_words) else 0.0
         base = w_rule * w_sec - pen
-        # бонус за валидные captures
-        if has_captures:
-            base += capture_bonus
-        # штраф за крайне короткие фразы (меньше 40 символов)
-        if len(text.strip()) < 40:
-            base -= short_penalty
+        if has_captures: base += capture_bonus
+        if len(text.strip()) < 40: base -= short_penalty
         return max(0.0, min(1.0, base))
 
     # 1) sections
     for sec in sections:
         sname = sec.get("name", "Unknown")
         text = sec.get("text", "")
-        if not text:
-            continue
-
+        if not text: continue
         for rule in rules:
-            if not _section_match(sname, rule.sections):
-                continue
+            if not _section_match(sname, rule.sections): continue
             for frag, span, m in _yield_matches(text, rule):
-                if rule_hits is not None:
-                    rule_hits.add(rule.id)  # <— фиксируем «кто стрелял»
+                if rule_hits is not None: rule_hits.add(rule.id)
                 idx += 1
                 has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
                 node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
@@ -411,14 +355,11 @@ def match_rules(doc_id: str,
     for cap in captions:
         sname = "FigureCaption" if str(cap.get("id", "")).lower().startswith("figure") else "TableCaption"
         text = cap.get("text", "")
-        if not text:
-            continue
+        if not text: continue
         for rule in rules:
-            if not _section_match(sname, rule.sections):
-                continue
+            if not _section_match(sname, rule.sections): continue
             for frag, span, m in _yield_matches(text, rule):
-                if rule_hits is not None:
-                    rule_hits.add(rule.id)  # <— фиксируем «кто стрелял»
+                if rule_hits is not None: rule_hits.add(rule.id)
                 idx += 1
                 has_caps = bool(rule.captures and any((m.groupdict().get(c) or "") for c in rule.captures))
                 node_text = tidy_numbers_and_percents(expand_to_sentence_robust(text, span))
@@ -437,14 +378,13 @@ def match_rules(doc_id: str,
     return nodes
 
 
-# ---------- Post-match utilities (safe prov handling) ----------
+# ---------- Post-match utilities ----------
 def _collect_provs(n: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Собирает провенансы в унифицированном виде [{'section':..., 'span':[s,e]}, ...]."""
     provs: List[Dict[str, Any]] = []
 
     def norm_one(p) -> Optional[Dict[str, Any]]:
-        if not isinstance(p, dict):
-            return None
+        if not isinstance(p, dict): return None
         if "span" in p and isinstance(p["span"], (list, tuple)) and len(p["span"]) == 2:
             s, e = int(p["span"][0]), int(p["span"][1])
         elif "spans" in p and isinstance(p["spans"], list) and p["spans"]:
@@ -474,8 +414,7 @@ def _collect_provs(n: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _span_and_section(n: Dict[str, Any]) -> Tuple[str, Tuple[int, int]]:
     """Возвращает ('section', (start, end)); если пров несколько — охватывающий интервал."""
     provs = _collect_provs(n)
-    if not provs:
-        return "Unknown", (0, 0)
+    if not provs: return "Unknown", (0, 0)
     sec = provs[0]["section"] or "Unknown"
     starts = [p["span"][0] for p in provs]
     ends = [p["span"][1] for p in provs]
@@ -511,10 +450,7 @@ def suppress_overlaps(cands: List[Dict[str, Any]], iou_thr: float = 0.45) -> Lis
             m_sec, _ = _span_and_section(m)
             if n["type"] != m["type"] or (n_sec or "Unknown") != (m_sec or "Unknown"):
                 continue
-            if _iou(n, m) < iou_thr:
-                continue
-
-            # Специфичность: 'pair' выигрывает у 'single'
+            if _iou(n, m) < iou_thr: continue
             n_is_pair = "percent_worse_improve_pair" in (n.get("label") or "")
             m_is_pair = "percent_worse_improve_pair" in (m.get("label") or "")
             if n_is_pair and not m_is_pair:
@@ -557,18 +493,12 @@ def merge_fragment_nodes(nodes: List[Dict[str, Any]], max_gap: int = 24) -> List
         cur_sec, (cur_s, cur_e) = _span_and_section(cur)
         while i < len(nodes):
             nxt = nodes[i]
-            same = (
-                    nxt.get("type") == cur.get("type")
-                    and (nxt.get("label") == cur.get("label"))
-                    and _span_and_section(nxt)[0] == cur_sec
-            )
+            same = (nxt.get("type") == cur.get("type") and (nxt.get("label") == cur.get("label")) and
+                    _span_and_section(nxt)[0] == cur_sec)
             nxt_s, nxt_e = _span_and_section(nxt)[1]
             near = nxt_s - cur_e <= max_gap
-            if not (same and near):
-                break
-            # склеиваем
+            if not (same and near): break
             cur["text"] = (cur.get("text", "") + " " + (nxt.get("text", "") or "")).strip()
-            # расширяем span (пишем обратно в prov как охватывающий)
             cur["prov"] = {"section": cur_sec, "span": [min(cur_s, nxt_s), max(cur_e, nxt_e)]}
             cur_s, cur_e = min(cur_s, nxt_s), max(cur_e, nxt_e)
             cur["conf"] = max(float(cur.get("conf", 0.0)), float(nxt.get("conf", 0.0)))
@@ -590,8 +520,7 @@ def drop_nested_overlaps(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         s1, e1 = _span_and_section(n)[1]
         nested = False
         for m in nodes:
-            if m is n:
-                continue
+            if m is n: continue
             s2, e2 = _span_and_section(m)[1]
             if s2 <= s1 and e1 <= e2 and len((m.get("text") or "")) >= len((n.get("text") or "")):
                 nested = True
@@ -601,7 +530,7 @@ def drop_nested_overlaps(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return keep
 
 
-# ---------- Linking (intra-paper) ----------
+# ---------- Linking ----------
 def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     edges: List[Dict[str, Any]] = []
     by_type: Dict[str, List[Dict[str, Any]]] = {}
@@ -612,17 +541,11 @@ def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) 
 
     def add(frm, to, etype, conf=0.6, hint="rule"):
         key = (frm["id"], to["id"], etype)
-        if key in seen:
-            return
+        if key in seen: return
         seen.add(key)
         edges.append({
-            "from": frm["id"], "to": to["id"], "type": etype,
-            "conf": round(conf, 3),
-            "prov": {
-                "hint": hint,
-                "from_section": _span_and_section(frm)[0],
-                "to_section": _span_and_section(to)[0]
-            }
+            "from": frm["id"], "to": to["id"], "type": etype, "conf": round(conf, 3),
+            "prov": {"hint": hint, "from_section": _span_and_section(frm)[0], "to_section": _span_and_section(to)[0]}
         })
         # пост-хок буст уверенности узлов, вошедших в ребро
         boost = float((meta.get("conf_boosts") or {}).get("edge_participation", 0.02))
@@ -642,46 +565,33 @@ def link_inside(doc_id: str, nodes: List[Dict[str, Any]], meta: Dict[str, Any]) 
 
     # Technique/Method -> Result/Experiment
     for m in by_type.get("Technique", []) + by_type.get("Method", []):
-        neigh_r = _order_by_proximity(m, by_type.get("Result", []))[:2]
-        neigh_e = _order_by_proximity(m, by_type.get("Experiment", []))[:1]
-        for r in neigh_r:
-            add(m, r, "uses", conf=0.64, hint="prox")
-        for e in neigh_e:
-            add(m, e, "uses", conf=0.62, hint="prox")
+        for r in _order_by_proximity(m, by_type.get("Result", []))[:2]: add(m, r, "uses", conf=0.64, hint="prox")
+        for e in _order_by_proximity(m, by_type.get("Experiment", []))[:1]: add(m, e, "uses", conf=0.62, hint="prox")
 
     # Dataset -> Experiment
     for d in by_type.get("Dataset", []):
-        neigh_e = _order_by_proximity(d, by_type.get("Experiment", []))[:1]
-        for e in neigh_e:
-            add(d, e, "feeds", conf=0.60, hint="prox")
+        for e in _order_by_proximity(d, by_type.get("Experiment", []))[:1]: add(d, e, "feeds", conf=0.60, hint="prox")
 
     # Experiment -> Result
     for ex in by_type.get("Experiment", []):
-        neigh_r = _order_by_proximity(ex, by_type.get("Result", []))[:2]
-        for r in neigh_r:
-            add(ex, r, "produces", conf=0.62, hint="prox")
+        for r in _order_by_proximity(ex, by_type.get("Result", []))[:2]: add(ex, r, "produces", conf=0.62, hint="prox")
 
     # Result -> Hypothesis
     for r in by_type.get("Result", []):
-        neigh_h = _order_by_proximity(r, by_type.get("Hypothesis", []))[:2]
-        for h in neigh_h:
+        for h in _order_by_proximity(r, by_type.get("Hypothesis", []))[:2]:
             et = "supports" if r.get("polarity") != "negative" else "refutes"
             add(r, h, et, conf=0.63, hint="prox")
 
     # Input Fact -> Hypothesis
     for f in by_type.get("Input Fact", []):
-        neigh_h = _order_by_proximity(f, by_type.get("Hypothesis", []))[:2]
-        for h in neigh_h:
+        for h in _order_by_proximity(f, by_type.get("Hypothesis", []))[:2]:
             add(f, h, "informs", conf=0.58, hint="prox")
 
     # Result/Dataset/Technique -> Analysis (чтобы в усечённых случаях были рёбра)
     for a in by_type.get("Analysis", []):
-        for r in _order_by_proximity(a, by_type.get("Result", []))[:1]:
-            add(r, a, "informs", conf=0.57, hint="prox")
-        for d in _order_by_proximity(a, by_type.get("Dataset", []))[:1]:
-            add(d, a, "informs", conf=0.56, hint="prox")
-        for t in _order_by_proximity(a, by_type.get("Technique", []))[:1]:
-            add(t, a, "uses", conf=0.56, hint="prox")
+        for r in _order_by_proximity(a, by_type.get("Result", []))[:1]: add(r, a, "informs", conf=0.57, hint="prox")
+        for d in _order_by_proximity(a, by_type.get("Dataset", []))[:1]: add(d, a, "informs", conf=0.56, hint="prox")
+        for t in _order_by_proximity(a, by_type.get("Technique", []))[:1]: add(t, a, "uses", conf=0.56, hint="prox")
 
     return edges
 
@@ -705,8 +615,7 @@ def _compile_seed_regexes(meta: Dict[str, Any]):
 
 def _looks_like_seed(sent: str, seed_res: List[re.Pattern]) -> bool:
     t = sent or ""
-    if len(t) < _SENT_MIN or len(t) > _SENT_MAX:
-        return False
+    if len(t) < _SENT_MIN or len(t) > _SENT_MAX: return False
     return any(r.search(t) for r in seed_res)
 
 
@@ -726,11 +635,8 @@ def gather_gaps(sections: List[Dict[str, Any]], meta: Dict[str, Any], max_gaps: 
     for sec in sections:
         sname = sec.get("name", "Unknown") or "Unknown"
         text = sec.get("text", "") or ""
-        if not text:
-            continue
-        if section_weights.get(_norm(sname), 0.0) < min_w:
-            continue
-
+        if not text: continue
+        if section_weights.get(_norm(sname), 0.0) < min_w: continue
         for sent in _split_sentences(text):
             if _looks_like_seed(sent, seed_res):
                 if _has_lexicon(sent, meta) or not (meta.get("seeds", {}) or {}).get("method_lexicon"):
@@ -846,11 +752,7 @@ def run_s1(
             blocks = [b for b in blocks if b]
         else:
             blocks = paras
-
-        vsecs = []
-        for i, b in enumerate(blocks, 1):
-            vsecs.append({"name": f"VirtualSection {i}", "text": b})
-        return vsecs
+        return [{"name": f"VirtualSection {i}", "text": b} for i, b in enumerate(blocks, 1)]
 
     def virtualize_pathological_sections(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -1083,7 +985,7 @@ def run_s1(
         },
     }
 
-    # ---------- Запись ----------
+    # --- Write S1 artifacts
     outp = Path(out_path)
     out_dir = outp.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1132,7 +1034,6 @@ def _apply_theme_weight_mix(rule_objs: List[Rule], chosen_themes) -> None:
                 break
 
 
-# ---- S1 stats helpers -------------------------------------------------
 def _tally_nodes_by_type(nodes):
     by_type = {}
     for n in nodes:

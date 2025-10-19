@@ -23,3 +23,7 @@ redis>=5.0.7
 
 # Optional PDF utilities if you hook S0 here
 PyMuPDF>=1.24.9
+
+# S1.5 - llm api
+openai>=1.0,<2.0
+pydantic>=2.0,<3.0
