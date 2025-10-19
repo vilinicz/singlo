@@ -2,7 +2,13 @@
 """
 RQ-воркер: оркестрация S0 → S1 → S2
 Сохраняет прогресс и артефакты в Redis для отображения во фронте.
-Добавлено:
+
+Изменения:
+- S0 полностью переведён на GROBID: используем s0_grobid.grobid_fulltext_tei + tei_to_s0
+- Формат s0.json остаётся прежним; путь вывода: DATA_DIR/<doc_id>/s0.json
+- Параметр GROBID_URL читается из окружения (по умолчанию http://grobid:8070)
+
+Также:
 - Тематический роутинг: приём параметра `theme` (auto | name | name1,name2)
 - Предзагрузка реестра тем и прокидка в S1
 """
@@ -17,7 +23,10 @@ from rq import Worker, Queue
 from rq.connections import Connection
 import redis
 
-from .s0 import build_s0
+# --- S0 (GROBID) ---
+from .s0_grobid import grobid_fulltext_tei, tei_to_s0
+
+# --- S1 / S2 ---
 from .s1 import run_s1
 from .s2 import run_s2
 
@@ -194,7 +203,7 @@ def run_pipeline(
     Универсальный раннер S0→S1→S2.
 
     pdf_path: путь к PDF
-    rules_path: путь к rules/common.yaml
+    rules_path: путь к rules/common.yaml (используется в текущей версии S1; будет игнорироваться при переходе на spaCy)
     export_dir: базовая директория вывода артефактов (export/)
     themes_root: директория с themes/* (опционально)
     theme_override: ['biomed','physics'] — ручной выбор тем (опционально; старое имя)
@@ -208,7 +217,7 @@ def run_pipeline(
 
     # нормализация пути (pdf_path может быть каталогом /app/data/<doc_id> или любым «похожим» значением)
     pdf_path = _ensure_pdf_path(pdf_path)
-    export_dir = Path(export_dir).resolve();
+    export_dir = Path(export_dir).resolve()
     export_dir.mkdir(parents=True, exist_ok=True)
     rules_path = str(Path(rules_path).resolve())
     themes_root = str(Path(themes_root).resolve())
@@ -221,6 +230,7 @@ def run_pipeline(
     # 2) выбираем doc_id для папки вывода (до запуска S0)
     doc_id_eff = doc_id or resolved_pdf.stem
     _init_status(doc_id_eff, theme=str(theme) if theme is not None else "auto")
+
     # ВАЖНО: S0 сохраняем в DATA_DIR, т.к. фронт и другие части кода ждут s0.json там
     data_dir = Path(os.getenv("DATA_DIR", "/app/data")).resolve() / doc_id_eff
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -229,18 +239,22 @@ def run_pipeline(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # 3) S0: сохраняем артефакты в DATA_DIR/<doc_id>
+        # 3) S0 (GROBID): сохраняем артефакты в DATA_DIR/<doc_id>
         s0_stage_t = time.time()
-        s0 = build_s0(str(resolved_pdf), str(data_dir))
+        grobid_url = os.getenv("GROBID_URL", "http://grobid:8070")
+        tei = grobid_fulltext_tei(grobid_url, str(resolved_pdf))
+        s0 = tei_to_s0(tei, str(resolved_pdf))
+
         # при необходимости фиксируем doc_id в артефактах
         if doc_id:
             s0["doc_id"] = doc_id
         else:
             doc_id = s0.get("doc_id") or doc_id_eff
+
         # сохраняем s0.json
         s0_path = data_dir / "s0.json"
         s0_path.write_text(json.dumps(s0, ensure_ascii=False, indent=2), encoding="utf-8")
-        _push_stage(doc_id_eff, "S0", s0_stage_t)
+        _push_stage(doc_id_eff, "S0", s0_stage_t, notes=f"GROBID_URL={grobid_url}")
         _set_artifact(doc_id_eff, "s0", str(s0_path))
 
         # --- normalize theme params ---
@@ -248,7 +262,7 @@ def run_pipeline(
 
         # --- S1 ---
         s1_stage_t = time.time()
-        graph_path = out_dir / "graph.json"  # будущее место для S2-выхода
+        graph_path = out_dir / "graph.json"  # место для финального графа (после S2)
         run_s1(
             str(s0_path),
             rules_path,
@@ -288,14 +302,20 @@ def run_pipeline(
 
 # -------- вспомогательная задача: только S0 --------
 def run_s0_only(doc_id: str):
-    data_dir = Path("/app/data") / doc_id
+    """
+    Выполняет только S0 (GROBID) для уже положенного PDF: /app/data/<doc_id>/input.pdf
+    """
+    data_dir = Path(os.getenv("DATA_DIR", "/app/data")).resolve() / doc_id
     pdf_path = data_dir / "input.pdf"
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
     t0 = time.time()
     _init_status(doc_id)
-    s0 = build_s0(str(pdf_path), str(data_dir))
-    _push_stage(doc_id, "S0", t0, notes="standalone S0")
+    grobid_url = os.getenv("GROBID_URL", "http://grobid:8070")
+    tei = grobid_fulltext_tei(grobid_url, str(pdf_path))
+    s0 = tei_to_s0(tei, str(pdf_path))
+    (data_dir / "s0.json").write_text(json.dumps(s0, ensure_ascii=False, indent=2), encoding="utf-8")
+    _push_stage(doc_id, "S0", t0, notes=f"standalone S0 (GROBID_URL={grobid_url})")
     _set_artifact(doc_id, "s0", str(data_dir / "s0.json"))
     _finish_status(doc_id, ok=True)
     return {"doc_id": doc_id, "s0": str(data_dir / "s0.json")}

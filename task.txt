@@ -1,0 +1,106 @@
+## Что сделать (обязательные правки)
+
+### A) Engineering & Technology (2) — и её подкатегория Civil Engineering (2.1)
+
+1. В файле `rules/themes/2-engineering-and-technology/triggers.yaml`:
+
+   * Удали слово `prototype` из `must` (если есть).
+   * Добавь **эти** should-сигналы (вес указать как ниже):
+
+     ```
+     [construction, 1.0]
+     [bim, 1.2]
+     ["building information modeling", 1.2]
+     [bibliometric, 1.0]
+     [vosviewer, 1.1]
+     ["web of science", 0.8]
+     [scopus, 0.8]
+     ["co-occurrence", 0.8]
+     ["co-authorship", 0.7]
+     [prisma, 0.8]
+     ["keyword analysis", 0.8]
+     ```
+   * Установи `threshold` = **0.7**.
+
+2. В файле `rules/themes/2-engineering-and-technology/2.1-civil-engineering/triggers.yaml`:
+
+   * Сделай `must` ровно из: `bim`, `construction`.
+   * Добавь same should из пункта A.1 (можно повторить не все, но как минимум `bim-based`, `construction phase`, `vosviewer`, `bibliometric`, `4d`, `5d`, `clash detection`, `quantity takeoff`, `site management`).
+   * Поставь `threshold` = **0.7**.
+   * В `negative` включи: `spectroscopy`, `genome`, `patient`, `clinical`.
+
+3. В файлах `rules/themes/1-natural-sciences/triggers.yaml` и/или `rules/themes/1-natural-sciences/1.2-computer-and-information-sciences/triggers.yaml`:
+
+   * Добавь в `negative`: `bim`, `construction`, `aec`.
+   * Не трогай остальные части.
+
+### B) Общие правила для YAML-правил (rules.yaml)
+
+В `rules/themes/2-engineering-and-technology/2.1-civil-engineering/rules.yaml` **добавь** минимум 4 новых правила (если подобных ещё нет), с ИМЕННО такими id и параметрами (можно вставить в конец списка):
+
+```yaml
+- id: "2.1/ Dataset/num-docs"
+  type: "Dataset"
+  weight: 0.70
+  sections: ["Introduction","Body","Unknown","FigureCaption","TableCaption"]
+  pattern: "\\b(?:a\\s+total\\s+of\\s+|n\\s*=?\\s*)?(?P<n>\\d{2,5})\\s+(?:documents|records|papers|articles)\\b"
+  negatives: []
+  captures: ["n"]
+
+- id: "2.1/ Technique/vosviewer-bibliometric"
+  type: "Technique"
+  weight: 0.64
+  sections: ["Introduction","Body","Unknown","FigureCaption","TableCaption"]
+  pattern: "\\bvosviewer\\b|\\bbibliometric\\s+(?:analysis|mapping)\\b"
+  negatives: []
+
+- id: "2.1/ Hypothesis/aim-objective"
+  type: "Hypothesis"
+  weight: 0.60
+  sections: ["Introduction","Body","Unknown"]
+  pattern: "\\b(?:aim|objective|goal)s?\\s+(?:is|was|are|were)\\s+to\\s+.+"
+  negatives: ["\\bnot\\s+to\\b"]
+
+- id: "2.1/ Result/bim-contribution"
+  type: "Result"
+  weight: 0.63
+  sections: ["Introduction","Body","Unknown","FigureCaption","TableCaption"]
+  pattern: "\\bbim\\b.{0,80}\\b(?:enables|improves|reduces|supports|visualiz(?:e|ation)|optim(?:ize|isation))\\b"
+  negatives:
+    - "\\bnot\\s+(?:significant|improv(e|es|ed)|support)\\b"
+    - "\\bno\\s+evidence\\b"
+```
+
+> **Важно:** если похожие правила уже есть, всё равно добавь ровно эти 4 с указанными `id` (они нужны как «маяки» для приёмки).
+
+### C) Секции у правил
+
+Проверь базовые правила в `rules.yaml` инженерных веток: если у них отсутствуют секции `"Introduction","Body","Unknown"`, **добавь** их в `sections` (особенно для обзоров). Ничего больше в этих правилах не меняй.
+
+### D) Негативы по верхним разделам
+
+В `rules/themes/1-natural-sciences/triggers.yaml` добавь `negative: [bim, construction, aec]`.
+В `rules/themes/2-engineering-and-technology/triggers.yaml` добавь `negative: [patient, clinical, genome]`.
+Если эти негативы уже есть — оставь как есть.
+
+---
+
+## Что **НЕЛЬЗЯ** делать
+
+* Никаких `pip install`, `apt-get`, запуска линтеров и тестов.
+* Не правь код Python.
+* Не изменяй структуру директорий и имена файлов.
+* Не удаляй существующие правила, только добавляй/редактируй по списку выше.
+
+---
+
+## Что вернуть (артефакты приёмки)
+
+1. Список изменённых файлов с построчными номерами правок (формат mini-diff, без команд, просто блоки `@@` с +/- строками).
+2. Короткий свод: какие `must/should/negative` добавлены в каждой из трёх правок A.1–A.3.
+3. Подтверждение, что в `rules/themes/2.1-civil-engineering/rules.yaml` появились **ровно** 4 указанных правила с заданными `id`.
+4. Проверка секций: перечень правил в инженерных ветках, куда ты добавил `"Introduction","Body","Unknown"`.
+
+**Definition of Done:**
+После этих правок роутер (без fallback) сможет выбрать `2-engineering-and-technology` и/или `2.1-civil-engineering` на статьях про BIM/библиометрику (интро-уровень текста), а S1 начнёт выдавать **минимум** узлы `Dataset(num-docs)`, `Technique(vosviewer-bibliometric)`, `Hypothesis(aim-objective)`, `Result(bim-contribution)`.
+

@@ -175,7 +175,7 @@ def section_matches_rule(sec_role: str, sec_name: str, rule_sections: List[str])
     return any(s in low_name for s in rs)
 
 
-# ---------- Load rules with validation ----------
+# ---------- Load legacy_rules with validation ----------
 def load_rules(path: str):
     cfg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     if not isinstance(cfg, dict):
@@ -245,7 +245,7 @@ def load_rules_merged(paths: List[str]) -> Tuple[Dict[str, Any], set, List[Rule]
         if thr:
             merged_meta.setdefault("conf_thresholds", {}).update(thr)
 
-        # hedges / rules / relations — как было
+        # hedges / legacy_rules / relations — как было
         hedges_all |= set(hedge_words or [])
         all_rules.extend(rules or [])
         all_rel.extend(relations or [])
@@ -659,12 +659,12 @@ def run_s1(
         rules_path: str,
         out_path: str,
         *,
-        themes_root: str = "/app/rules/themes",
+        themes_root: str = "/app/legacy_rules/themes",
         theme_override: Optional[List[str]] = None,
         theme_registry: Optional[ThemeRegistry] = None,
 ) -> Dict[str, Any]:
     """
-    1) грузит s0.json и rules (common.yaml + тематические пакеты);
+    1) грузит s0.json и legacy_rules (common.yaml + тематические пакеты);
     2) нормализует секции (role + soft_weight) и, при необходимости, виртуализирует одну большую секцию;
     3) матч правил по секциям/капшенам -> кандидаты узлов (с учётом роли секции в conf);
     4) постобработка (склейка/анти-дубликат/супресс перекрытий) и пороги -> nodes;
@@ -694,7 +694,7 @@ def run_s1(
         chosen=chosen,
         common_path=rules_path,
     )
-    rule_files = [str(p) for p in files.get("rules", [])]
+    rule_files = [str(p) for p in files.get("legacy_rules", [])]
     lexicon_files = [str(p) for p in files.get("lexicons", [])]
 
     # ---------- Загрузка и мерж правил ----------
@@ -978,7 +978,7 @@ def run_s1(
             "edges_total": len(edges_final),
             "edges_by_type": _tally(edges_final, "type"),
         },
-        "rules": {
+        "legacy_rules": {
             "packs_active": rule_files,
             "rules_fired_total": len(rule_hits),
             "rules_fired": sorted(list(rule_hits))[:500],
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--s0", required=True)
-    ap.add_argument("--rules", required=True)
+    ap.add_argument("--legacy_rules", required=True)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     run_s1(args.s0, args.rules, args.out)

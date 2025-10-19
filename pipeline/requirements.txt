@@ -1,13 +1,12 @@
 # Core
 pydantic>=2.8
 pyyaml>=6.0.1
-regex>=2024.5.15
+regex>=2024.5.15 # delete?
 # rapidfuzz>=3.9.6
 # pint>=0.23
 
 # NLP
-# spacy>=3.7.5
-# negspacy>=1.0.3
+spacy>=3.8.7
 
 # Embeddings (S2) - можно отключить, если не нужно на хакатоне
 # sentence-transformers>=3.0.1

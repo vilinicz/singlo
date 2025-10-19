@@ -1,4 +1,4 @@
-# Мини-схема для rules.yaml (похожа на ваш common.yaml)
+# Мини-схема для legacy_rules.yaml (похожа на ваш common.yaml)
 type: object
 required: [version, elements]
 properties:

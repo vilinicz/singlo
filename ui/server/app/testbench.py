@@ -39,8 +39,8 @@ DATASET_ROOT = Path("/app/dataset")  # пробросим в Docker
 WORKDIR = Path("/app/workdir").resolve()
 DATA_DIR = Path(os.getenv("DATA_DIR", "/app/data")).resolve()  # ⟵ добавь это
 EXPORT_DIR = Path(os.getenv("EXPORT_DIR", "/app/export")).resolve()  # ⟵ и это (полезно для отчётов)
-RULES_PATH = os.getenv("RULES_PATH", "/app/rules/common.yaml")
-THEMES_ROOT = os.getenv("THEMES_ROOT", "/app/rules/themes")
+RULES_PATH = os.getenv("RULES_PATH", "/app/legacy_rules/common.yaml")
+THEMES_ROOT = os.getenv("THEMES_ROOT", "/app/legacy_rules/themes")
 
 # Какие имена файлов считаем артефактами
 S0_NAMES = ("s0.json",)

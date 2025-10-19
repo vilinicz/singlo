@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # ---------- Themes registry (preload once) ----------
-RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")
+RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/legacy_rules")
 THEMES_DIR = os.getenv("THEMES_DIR", str(Path(RULES_BASE_DIR) / "themes"))
 THEME_REGISTRY = themes_preload(THEMES_DIR)  # быстрый реестр + инвертированный индекс
 
@@ -46,7 +46,7 @@ app.add_middleware(
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 DATA_DIR = Path("/app/data")
 EXPORT_DIR = Path("/app/export")
-RULES_PATH = os.getenv("S1_RULES_PATH", "/app/rules/common.yaml")
+RULES_PATH = os.getenv("S1_RULES_PATH", "/app/legacy_rules/common.yaml")
 
 # -------------------- Redis helpers --------------------
 def _r():

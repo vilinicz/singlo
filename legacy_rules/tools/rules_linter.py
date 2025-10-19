@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-rules_linter.py — линтер для Singularis S1: rules/common.yaml + themes/*/{rules,triggers,lexicon}.yaml
+rules_linter.py — линтер для Singularis S1: legacy_rules/common.yaml + themes/*/{legacy_rules,triggers,lexicon}.yaml
 
 Запуск:
   python rules_linter.py                      # автопоиск файлов от корня проекта
-  python rules_linter.py --paths rules/common.yaml themes/biomed/rules.yaml
+  python rules_linter.py --paths legacy_rules/common.yaml themes/biomed/legacy_rules.yaml
   python rules_linter.py --root . --json report.json --strict
 
 Код выхода:
@@ -282,8 +282,8 @@ def lint_lexicon_yaml(path: Path, rep: Report):
 def discover_paths(root: Path) -> List[Path]:
     """Ищем известные файлы по структуре проекта."""
     paths: List[Path] = []
-    # rules
-    common = root / "rules" / "common.yaml"
+    # legacy_rules
+    common = root / "legacy_rules" / "common.yaml"
     if common.exists(): paths.append(common)
     # themes
     themes_dir = root / "themes"
