@@ -5,7 +5,8 @@ RQ-воркер: оркестрация S0 → S1 → S2
 
 Изменения:
 - S0 полностью переведён на GROBID: используем s0_grobid.grobid_fulltext_tei + tei_to_s0
-- Формат s0.json остаётся прежним; путь вывода: DATA_DIR/<doc_id>/s0.json
+- PDF всегда копируется в DATA_DIR/<doc_id>/input.pdf (как в legacy), рядом сохраняется s0.json
+- Формат s0.json остаётся прежним
 - Параметр GROBID_URL читается из окружения (по умолчанию http://grobid:8070)
 
 Также:
@@ -16,6 +17,7 @@ RQ-воркер: оркестрация S0 → S1 → S2
 import os
 import time
 import json
+import shutil
 from pathlib import Path
 from typing import Optional, List, Union
 
@@ -238,18 +240,35 @@ def run_pipeline(
     out_dir = Path(export_dir).resolve() / doc_id_eff
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # 2.1) Всегда иметь локальную копию PDF: /app/data/<doc_id>/input.pdf
+    pdf_copy = data_dir / "input.pdf"
+    try:
+        if resolved_pdf.resolve() != pdf_copy.resolve():
+            pdf_copy.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(resolved_pdf, pdf_copy)
+        else:
+            if not pdf_copy.exists():
+                shutil.copy2(resolved_pdf, pdf_copy)
+        _set_artifact(doc_id_eff, "pdf", str(pdf_copy))
+    except Exception as copy_err:
+        _finish_status(doc_id_eff, ok=False, err_msg=f"Failed to copy PDF: {copy_err}")
+        raise
+
     try:
         # 3) S0 (GROBID): сохраняем артефакты в DATA_DIR/<doc_id>
         s0_stage_t = time.time()
         grobid_url = os.getenv("GROBID_URL", "http://grobid:8070")
-        tei = grobid_fulltext_tei(grobid_url, str(resolved_pdf))
-        s0 = tei_to_s0(tei, str(resolved_pdf))
+        tei = grobid_fulltext_tei(grobid_url, str(pdf_copy))  # используем локальную копию
+        s0 = tei_to_s0(tei, str(pdf_copy))
 
         # при необходимости фиксируем doc_id в артефактах
         if doc_id:
             s0["doc_id"] = doc_id
         else:
             doc_id = s0.get("doc_id") or doc_id_eff
+
+        # принудительно прописываем путь к локальной копии PDF
+        s0["source_pdf"] = str(pdf_copy)
 
         # сохраняем s0.json
         s0_path = data_dir / "s0.json"
@@ -262,11 +281,10 @@ def run_pipeline(
 
         # --- S1 ---
         s1_stage_t = time.time()
-        graph_path = out_dir / "graph.json"  # место для финального графа (после S2)
         run_s1(
             str(s0_path),
             rules_path,
-            str(graph_path),
+            str(out_dir / "graph.json"),  # просто передаём путь куда S2 потом положит финальный граф
             themes_root=themes_root,
             theme_override=themes_sel
         )
@@ -278,7 +296,11 @@ def run_pipeline(
 
         # --- S2 ---
         s2_stage_t = time.time()
-        run_s2(str(s1_graph), str(graph_path))  # создаст graph.json и s2_debug.json в out_dir
+        # ВАЖНО: run_s2 ожидает ПАПКУ, внутри сам откроет s1_graph.json
+        run_s2(str(out_dir))
+        graph_path = out_dir / "graph.json"
+        if not graph_path.exists():
+            raise RuntimeError(f"graph.json not found at {graph_path}")
         _push_stage(doc_id_eff, "S2", s2_stage_t)
         _set_artifact(doc_id_eff, "graph", str(graph_path))
         s2_debug = out_dir / "s2_debug.json"

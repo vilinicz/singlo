@@ -2,6 +2,9 @@ rq==1.15.1
 redis>=5.0.7
 fastapi>=0.114.2
 uvicorn[standard]>=0.30.6
-pydantic>=2.8
+pydantic>=2.8,<3.0
 python-multipart>=0.0.9
-PyMuPDF>=1.24.9
+#PyMuPDF>=1.24.9
+# HTTP/XML for GROBID S0
+requests>=2.32.3
+lxml>=5.3.0

@@ -1,28 +1,20 @@
 # Core
-pydantic>=2.8
+pydantic>=2.8,<3.0
 pyyaml>=6.0.1
-regex>=2024.5.15 # delete?
-# rapidfuzz>=3.9.6
-# pint>=0.23
+regex>=2024.5.15
+
+# HTTP/XML for GROBID S0
+lxml>=5.3.0
 
 # NLP
 spacy>=3.8.7
 
-# Embeddings (S2) - можно отключить, если не нужно на хакатоне
-# sentence-transformers>=3.0.1
-# faiss-cpu>=1.8.0.post1
-
-# IO
-# ujson>=5.10.0
-# orjson>=3.10.7
-
-# Queue (пример с RQ; можно заменить на Celery/Arq)
+# Queue
 rq==1.15.1
 redis>=5.0.7
 
-# Optional PDF utilities if you hook S0 here
-PyMuPDF>=1.24.9
+# Optional PDF utilities
+#PyMuPDF>=1.24.9
 
 # S1.5 - llm api
 openai>=1.0,<2.0
-pydantic>=2.0,<3.0
