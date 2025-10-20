@@ -2,7 +2,7 @@
 """
 S1 (spaCy + data-driven patterns) → s1_graph.json / s1_debug.json
 
-Вход теперь ТОЛЬКО плоский S0:
+Вход ТОЛЬКО плоский S0:
   s0["sentences"] = [
     {"text": "...", "page": 0, "bbox": [x0,y0,x1,y1], "section_hint": "INTRO|METHODS|RESULTS|DISCUSSION|REFERENCES|OTHER",
      "is_caption": false, "caption_type": ""|"Figure"|"Table"}
@@ -26,10 +26,6 @@ S1 (spaCy + data-driven patterns) → s1_graph.json / s1_debug.json
 Fallback (если рёбер нет, а узлы есть):
   Result → Hypothesis : supports|refutes (1–2 ребра)
   Technique → (Experiment|Result) : uses (1–2 ребра)
-
-Примечание:
-- rules_path не используется (оставлен ради совместимости интерфейса).
-- theme_override — список имён тем (['biomed','physics']) или None → подключаем только 'common'.
 """
 
 from __future__ import annotations
@@ -57,7 +53,8 @@ SECTION_PRIORS = {
     "INTRO": {"Hypothesis": 1.10, "Input Fact": 1.05, "Conclusion": 1.00},
     "METHODS": {"Technique": 1.15, "Experiment": 1.12, "Dataset": 1.10, "Analysis": 1.05},
     "RESULTS": {"Result": 1.18, "Analysis": 1.08},
-    "DISCUSSION": {"Conclusion": 1.15, "Hypothesis": 1.05, "Result": 1.03, "Analysis": 1.03},
+    # NOTE: усилили Result в DISCUSSION, чтобы «словесные» связи проходили увереннее
+    "DISCUSSION": {"Conclusion": 1.15, "Hypothesis": 1.05, "Result": 1.10, "Analysis": 1.03},
     "REFERENCES": {},
     "OTHER": {"Input Fact": 1.02}
 }
@@ -117,7 +114,8 @@ def _contains_any(tokens_lower: List[str], vocab: Set[str]) -> bool:
 
 def _has_numeric(text: str) -> bool:
     # быстрый признак «есть числа/проценты/p-values»
-    return any(c.isdigit() for c in text) or "%" in text or " p<" in text.lower() or " p =" in text.lower()
+    t = text.lower()
+    return any(c.isdigit() for c in t) or "%" in t or " p<" in t or " p =" in t
 
 
 def _polarity(text: str) -> str:
@@ -152,121 +150,6 @@ def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
         yield i, s
 
 
-def _mk_rule_key(label_type: str, source_rel: str, idx: int, engine: str) -> str:
-    # пример: "Result||src=themes/biomed/patterns/matcher.json#12||engine=token"
-    return f"{label_type}||src={source_rel}#{idx}||engine={engine}"
-
-
-def _parse_rule_key(vocab, match_id) -> dict:
-    key = vocab.strings[match_id] if isinstance(match_id, int) else str(match_id)
-    # ожидаем формат как в _mk_rule_key
-    out = {"type": None, "source": None, "index": None, "engine": None, "raw": key}
-    parts = key.split("||")
-    if parts:
-        out["type"] = parts[0]
-    for p in parts[1:]:
-        if p.startswith("src="):
-            src = p[4:]
-            if "#" in src:
-                src_path, idx = src.rsplit("#", 1)
-                out["source"] = src_path
-                try:
-                    out["index"] = int(idx)
-                except:
-                    out["index"] = idx
-            else:
-                out["source"] = src
-        elif p.startswith("engine="):
-            out["engine"] = p.split("=", 1)[1]
-    return out
-
-
-def _canon_type_from_key(key_type: str) -> str | None:
-    # TYPE_CANON объявлен выше (как и раньше)
-    return TYPE_CANON.get((key_type or "").lower().replace(" ", ""))
-
-
-def _load_spacy_patterns(nlp,
-                         themes_root: str,
-                         theme_override: Optional[List[str]] = None
-                         ) -> Tuple[Matcher, DependencyMatcher, Dict[str, float], List[dict]]:
-    """
-    Возвращает: matcher, depmatcher, type_boosts, registry
-    registry: [{ "type": "Result", "engine":"token", "source":"themes/biomed/patterns/matcher.json", "index":12, "key":"..." }, ...]
-    """
-    matcher = Matcher(nlp.vocab)
-    depmatcher = DependencyMatcher(nlp.vocab)
-    registry: List[dict] = []
-
-    themes_root_path = Path(themes_root or "/app/rules/themes")
-    roots = []
-    if theme_override:
-        for t in theme_override:
-            roots.append(themes_root_path / t / "patterns")
-    roots.append(themes_root_path / "common" / "patterns")  # common всегда
-
-    def relpath(p: Path) -> str:
-        try:
-            return str(p.relative_to(themes_root_path.parent))
-        except Exception:
-            return str(p)
-
-    for r in roots:
-        if not r.exists():
-            continue
-        # token matcher
-        mfile = r / "matcher.json"
-        if mfile.exists():
-            try:
-                items = json.loads(mfile.read_text(encoding="utf-8"))
-                if isinstance(items, list):
-                    for idx, it in enumerate(items):
-                        label = _canon_type(str(it.get("label", "")))
-                        pattern = it.get("pattern")
-                        if not label or not pattern:
-                            continue
-                        key = _mk_rule_key(label, relpath(mfile), idx, "token")
-                        matcher.add(key, [pattern])
-                        registry.append(
-                            {"type": label, "engine": "token", "source": relpath(mfile), "index": idx, "key": key})
-                # else ignore
-            except Exception:
-                pass
-        # dependency matcher
-        dfile = r / "depmatcher.json"
-        if dfile.exists():
-            try:
-                items = json.loads(dfile.read_text(encoding="utf-8"))
-                if isinstance(items, list):
-                    for idx, it in enumerate(items):
-                        label = _canon_type(str(it.get("label", "")))
-                        pat = it.get("pattern")
-                        if not label or not pat:
-                            continue
-                        key = _mk_rule_key(label, relpath(dfile), idx, "dep")
-                        depmatcher.add(key, [pat])
-                        registry.append(
-                            {"type": label, "engine": "dep", "source": relpath(dfile), "index": idx, "key": key})
-            except Exception:
-                pass
-
-    # type boosts
-    type_boosts: Dict[str, float] = {}
-    for r in roots:
-        lfile = r.parent / "lexicon.json"
-        if lfile.exists():
-            try:
-                lex = json.loads(lfile.read_text(encoding="utf-8"))
-                for k, v in (lex.get("type_boosts") or {}).items():
-                    t = _canon_type(str(k))
-                    if t:
-                        type_boosts[t] = float(v)
-            except Exception:
-                pass
-
-    return matcher, depmatcher, type_boosts, registry
-
-
 # ─────────────────────────────────────────────────────────────
 # Оценка и выбор типа
 # ─────────────────────────────────────────────────────────────
@@ -275,7 +158,7 @@ def _score_sentence(nlp_doc: Doc,
                     text: str,
                     imrad_hint: str,
                     matcher: Matcher,
-                    depmatcher: DependencyMatcher,
+                    depmatcher: Optional[DependencyMatcher],
                     type_boosts: Dict[str, float],
                     dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any], List[dict]]:
     hits: Dict[str, float] = {}
@@ -283,33 +166,35 @@ def _score_sentence(nlp_doc: Doc,
 
     # token patterns
     for match_id, start, end in matcher(nlp_doc):
-        meta = _parse_rule_key(nlp_doc.vocab, match_id)
-        tname = _canon_type_from_key(meta["type"]) or meta["type"]
+        label = nlp_doc.vocab.strings[match_id]
+        tname = _canon_type(label) or label
         if tname in NODE_TYPES:
             hits[tname] = hits.get(tname, 0.0) + 1.0
             frag = nlp_doc[start:end].text
-            meta_out = {**meta, "span": [start, end], "text": frag}
-            matched_rules.append(meta_out)
+            matched_rules.append({"type": tname, "engine": "token", "span": [start, end], "text": frag})
 
     # dep patterns
-    if dep_enabled:
-        for match_id, (token_ids,) in depmatcher(nlp_doc):
-            meta = _parse_rule_key(nlp_doc.vocab, match_id)
-            tname = _canon_type_from_key(meta["type"]) or meta["type"]
+    if dep_enabled and depmatcher is not None:
+        # NOTE: корректная итерация по DependencyMatcher — token_maps, а не кортеж
+        for match_id, token_maps in depmatcher(nlp_doc):
+            label = nlp_doc.vocab.strings[match_id]
+            tname = _canon_type(label) or label
             if tname in NODE_TYPES:
                 hits[tname] = hits.get(tname, 0.0) + 1.2
-                # соберём компактный фрагмент-окно
-                toks = [nlp_doc[i].text for i in token_ids if 0 <= i < len(nlp_doc)]
-                meta_out = {**meta, "tokens": toks}
-                matched_rules.append(meta_out)
+                toks = []
+                for node_map in token_maps:
+                    for i in node_map.values():
+                        if 0 <= i < len(nlp_doc):
+                            toks.append(nlp_doc[i].text)
+                matched_rules.append({"type": tname, "engine": "dep", "tokens": toks})
 
     if not hits:
         return None, 0.0, {"hits": {}}, matched_rules
 
-    prior_mult = {t: SECTION_PRIORS.get(imrad_hint or "OTHER", {}).get(t, 1.0) for t in hits.keys()}
-    base_mult = {t: BASE_TYPE_WEIGHTS.get(t, 1.0) for t in hits.keys()}
+    prior_mult = {t: _section_prior(imrad_hint, t) for t in hits.keys()}
+    base_mult = {t: _base_type_weight(t) for t in hits.keys()}
     theme_mult = {t: type_boosts.get(t, 1.0) for t in hits.keys()}
-    hedge = HEDGE_PENALTY if any(tok.text.lower() in HEDGING for tok in nlp_doc) else 0.0
+    hedge = _hedge_penalty_from_doc(nlp_doc)
     num_bonus = NUMERIC_BONUS if _has_numeric(text) else 0.0
 
     scored: Dict[str, float] = {}
@@ -483,11 +368,11 @@ def run_s1(s0_path: str,
 
     # загрузка spaCy и паттернов
     nlp, dep_enabled, model_name = load_spacy_model()
-    matcher, depmatcher, type_boosts, registry = load_spacy_patterns(
+    # NOTE: spacy_loader теперь возвращает loaded_paths, а не registry
+    matcher, depmatcher, type_boosts, loaded_paths = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
     themes_used = theme_override or ["common"]
-    pattern_sources = sorted({r["source"] for r in registry})
 
     nodes: List[Dict[str, Any]] = []
     debug_hits: List[Dict[str, Any]] = []
@@ -509,7 +394,7 @@ def run_s1(s0_path: str,
         doc = nlp(text)
         tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
 
-        # --- citation guard:References/цитатные фразы → Input Fact, не Result/Technique/... ---
+        # --- citation guard: References/цитатные фразы → Input Fact ---
         text_l = text.lower()
         # эвристики цитирования: [12], (Smith, 2010), [Medline], [CrossRef], длинные блоки ссылок
         looks_like_citation = (
@@ -526,16 +411,14 @@ def run_s1(s0_path: str,
                 tname, conf = "Input Fact", 0.45
             elif tname != "Input Fact":
                 tname = "Input Fact"
-                conf = min(conf, 0.45)  # не даём «перетягивать» семантику
-            # можно также выкинуть такие предложения вовсе:
-            # if in_refs: continue
+                conf = min(conf, 0.45)
 
         if not tname or conf < CONF_NODE_MIN:
             continue
 
         pol = _polarity(text)
 
-        # секционное имя
+        # секционное имя (для фронта/аналитики)
         if is_cap and cap_type == "Figure":
             section_name = "FigureCaption"
         elif is_cap and cap_type == "Table":
@@ -548,7 +431,7 @@ def run_s1(s0_path: str,
             section_name=section_name, imrad_hint=imrad,
             s_idx=s_idx, page=page, bbox=bbox, polarity=pol
         )
-        node["matched_rules"] = rule_hits  # список объектов: {type, source, index, engine, span/text|tokens, raw}
+        node["matched_rules"] = rule_hits
         nodes.append(node)
         debug_hits.append({
             "sec": section_name, "imrad": imrad, "text": text[:200],
@@ -563,7 +446,7 @@ def run_s1(s0_path: str,
     s1_graph = {
         "doc_id": doc_id,
         "themes_used": themes_used,  # НОВОЕ
-        "pattern_sources": pattern_sources,  # НОВОЕ
+        "pattern_sources": loaded_paths,
         "spacy_model": model_name,  # опционально, но полезно
         "dep_enabled": bool(dep_enabled),  # опционально
         "nodes": nodes,

@@ -277,13 +277,17 @@ def run_pipeline(
 
         # --- normalize theme params ---
         themes_sel = _normalize_theme_override(theme=theme, theme_override=theme_override)
+        # фильтруем мусор: если пришло ["auto"], считаем как None
+        if themes_sel:
+            themes_sel = [t for t in themes_sel if str(t).strip().lower() not in {"", "auto"}]
+        # если после фильтра пусто — запускаем авто-детект через роутер
         if not themes_sel:
             try:
-                from .themes_router import detect_topics  # новая функция ниже
+                from .themes_router import detect_topics
                 themes_sel = detect_topics(s0, THEME_REGISTRY) or []
             except Exception:
                 themes_sel = []
-        # минимум всегда подключаем common (его и так добавит S1 на своей стороне, но пусть будет явно)
+        # гарантируем common
         if "common" not in themes_sel:
             themes_sel.append("common")
 

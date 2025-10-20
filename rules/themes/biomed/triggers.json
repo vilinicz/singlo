@@ -1,0 +1,12 @@
+{
+  "any": [
+    "\\bp\\s*(?:<|=)\\s*0?\\.\\d+",
+    "\\bfisher(?:'s)?\\b",
+    "\\bspearman(?:'s)?\\b",
+    "\\bregression\\b",
+    "\\bcohort\\b|\\bparticipants?\\b|\\bsubjects?\\b",
+    "\\b(l\\.\\s*[a-z]+|lactobacillus|streptococcus)\\b"
+  ],
+  "intro_bias": ["\\baims?\\b|\\bobjective[s]?\\b"],
+  "methods_bias": ["\\bmaterials? and methods?\\b|\\bstatistical analysis\\b"]
+}

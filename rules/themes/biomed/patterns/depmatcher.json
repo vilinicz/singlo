@@ -1,44 +1,35 @@
 [
-
   {
     "label": "Result",
-    "pattern": {
-      "nodes": [
-        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["associate","correlate","affect","influence","increase","decrease","demonstrate","show"]}}},
-        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "advmod", "RIGHT_ATTRS": {"LOWER": {"IN": ["significantly","significant"]}}, "OP": "?"},
-        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}},
-        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj",  "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","attr","pobj"]}}}
-      ],
-      "edges": [
-        {"source": "verb", "target": "subj"},
-        {"source": "verb", "target": "obj"}
-      ]
-    }
+    "pattern": [
+      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["associate","correlate","affect","influence","increase","decrease","demonstrate","show"]}}},
+      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "advmod", "RIGHT_ATTRS": {"LOWER": {"IN": ["significantly","significant"]}}, "OP": "?"},
+      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}},
+      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj",  "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","attr","pobj"]}}}
+    ]
   },
-
+  {
+    "label": "Result",
+    "pattern": [
+      {"RIGHT_ID": "root", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["observe","find","see","correlate","associate"]}}},
+      {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "between", "RIGHT_ATTRS": {"LOWER": "between"}},
+      {"LEFT_ID": "between", "REL_OP": ">", "RIGHT_ID": "obj1", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","dobj","obl"]}}},
+      {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "andtok", "RIGHT_ATTRS": {"LOWER": "and"}},
+      {"LEFT_ID": "andtok", "REL_OP": ">", "RIGHT_ID": "obj2", "RIGHT_ATTRS": {"DEP": {"IN": ["conj","pobj","dobj","obl"]}}}
+    ]
+  },
   {
     "label": "Technique",
-    "pattern": {
-      "nodes": [
-        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["isolate","measure","identify","sequence","incubate","plate","grow","wash","centrifuge","filter"]}}},
-        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
-      ],
-      "edges": [
-        {"source": "verb", "target": "obj"}
-      ]
-    }
+    "pattern": [
+      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["isolate","measure","identify","sequence","incubate","plate","grow","wash","centrifuge","filter"]}}},
+      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
+    ]
   },
-
   {
     "label": "Analysis",
-    "pattern": {
-      "nodes": [
-        {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["analyze","analyse","evaluate","assess","test","estimate","regress","compute"]}}},
-        {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
-      ],
-      "edges": [
-        {"source": "verb", "target": "obj"}
-      ]
-    }
+    "pattern": [
+      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["analyze","analyse","evaluate","assess","test","estimate","regress","compute"]}}},
+      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
+    ]
   }
 ]
