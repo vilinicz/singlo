@@ -43,7 +43,23 @@
   { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["regression","anova","t-test","ttest","logistic","cox","glm","mixed-effects","bayesian","fisher","welch","spearman","rho","exact"]}} ] },
 
 
-  { "label": "Hypothesis", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["hypothesize","hypothesise","propose","posits","assume","suggest"]}}, {"LOWER": "that", "OP": "?"} ] },
+ {
+  "label": "Hypothesis",
+  "pattern": [
+    {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
+    {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","aim","aimed","aims","objective","objectives","goal"]}},
+    {"LOWER": "to", "OP": "?"}
+  ]
+},
+{
+  "label": "Hypothesis",
+  "pattern": [
+    {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
+    {"LOWER": {"IN": ["study","work","paper"]}},
+    {"LOWER": {"IN": ["aims","aimed","seeks","intends"]}},
+    {"LOWER": "to", "OP": "?"}
+  ]
+},
 
 
   { "label": "Input Fact", "pattern": [ {"LOWER": {"IN": ["according","previous","prior","it","it","it"]}}, {"LOWER": {"IN": ["to","studies","work","is","is","is"]}, "OP": "?"} ] },
@@ -54,6 +70,12 @@
   { "label": "Input Fact", "pattern": [ {"TEXT": {"REGEX": "^\\([A-Z][a-z]+(\\s+et\\sal\\.)?,\\s?\\d{4}(;\\s?\\d{4})*\\)$"}} ] },
 
 
-  { "label": "Conclusion", "pattern": [ {"LOWER": {"IN": ["in","overall","in","to"]}}, {"LOWER": {"IN": ["conclusion","summary","sum","conclude","conclusion,","summary,"]}} ] },
-  { "label": "Conclusion", "pattern": [ {"LOWER": {"IN": ["we","these","our"]}}, {"LOWER": {"IN": ["conclude","results","findings","observations"]}}, {"LOWER": {"IN": ["suggest","indicate","support","imply"]}} ] }
+ {
+  "label": "Conclusion",
+  "pattern": [
+    {"LOWER": {"IN": ["these","overall","in","to"]}, "OP": "?"},
+    {"LOWER": {"IN": ["results","findings","observations","conclusion","summary","conclude"]}},
+    {"LOWER": {"IN": ["suggest","indicate","support","imply","show"]}}
+  ]
+}
 ]

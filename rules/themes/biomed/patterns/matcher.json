@@ -1,10 +1,9 @@
 [
-
   {
     "label": "Hypothesis",
     "pattern": [
       {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["aim","aimed","aims","objective","objectives","goal","hypothesize","hypothesise","propose","postulate","test"]}},
+      {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","aim","aimed","aims","objective","objectives","goal"]}},
       {"LOWER": "to", "OP": "?"}
     ]
   },
@@ -13,11 +12,10 @@
     "pattern": [
       {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
       {"LOWER": {"IN": ["study","work","paper"]}},
-      {"LOWER": {"IN": ["was","were","seeks","intends"]}},
-      {"LOWER": {"IN": ["to","investigate","examine","reveal","determine"]}}
+      {"LOWER": {"IN": ["aims","aimed","seeks","intends"]}},
+      {"LOWER": "to", "OP": "?"}
     ]
   },
-
 
   {
     "label": "Dataset",
@@ -52,7 +50,6 @@
     ]
   },
 
-
   {
     "label": "Technique",
     "pattern": [
@@ -78,7 +75,6 @@
     ]
   },
 
-
   {
     "label": "Experiment",
     "pattern": [
@@ -93,7 +89,6 @@
       {"LOWER": {"IN": ["regression","exact","test","rho","analysis","analyses"]}}
     ]
   },
-
 
   {
     "label": "Analysis",
@@ -125,7 +120,6 @@
     ]
   },
 
-
   {
     "label": "Result",
     "pattern": [
@@ -145,20 +139,33 @@
   {
     "label": "Result",
     "pattern": [
-      {"LOWER": {"IN": ["positive","negative"]}},
-      {"LOWER": {"IN": ["association","correlation","tendency","influence"]}}
+      {"LOWER": {"IN": ["positive","negative","strong","weak"]}},
+      {"LOWER": {"IN": ["tendency","association","correlation","relationship","link"]}},
+      {"LOWER": "between"},
+      {"IS_ALPHA": true, "OP": "+"},
+      {"LOWER": "and"},
+      {"IS_ALPHA": true, "OP": "+"}
     ]
   },
-
+  {
+    "label": "Result",
+    "pattern": [
+      {"LOWER": {"IN": ["observed","found","seen"]}},
+      {"LOWER": "between"},
+      {"IS_ALPHA": true, "OP": "+"},
+      {"LOWER": "and"},
+      {"IS_ALPHA": true, "OP": "+"}
+    ]
+  },
 
   {
     "label": "Conclusion",
     "pattern": [
-      {"LOWER": {"IN": ["in","overall","in","to"]}},
-      {"LOWER": {"IN": ["conclusion","summary","conclude","indicate","suggest"]}}
+      {"LOWER": {"IN": ["these","overall","in","to"]}, "OP": "?"},
+      {"LOWER": {"IN": ["results","findings","observations","conclusion","summary","conclude"]}},
+      {"LOWER": {"IN": ["suggest","indicate","support","imply","show"]}}
     ]
   },
-
 
   {
     "label": "Input Fact",

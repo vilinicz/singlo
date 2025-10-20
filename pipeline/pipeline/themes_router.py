@@ -134,23 +134,6 @@ def detect_topics(s0: Dict[str, Any], registry: Optional[Dict[str, Dict[str, Any
         if topic == "common":
             continue
         trig = meta.get("triggers") or {}
-        if not trig:
-            # если триггеров нет — пробуем небольшой эвристический fallback
-            # biomed эвристика
-            if topic.lower() == "biomed":
-                trig = {
-                    "any": [
-                        r"\bp\s*(?:<|=)\s*0?\.\d+",
-                        r"\bfisher(?:'s)?\b",
-                        r"\bspearman(?:'s)?\b",
-                        r"\bregression\b",
-                        r"\bcohort\b|\bparticipants?\b|\bsubjects?\b",
-                        r"\b(l\.\s*[a-z]+|lactobacillus|streptococcus)\b"
-                    ]
-                }
-            else:
-                # без триггеров — пропускаем тему
-                continue
         sc = _topic_score_for_sentences(sents, trig)
         if sc >= threshold:
             scores.append((topic, sc))

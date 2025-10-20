@@ -54,7 +54,13 @@ SECTION_PRIORS = {
     "METHODS": {"Technique": 1.15, "Experiment": 1.12, "Dataset": 1.10, "Analysis": 1.05},
     "RESULTS": {"Result": 1.18, "Analysis": 1.08},
     # NOTE: усилили Result в DISCUSSION, чтобы «словесные» связи проходили увереннее
-    "DISCUSSION": {"Conclusion": 1.15, "Hypothesis": 1.05, "Result": 1.10, "Analysis": 1.03},
+    "DISCUSSION": {
+        "Conclusion": 1.20,
+        "Result": 1.12,
+        "Hypothesis": 0.92,  # штрафуем гипотезы в DISCUSSION
+        "Dataset": 0.95,
+        "Analysis": 1.03
+    },
     "REFERENCES": {},
     "OTHER": {"Input Fact": 1.02}
 }
@@ -393,6 +399,16 @@ def run_s1(s0_path: str,
         # doc для spaCy
         doc = nlp(text)
         tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
+
+        if tname and conf >= CONF_NODE_MIN:
+            tl = text.lower().strip()
+            if tl.startswith(("these results", "overall", "in conclusion", "in summary")):
+                if any(w in tl for w in ("suggest", "indicate", "support", "imply", "show")):
+                    if tname != "Conclusion":
+                        tname = "Conclusion"
+                        # слегка поднимем уверенность в DISCUSSION
+                        if imrad == "DISCUSSION":
+                            conf = max(conf, 0.52)
 
         # --- citation guard: References/цитатные фразы → Input Fact ---
         text_l = text.lower()

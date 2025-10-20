@@ -16,6 +16,16 @@
       {"LEFT_ID": "noun",  "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}}
     ]
   },
+{
+  "label": "Result",
+  "pattern": [
+    {"RIGHT_ID": "root", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["observe","find","see","correlate","associate"]}}},
+    {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "between", "RIGHT_ATTRS": {"LOWER": "between"}},
+    {"LEFT_ID": "between", "REL_OP": ">", "RIGHT_ID": "obj1", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","dobj","obl"]}}},
+    {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "andtok", "RIGHT_ATTRS": {"LOWER": "and"}},
+    {"LEFT_ID": "andtok", "REL_OP": ">", "RIGHT_ID": "obj2", "RIGHT_ATTRS": {"DEP": {"IN": ["conj","pobj","dobj","obl"]}}}
+  ]
+},
 
   {
     "label": "Technique",
