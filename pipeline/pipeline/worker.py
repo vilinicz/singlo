@@ -4,9 +4,8 @@ RQ-воркер: оркестрация S0 → S1 → S2
 Сохраняет прогресс и артефакты в Redis для отображения во фронте.
 
 Изменения:
-- S0 полностью переведён на GROBID: используем s0_grobid.grobid_fulltext_tei + tei_to_s0
+- S0 полностью переведён на GROBID и отдаёт ПЛОСКИЙ формат: s0["sentences"] = [{text,page,bbox,section_hint,is_caption,...}]
 - PDF всегда копируется в DATA_DIR/<doc_id>/input.pdf (как в legacy), рядом сохраняется s0.json
-- Формат s0.json остаётся прежним
 - Параметр GROBID_URL читается из окружения (по умолчанию http://grobid:8070)
 
 Также:
@@ -205,7 +204,7 @@ def run_pipeline(
     Универсальный раннер S0→S1→S2.
 
     pdf_path: путь к PDF
-    rules_path: путь к rules/common.yaml (используется в текущей версии S1; будет игнорироваться при переходе на spaCy)
+    rules_path: путь к rules/common.yaml (исторический параметр; при spaCy-паттернах игнорируется в S1)
     export_dir: базовая директория вывода артефактов (export/)
     themes_root: директория с themes/* (опционально)
     theme_override: ['biomed','physics'] — ручной выбор тем (опционально; старое имя)
@@ -255,7 +254,7 @@ def run_pipeline(
         raise
 
     try:
-        # 3) S0 (GROBID): сохраняем артефакты в DATA_DIR/<doc_id>
+        # S0 (GROBID): пишем тонкий s0.json в DATA_DIR/<doc_id>
         s0_stage_t = time.time()
         grobid_url = os.getenv("GROBID_URL", "http://grobid:8070")
         tei = grobid_fulltext_tei(grobid_url, str(pdf_copy))  # используем локальную копию

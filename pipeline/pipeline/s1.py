@@ -2,9 +2,14 @@
 """
 S1 (spaCy + data-driven patterns) → s1_graph.json / s1_debug.json
 
-- Вход: s0.json (тонкий, с sections[].blocks[].sentences[] и captions[])
-- Паттерны: themes/<topic>/patterns/{matcher.json, depmatcher.json}, плюс общие themes/common/...
-- Выход: s1_graph.json (кандидаты узлов + рёбра внутри статьи), s1_debug.json (сводка)
+Вход теперь ТОЛЬКО плоский S0:
+  s0["sentences"] = [
+    {"text": "...", "page": 0, "bbox": [x0,y0,x1,y1], "section_hint": "INTRO|METHODS|RESULTS|DISCUSSION|REFERENCES|OTHER",
+     "is_caption": false, "caption_type": ""|"Figure"|"Table"}
+  ]
+
+Паттерны: themes/<topic>/patterns/{matcher.json, depmatcher.json}, плюс общие themes/common/...
+Выход: s1_graph.json (кандидаты узлов + рёбра внутри статьи), s1_debug.json (сводка)
 
 Типы узлов (ровно 8):
   Input Fact, Hypothesis, Experiment, Technique, Result, Dataset, Analysis, Conclusion
@@ -34,7 +39,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional, Iterable, Set
 
 from spacy.tokens import Doc
-from spacy.matcher import Matcher, DependencyMatcher  # только для type hints
+from spacy.matcher import Matcher, DependencyMatcher  # type hints
 from .spacy_loader import load_spacy_model, load_spacy_patterns
 
 # ─────────────────────────────────────────────────────────────
@@ -48,12 +53,6 @@ NODE_TYPES = [
 
 TYPE_CANON = {t.lower().replace(" ", ""): t for t in NODE_TYPES}
 
-TYPE_ORDER = [
-    "Input Fact", "Hypothesis", "Experiment", "Technique",
-    "Dataset", "Analysis", "Result", "Conclusion"
-]
-
-# веса секций (IMRAD hint) — мягкие приоры
 SECTION_PRIORS = {
     "INTRO": {"Hypothesis": 1.10, "Input Fact": 1.05, "Conclusion": 1.00},
     "METHODS": {"Technique": 1.15, "Experiment": 1.12, "Dataset": 1.10, "Analysis": 1.05},
@@ -101,31 +100,15 @@ NEG_MARKERS = {
     "decrease", "decreases", "decreased", "worse", "worsened", "negative result", "null result"
 }
 
-ALLOWED_EDGE_TYPES = {
-    ("Technique", "Experiment"): "uses",
-    ("Technique", "Result"): "uses",
-    ("Experiment", "Result"): "produces",
-    ("Result", "Hypothesis"): "supports",  # может стать refutes по polarity
-    ("Dataset", "Experiment"): "feeds",
-    ("Dataset", "Analysis"): "feeds",
-    ("Analysis", "Result"): "informs",
-}
+LINK_WINDOW_SENTENCES = 2
 
-# сколько соседей смотреть для ближней линковки
-LINK_WINDOW_SENTENCES = 2  # ±2 предложения
-LINK_WINDOW_PARAGRAPHS = 1  # ±1 абзац
 
 # ─────────────────────────────────────────────────────────────
 # Утилиты
 # ─────────────────────────────────────────────────────────────
 
-def _load_json(p: Path) -> Any:
-    return json.loads(p.read_text(encoding="utf-8"))
-
-
 def _canon_type(label: str) -> Optional[str]:
-    k = label.lower().replace(" ", "")
-    return TYPE_CANON.get(k)
+    return TYPE_CANON.get(label.lower().replace(" ", ""))
 
 
 def _contains_any(tokens_lower: List[str], vocab: Set[str]) -> bool:
@@ -160,36 +143,17 @@ def _base_type_weight(tname: str) -> float:
     return BASE_TYPE_WEIGHTS.get(tname, 1.0)
 
 
-def _sent_iter(s0: Dict) -> Iterable[Tuple[int, int, int, Dict, str, str]]:
+def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
     """
-    Итерирует предложения.
-    Возвращает: (sec_idx, blk_idx, s_idx, sent_obj, section_name, imrad_hint)
+    Итерирует плоский список предложений s0["sentences"].
+    Возвращает (global_idx, sent_obj)
     """
-    for si, sec in enumerate(s0.get("sections", [])):
-        sname = sec.get("name") or "Body"
-        hint = sec.get("imrad_hint") or "OTHER"
-        for pi, blk in enumerate(sec.get("blocks", [])):
-            for s in blk.get("sentences", []):
-                yield si, pi, int(s.get("s_idx", 0)), s, sname, hint
+    for i, s in enumerate(s0.get("sentences", [])):
+        yield i, s
 
-
-def _captions_to_sent_like(s0: Dict) -> List[Tuple[str, Dict]]:
-    """
-    Делает из captions «квазипредложения» для матчеров (с меткой секции FigureCaption/TableCaption).
-    Возвращает список (section_name, sent_like_dict)
-    """
-    out = []
-    for c in s0.get("captions", []):
-        sid = c.get("id", "")
-        txt = c.get("text", "") or ""
-        if not txt.strip():
-            continue
-        sec_name = "FigureCaption" if sid.lower().startswith("figure") else "TableCaption"
-        out.append((sec_name, {"text": txt, "page": c.get("page", 0), "coords": c.get("coords", [])}))
-    return out
 
 # ─────────────────────────────────────────────────────────────
-# Оценка и выбор типа для предложения
+# Оценка и выбор типа
 # ─────────────────────────────────────────────────────────────
 
 def _score_sentence(nlp_doc: Doc,
@@ -199,48 +163,33 @@ def _score_sentence(nlp_doc: Doc,
                     depmatcher: DependencyMatcher,
                     type_boosts: Dict[str, float],
                     dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any]]:
-    """
-    Возвращает (best_type, conf, debug_hits)
-    conf ∈ [0, +∞), порог отсечки на уровне узла — CONF_NODE_MIN
-    """
-    hits: Dict[str, float] = {}  # type -> raw score
+    hits: Dict[str, float] = {}
 
-    # 1) token-level hits
+    # token-patterns
     for label, start, end in matcher(nlp_doc):
         tname = nlp_doc.vocab.strings[label]
         tname = _canon_type(tname) or tname
-        if tname not in NODE_TYPES:
-            continue
-        hits[tname] = hits.get(tname, 0.0) + 1.0
+        if tname in NODE_TYPES:
+            hits[tname] = hits.get(tname, 0.0) + 1.0
 
-    # 2) dependency hits (только если есть парсер)
+    # dep-patterns (если есть парсер)
     if dep_enabled:
         for label, _ in depmatcher(nlp_doc):
             tname = nlp_doc.vocab.strings[label]
             tname = _canon_type(tname) or tname
-            if tname not in NODE_TYPES:
-                continue
-            hits[tname] = hits.get(tname, 0.0) + 1.2  # чуть сильнее, чем token-matcher
+            if tname in NODE_TYPES:
+                hits[tname] = hits.get(tname, 0.0) + 1.2
 
     if not hits:
         return None, 0.0, {"hits": {}}
 
-    # 3) приоры секции
     prior_mult = {t: _section_prior(imrad_hint, t) for t in hits.keys()}
-
-    # 4) базовый вес типа
     base_mult = {t: _base_type_weight(t) for t in hits.keys()}
-
-    # 5) boost темы (из lexicon.json)
     theme_mult = {t: type_boosts.get(t, 1.0) for t in hits.keys()}
 
-    # 6) hedge penalty
     hedge = _hedge_penalty_from_doc(nlp_doc)
-
-    # 7) numeric bonus для некоторых типов
     num_bonus = NUMERIC_BONUS if _has_numeric(text) else 0.0
 
-    # 8) итоговый скор
     scored: Dict[str, float] = {}
     for t, raw in hits.items():
         val = raw * prior_mult.get(t, 1.0) * base_mult.get(t, 1.0) * theme_mult.get(t, 1.0)
@@ -249,8 +198,8 @@ def _score_sentence(nlp_doc: Doc,
         val -= hedge
         scored[t] = val
 
-    best_t = max(scored.items(), key=lambda kv: kv[1])
-    return (best_t[0], float(best_t[1]), {
+    best_t, best_v = max(scored.items(), key=lambda kv: kv[1])
+    return best_t, float(best_v), {
         "hits": hits,
         "prior_mult": prior_mult,
         "base_mult": base_mult,
@@ -258,7 +207,8 @@ def _score_sentence(nlp_doc: Doc,
         "hedge": hedge,
         "num_bonus": num_bonus,
         "scored": scored
-    })
+    }
+
 
 # ─────────────────────────────────────────────────────────────
 # Построение узлов/рёбер
@@ -271,8 +221,13 @@ def _node_id(doc_id: str, tname: str, idx: int) -> str:
 
 
 def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
-             section_name: str, imrad_hint: str, sec_idx: int, blk_idx: int, s_idx: int,
-             page: int, coords: List[Dict[str, Any]], polarity: str) -> Dict[str, Any]:
+             section_name: str, imrad_hint: str, s_idx: int,
+             page: int, bbox: List[float], polarity: str) -> Dict[str, Any]:
+    # coords (для фронта) — из bbox
+    coords = []
+    if isinstance(bbox, (list, tuple)) and len(bbox) == 4:
+        x0, y0, x1, y1 = bbox
+        coords = [{"x": float(x0), "y": float(y0), "w": float(x1) - float(x0), "h": float(y1) - float(y0)}]
     return {
         "id": _node_id(doc_id, tname, idx),
         "type": tname,
@@ -283,31 +238,26 @@ def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
         "prov": {
             "section": section_name,
             "imrad": imrad_hint,
-            "sec_idx": sec_idx,
-            "block_idx": blk_idx,
+            "sec_idx": -1,
+            "block_idx": -1,
             "sent_idx": s_idx,
         },
-        "page": page,
-        "coords": coords
+        "page": int(page) if page is not None else 0,
+        "coords": coords,
+        "bbox": list(bbox) if isinstance(bbox, (list, tuple)) else []
     }
 
 
 def _distance(a: Dict[str, Any], b: Dict[str, Any]) -> int:
-    # расстояние по предложению/абзацу (внутри секции), чем меньше — тем ближе
-    ap = (a["prov"]["sec_idx"], a["prov"]["block_idx"], a["prov"]["sent_idx"])
-    bp = (b["prov"]["sec_idx"], b["prov"]["block_idx"], b["prov"]["sent_idx"])
-    if ap[0] != bp[0]:
-        return 999999
-    # приоритет по абзацам, потом предложениям
-    para_d = abs(ap[1] - bp[1])
-    sent_d = abs(ap[2] - bp[2])
-    return para_d * 10 + sent_d
+    # на плоском списке меряем дистанцию по глобальному sent_idx
+    sa = int(a["prov"]["sent_idx"])
+    sb = int(b["prov"]["sent_idx"])
+    return abs(sa - sb)
 
 
 def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     edges: List[Dict[str, Any]] = []
 
-    # индексы по типу
     by_type: Dict[str, List[Dict[str, Any]]] = {t: [] for t in NODE_TYPES}
     for n in nodes:
         by_type.get(n["type"], []).append(n)
@@ -320,34 +270,28 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             "conf": round(conf, 3),
             "prov": {
                 "hint": "prox",
-                "from": {"sec": src["prov"]["section"], "blk": src["prov"]["block_idx"], "s": src["prov"]["sent_idx"]},
-                "to": {"sec": dst["prov"]["section"], "blk": dst["prov"]["block_idx"], "s": dst["prov"]["sent_idx"]},
+                "from": {"sec": src["prov"]["section"], "s": src["prov"]["sent_idx"]},
+                "to": {"sec": dst["prov"]["section"], "s": dst["prov"]["sent_idx"]},
             }
         })
 
-    # полезная функция поиска ближайших
     def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2) -> List[Tuple[Dict, Dict, int]]:
         cands = []
         for a in src_list:
             best: List[Tuple[Dict, Dict, int]] = []
             for b in dst_list:
                 d = _distance(a, b)
-                if d >= 999999: continue
-                # окно
-                para_d = abs(a["prov"]["block_idx"] - b["prov"]["block_idx"])
-                sent_d = abs(a["prov"]["sent_idx"] - b["prov"]["sent_idx"])
-                if para_d > LINK_WINDOW_PARAGRAPHS or sent_d > LINK_WINDOW_SENTENCES:
+                if d > LINK_WINDOW_SENTENCES:
                     continue
                 best.append((a, b, d))
             best.sort(key=lambda t: t[2])
             cands.extend(best[:max_k])
-        # убрать дубли пар
+        # dedup
         seen = set()
         out = []
         for a, b, d in sorted(cands, key=lambda t: t[2]):
             key = (a["id"], b["id"])
-            if key in seen:
-                continue
+            if key in seen: continue
             seen.add(key)
             out.append((a, b, d))
         return out
@@ -362,11 +306,9 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=2):
         add_edge(a, b, "produces", (a["conf"] + b["conf"]) / 2)
 
-    # Result → Hypothesis (supports/refutes)
+    # Result → Hypothesis
     for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=2):
-        et = "supports"
-        if a.get("polarity") == "negative":
-            et = "refutes"
+        et = "supports" if a.get("polarity") != "negative" else "refutes"
         add_edge(a, b, et, (a["conf"] + b["conf"]) / 2)
 
     # Dataset → Experiment/Analysis
@@ -379,19 +321,16 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1):
         add_edge(a, b, "informs", (a["conf"] + b["conf"]) / 2)
 
-    # фильтр по порогу
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
 
-    # fallback: если рёбер нет, а узлы есть
+    # fallback, если пусто
     if not edges and nodes:
-        # 1–2 ребра Result → Hypothesis
         res = sorted(by_type["Result"], key=lambda n: -n["conf"])[:2]
         hyp = sorted(by_type["Hypothesis"], key=lambda n: -n["conf"])[:2]
         if res and hyp:
             for i, (a, b) in enumerate([(res[0], hyp[0])] + ([(res[1], hyp[0])] if len(res) > 1 else [])):
                 et = "supports" if a.get("polarity") != "negative" else "refutes"
                 add_edge(a, b, et, (a["conf"] + b["conf"]) / 2)
-        # Technique → (Experiment|Result)
         tech = sorted(by_type["Technique"], key=lambda n: -n["conf"])[:1]
         exp = sorted(by_type["Experiment"], key=lambda n: -n["conf"])[:1]
         if tech and (exp or res):
@@ -400,91 +339,71 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
 
     return edges
 
+
 # ─────────────────────────────────────────────────────────────
 # Основной раннер
 # ─────────────────────────────────────────────────────────────
 
 def run_s1(s0_path: str,
-           rules_path: Optional[str],  # не используется (ради совместимости)
+           rules_path: Optional[str],
            graph_path: str,
            *,
            themes_root: Optional[str] = None,
            theme_override: Optional[List[str]] = None
            ) -> None:
     """
-    Преобразует s0.json → s1_graph.json (+ s1_debug.json).
-    graph_path — путь к будущему финальному graph.json (S2 его перезапишет),
-                 но тут мы используем его директорию для сохранения артефактов S1.
+    S0 (плоский sentences[]) → S1 кандидаты (узлы + рёбра).
     """
     s0 = json.loads(Path(s0_path).read_text(encoding="utf-8"))
     out_dir = Path(graph_path).parent
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # построим «квази-секции» для captions, чтобы матчеры могли их ловить
-    captions_sent_like = _captions_to_sent_like(s0)
-
-    # загрузка spaCy и паттернов (с фолбэком)
+    # загрузка spaCy и паттернов
     nlp, dep_enabled, model_name = load_spacy_model()
     matcher, depmatcher, type_boosts = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
 
-    # обход предложений и матчинг
     nodes: List[Dict[str, Any]] = []
     debug_hits: List[Dict[str, Any]] = []
     idx = 1
     doc_id = s0.get("doc_id", "doc")
 
-    # 1) обычные предложения из секций
-    for si, sec in enumerate(s0.get("sections", [])):
-        sname = sec.get("name") or "Body"
-        imrad = sec.get("imrad_hint") or "OTHER"
-        for bi, blk in enumerate(sec.get("blocks", [])):
-            for sent in blk.get("sentences", []):
-                text = (sent.get("text") or "").strip()
-                if not text:
-                    continue
-                # ВАЖНО: полный прогон пайплайна (POS/DEP для DependencyMatcher)
-                doc = nlp(text)
-                tname, conf, dbg = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
-                if not tname or conf < CONF_NODE_MIN:
-                    continue
-                pol = _polarity(text)
-                node = _mk_node(
-                    doc_id, idx, tname, text, conf,
-                    section_name=sname, imrad_hint=imrad,
-                    sec_idx=si, blk_idx=bi, s_idx=int(sent.get("s_idx", 0)),
-                    page=int(sent.get("page", blk.get("page", 0))), coords=sent.get("coords", blk.get("coords", [])),
-                    polarity=pol
-                )
-                nodes.append(node)
-                debug_hits.append({
-                    "sec": sname, "imrad": imrad, "text": text[:200],
-                    "chosen": tname, "conf": round(conf, 3), **dbg
-                })
-                idx += 1
-
-    # 2) captions как отдельные «предложения»
-    for sec_name, cap in captions_sent_like:
-        text = (cap.get("text") or "").strip()
+    # единый проход по плоскому списку предложений
+    for s_idx, sent in _sent_iter_flat(s0):
+        text = (sent.get("text") or "").strip()
         if not text:
             continue
-        imrad = "RESULTS"  # для фигур/таблиц в большинстве случаев ближе к результатам
+        imrad = (sent.get("section_hint") or "OTHER").upper()
+        page = sent.get("page", 0)
+        bbox = sent.get("bbox") or []
+        is_cap = bool(sent.get("is_caption", False))
+        cap_type = (sent.get("caption_type") or "").strip()
+
+        # doc для spaCy
         doc = nlp(text)
         tname, conf, dbg = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
         if not tname or conf < CONF_NODE_MIN:
             continue
+
         pol = _polarity(text)
+
+        # секционное имя
+        if is_cap and cap_type == "Figure":
+            section_name = "FigureCaption"
+        elif is_cap and cap_type == "Table":
+            section_name = "TableCaption"
+        else:
+            section_name = "Body"
+
         node = _mk_node(
             doc_id, idx, tname, text, conf,
-            section_name=sec_name, imrad_hint=imrad,
-            sec_idx=-1, blk_idx=-1, s_idx=0,
-            page=int(cap.get("page", 0)), coords=cap.get("coords", []),
-            polarity=pol
+            section_name=section_name, imrad_hint=imrad,
+            s_idx=s_idx, page=page, bbox=bbox, polarity=pol
         )
         nodes.append(node)
         debug_hits.append({
-            "sec": sec_name, "imrad": imrad, "text": text[:200],
+            "sec": section_name, "imrad": imrad, "text": text[:200],
             "chosen": tname, "conf": round(conf, 3), **dbg
         })
         idx += 1
@@ -493,11 +412,7 @@ def run_s1(s0_path: str,
     edges = _link_inside(doc_id, nodes)
 
     # артефакты
-    s1_graph = {
-        "doc_id": doc_id,
-        "nodes": nodes,
-        "edges": edges
-    }
+    s1_graph = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
     (out_dir / "s1_graph.json").write_text(json.dumps(s1_graph, ensure_ascii=False, indent=2), encoding="utf-8")
 
     s1_debug = {
