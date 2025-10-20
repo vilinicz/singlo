@@ -30,6 +30,7 @@ import os, sys, time, json, re, sqlite3, hashlib, pathlib
 from typing import Any, Dict, List, Optional, Tuple
 
 # ---------- logging ----------
+# Lightweight structured logger controlled by LLM_DEBUG env.
 def _log(ev: str, data: Any):
     if os.environ.get("LLM_DEBUG", "1") != "1":
         return
@@ -38,6 +39,7 @@ def _log(ev: str, data: Any):
     except Exception:
         pass
 
+# Optionally log and dump raw LLM responses for postmortem debugging.
 def _log_llm_response(tag: str, text: str):
     if os.environ.get("LLM_LOG_RESP", "0") != "1":
         return
@@ -68,6 +70,7 @@ def _est_tokens_from_texts(texts: List[str]) -> Tuple[int, int]:
 
 # ---------- sqlite cache (optional & safe) ----------
 class _KV:
+    """Tiny sqlite-backed KV cache (optional, safe to disable on failure)."""
     _init_done = False
     _disabled = False
     _db = None
@@ -198,6 +201,7 @@ def _preflight_ok(client, model: str, timeout_s: float, tag: str) -> bool:
         return False
 
 def _call_llm(messages: List[Dict[str, str]], model: str, cache_tag: str) -> str:
+    """Call primary+fallback models, favoring JSON responses; cached by cache_tag."""
     """
     One robust call with:
       - json_object when supported (and disabled for *nano* by default),
@@ -425,6 +429,11 @@ def _compact_s1_graph(s1: Dict[str, Any]) -> Dict[str, Any]:
 
 # ---------- Public: one-shot refine ----------
 def refine_graph(doc_id: str, s1_graph: Dict[str, Any], s0_sections: Optional[List[str]] = None) -> Dict[str, Any]:
+    """GraphRefine entry: compact S1, prepare prompt, call LLM, and parse JSON.
+
+    Adds minimal guardrails: token budgeting, preflight checks, response coercion,
+    and caching to reduce cost on repeated inputs.
+    """
     """
     Build a single LLM request to refine S1 graph into a clean S2/Sfinal graph.
     Returns dict with keys: doc_id, nodes[], edges[].

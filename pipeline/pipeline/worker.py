@@ -34,6 +34,11 @@ from .s2 import run_s2
 # темы: реестр и роутинг
 from .themes_router import preload as themes_preload
 
+# Worker overview:
+# - Accepts jobs via RQ and orchestrates S0 -> S1 -> S2
+# - Tracks job status and artifacts in Redis hashes
+# - Selects themes automatically using themes_router (unless overridden)
+
 RULES_BASE_DIR = os.getenv("RULES_BASE_DIR", "/app/rules")
 THEMES_DIR = os.getenv("THEMES_DIR", str(Path(RULES_BASE_DIR) / "themes"))
 
@@ -47,10 +52,12 @@ except Exception:
 
 
 # -------- Redis helpers --------
+## Redis connection helper (resolves REDIS_URL or defaults to container DNS).
 def _r():
     return redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
 
 
+## Resolve a path-like to an actual PDF file under /app/data when needed.
 def _resolve_pdf_like(p: str | Path, doc_id: Optional[str] = None) -> Path:
     """
     Принимает путь к .pdf ИЛИ к каталогу ИЛИ «кривой» путь.
@@ -88,6 +95,7 @@ def _resolve_pdf_like(p: str | Path, doc_id: Optional[str] = None) -> Path:
     raise FileNotFoundError(f"PDF not found (tried): {p}, {cand1}, {base}/*.pdf, {cand2}")
 
 
+## Best-effort translation of path to an existing PDF path.
 def _ensure_pdf_path(p: str | Path) -> Path:
     """Принимаем либо путь к .pdf, либо каталог; для каталога ищем input.pdf или любой *.pdf."""
     if not p:
@@ -109,6 +117,7 @@ def _ensure_pdf_path(p: str | Path) -> Path:
 def _status_key(doc_id): return f"status:{doc_id}"
 
 
+## Initialize a status hash for a job in Redis.
 def _init_status(doc_id, *, theme: str = "auto"):
     r = _r()
     payload = {
@@ -122,6 +131,7 @@ def _init_status(doc_id, *, theme: str = "auto"):
     r.hset(_status_key(doc_id), mapping=payload)
 
 
+## Append a finished stage with timing info to the status record.
 def _push_stage(doc_id, name, t0, notes=None):
     r = _r()
     stages = json.loads(r.hget(_status_key(doc_id), "stages") or "[]")
@@ -137,6 +147,7 @@ def _push_stage(doc_id, name, t0, notes=None):
     r.hset(_status_key(doc_id), "stage", name)
 
 
+## Register an artifact path in the status record.
 def _set_artifact(doc_id, key, path):
     r = _r()
     artifacts = json.loads(r.hget(_status_key(doc_id), "artifacts") or "{}")
@@ -144,6 +155,7 @@ def _set_artifact(doc_id, key, path):
     r.hset(_status_key(doc_id), "artifacts", json.dumps(artifacts))
 
 
+## Mark job status as done or error and set end timestamp.
 def _finish_status(doc_id, ok=True, err_msg=None):
     r = _r()
     r.hset(_status_key(doc_id), mapping={
@@ -154,6 +166,7 @@ def _finish_status(doc_id, ok=True, err_msg=None):
 
 
 # -------- Темы: глобальный реестр (preload once per process) --------
+## Parse theme override string like "biomed,physics"; None/"auto" -> None.
 def _parse_theme_override(theme_str: Optional[str]) -> Optional[List[str]]:
     """
     "auto" | None -> None
@@ -172,6 +185,10 @@ def _parse_theme_override(theme_str: Optional[str]) -> Optional[List[str]]:
 
 def _normalize_theme_override(theme: Optional[Union[str, List[str]]],
                               theme_override: Optional[List[str]]) -> Optional[List[str]]:
+    """Normalize theme parameters from API and explicit overrides.
+
+    Precedence: explicit theme_override > theme. Returns list or None.
+    """
     """
     Принимает theme (строка 'biomed,physics' | список) и/или theme_override (список),
     возвращает нормализованный список тем или None.
@@ -190,6 +207,7 @@ def _normalize_theme_override(theme: Optional[Union[str, List[str]]],
     return None
 
 
+# Orchestrate S0 (GROBID) -> S1 (patterns) -> S2 (graph) for a single doc.
 def run_pipeline(
         pdf_path: Optional[str] = None,
         rules_path: Optional[str] = None,
@@ -335,6 +353,7 @@ def run_pipeline(
 
 
 # -------- вспомогательная задача: только S0 --------
+## Run only S0 (GROBID) for an already uploaded /app/data/<doc_id>/input.pdf.
 def run_s0_only(doc_id: str):
     """
     Выполняет только S0 (GROBID) для уже положенного PDF: /app/data/<doc_id>/input.pdf
@@ -356,6 +375,7 @@ def run_s0_only(doc_id: str):
 
 
 # -------- entrypoint --------
+## RQ worker entrypoint (listens on 'singularis' queue).
 def main():
     redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
     conn = redis.from_url(redis_url)

@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+# Text normalization helpers for PDF/LaTeX extraction
+
 RE_SOFT_HYPHEN_BREAK = re.compile(r'(\w)[\-­]\n(\w)')
 RE_LINE_BREAK_IN_NUMBER = re.compile(r'(\d)\s*\n\s*(\d)')
 RE_LINE_BREAK_AFTER_PAREN = re.compile(r'\)\s*\n\s*(\d)')

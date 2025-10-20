@@ -1,3 +1,8 @@
+"""LaTeX source parser to enrich S0 when arXiv sources are available.
+
+Expands \input/\include, strips comments/math, extracts sections and captions,
+and returns a structure convertible to S0-like fields.
+"""
 from __future__ import annotations
 
 import re
@@ -7,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from .utils import normalize_text, line_number, slugify
 
 
+## Normalize a heading title (capitalize ALLCAPS, strip noise).
 def _normalize_heading_title(title: str) -> str:
     cleaned = normalize_text(_clean_latex_text(title))
     if not cleaned:
@@ -35,6 +41,7 @@ DISPLAY_BRACKET_MATH_RE = re.compile(r'\\\[.*?\\\]', re.S)
 INLINE_MATH_RE = re.compile(r'\$(?:\\.|[^$])+\$', re.S)
 
 
+## Remove LaTeX comments (%) from text while preserving content.
 def _strip_latex_comments(text: str) -> str:
     lines = []
     for line in (text or "").splitlines():
@@ -42,6 +49,7 @@ def _strip_latex_comments(text: str) -> str:
     return "\n".join(lines)
 
 
+## Recursively expand \input/\include statements relative to base_dir.
 def _expand_latex_inputs(text: str, base_dir: Path, visited: Optional[set[str]] = None) -> str:
     visited = visited or set()
 
@@ -73,6 +81,7 @@ def _expand_latex_inputs(text: str, base_dir: Path, visited: Optional[set[str]] 
     return INPUT_INCLUDE_RE.sub(repl, text)
 
 
+## Pick a main .tex file under source_root (by priority and presence of \begin{document}).
 def _load_main_tex(source_root: Path) -> tuple[Optional[Path], Optional[str]]:
     tex_files = sorted(source_root.rglob("*.tex"))
     if not tex_files:
@@ -115,6 +124,7 @@ def _load_main_tex(source_root: Path) -> tuple[Optional[Path], Optional[str]]:
     return tex_files[0], fallback_text
 
 
+## Strip math, refs, citations, footnotes and commands from LaTeX to plain text.
 def _clean_latex_text(text: Optional[str]) -> str:
     if not text:
         return ""
@@ -136,6 +146,7 @@ def _clean_latex_text(text: Optional[str]) -> str:
     return t.strip()
 
 
+## Extract {...} content starting at '{' index; returns (content, end_idx).
 def _extract_braced_argument(text: str, start_idx: int) -> tuple[str, int]:
     n = len(text)
     if start_idx >= n or text[start_idx] != '{':
@@ -157,6 +168,7 @@ def _extract_braced_argument(text: str, start_idx: int) -> tuple[str, int]:
     return "", start_idx
 
 
+## Extract simple metadata fields from LaTeX preamble (title, author, date).
 def _extract_latex_metadata(tex_source: str) -> Dict[str, str]:
     meta: Dict[str, str] = {}
     mt = re.search(r'\\title\{(.*?)\}', tex_source, re.S | re.I)
@@ -172,10 +184,11 @@ def _extract_latex_metadata(tex_source: str) -> Dict[str, str]:
     return meta
 
 
+## Parse LaTeX sectioning commands into a list of sections with text excerpts.
 def _parse_latex_sections(doc_body: str,
-                          doc_offset: int,
-                          full_source: str,
-                          source_label: str) -> List[Dict[str, Any]]:
+                           doc_offset: int,
+                           full_source: str,
+                           source_label: str) -> List[Dict[str, Any]]:
     sections: List[Dict[str, Any]] = []
     body = doc_body or ""
 
@@ -292,10 +305,11 @@ def _parse_latex_sections(doc_body: str,
     return sections
 
 
+## Extract captions from figure/table environments and caption(of) commands.
 def _extract_latex_captions(doc_body: str,
-                            doc_offset: int,
-                            full_source: str,
-                            source_label: str) -> List[Dict[str, Any]]:
+                             doc_offset: int,
+                             full_source: str,
+                             source_label: str) -> List[Dict[str, Any]]:
     captions: List[Dict[str, Any]] = []
     counters = {"Figure": 0, "Table": 0}
     seen_ids: set[str] = set()

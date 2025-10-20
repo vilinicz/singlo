@@ -48,6 +48,7 @@ from lxml import etree
 # GROBID HTTP
 # ───────────────────────────────────────────────────────────
 
+# GROBID HTTP: call processFulltextDocument and return TEI-XML.
 def grobid_fulltext_tei(server: str, pdf_path: str, timeout: int = 120) -> str:
     """
     Вызов GROBID /api/processFulltextDocument и возврат TEI-XML.
@@ -78,6 +79,7 @@ COORD_ITEM_RE = re.compile(
 )
 
 
+# Parse TEI `coords` attribute into a list of page-local boxes.
 def parse_coords_attr(coords: str) -> List[Dict]:
     if not coords:
         return []
@@ -95,6 +97,7 @@ def parse_coords_attr(coords: str) -> List[Dict]:
     return boxes
 
 
+# Compute a union bbox across same-page boxes; returns (page, [x0,y0,x1,y1]).
 def union_bbox(boxes: List[Dict]) -> Tuple[Optional[int], List[float]]:
     if not boxes:
         return None, [0, 0, 0, 0]
@@ -106,6 +109,7 @@ def union_bbox(boxes: List[Dict]) -> Tuple[Optional[int], List[float]]:
     return page, [min(xs0), min(ys0), max(xs1), max(ys1)]
 
 
+# Helper: infer 0-based page index from boxes.
 def page0_from_boxes(boxes: List[Dict]) -> Optional[int]:
     p, _ = union_bbox(boxes)
     return (p - 1) if p is not None else None
@@ -118,6 +122,7 @@ _JOIN_FIGTAB = re.compile(r"(\S)(?=(Figure|Table)\b)")
 _FIX_PERCENT = re.compile(r"(%)([A-Za-z])")  # "60%of" → "60% of"
 
 
+# Normalize inline whitespace/punctuation artifacts in TEI text.
 def normalize_inline(text: str) -> str:
     if not text:
         return text
@@ -144,6 +149,7 @@ def _clean_head_text(txt: str) -> str:
     return t.replace("&", "and").lower()
 
 
+## Map TEI <head> text to a coarse IMRAD section hint.
 def map_head_to_hint(head_text: str) -> str:
     t = _clean_head_text(head_text)
     if not t:
@@ -173,6 +179,7 @@ def map_head_to_hint(head_text: str) -> str:
 # TEI → плоский список предложений
 # ───────────────────────────────────────────────────────────
 
+## Iterate TEI, yielding flat sentence/caption dicts with bbox and hints.
 def tei_iter_sentences(tei_xml: str):
     """
     Однопроходный итератор по TEI:
@@ -258,6 +265,7 @@ def tei_iter_sentences(tei_xml: str):
 # Метаданные
 # ───────────────────────────────────────────────────────────
 
+# Extract basic metadata (title, authors, date, arXiv id) from TEI root.
 def extract_metadata(root) -> Dict:
     NS = {"t": root.nsmap.get(None) or "http://www.tei-c.org/ns/1.0"}
     txt = lambda el: "".join(el.itertext()).strip()
@@ -312,6 +320,7 @@ def extract_metadata(root) -> Dict:
 # TEI → s0 (тонкий)
 # ───────────────────────────────────────────────────────────
 
+# Convert TEI to the s0.json structure for downstream stages.
 def tei_to_s0(tei_xml: str, pdf_path: str) -> Dict:
     root = etree.fromstring(tei_xml.encode("utf-8")) if isinstance(tei_xml, str) else tei_xml
 
@@ -342,6 +351,7 @@ def tei_to_s0(tei_xml: str, pdf_path: str) -> Dict:
 # CLI
 # ───────────────────────────────────────────────────────────
 
+# CLI entrypoint to run S0 for a single PDF and write s0.json.
 def main():
     ap = argparse.ArgumentParser(description="S0 via GROBID → s0.json (flat sentences)")
     ap.add_argument("--pdf", required=True, help="path to PDF")

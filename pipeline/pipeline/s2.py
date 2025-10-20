@@ -5,6 +5,13 @@ from typing import Dict, Any, List, Tuple
 from collections import defaultdict
 from .llm_layer import refine_graph, _log as llm_log
 
+# Stage S2 overview:
+# - Load S1 graph, normalize/cleanup nodes
+# - Deduplicate near-duplicate nodes; relink and validate edges
+# - Ensure a minimal backbone if edges are sparse or missing
+# - Optionally refine with an LLM on a compact payload
+# - Produce final layout hints and write export/<doc_id>/graph.json
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 8 канонических типов и порядок колонок
 # ──────────────────────────────────────────────────────────────────────────────
@@ -32,12 +39,14 @@ DEFAULT_EDGE_FOR_PAIR = {
 
 SPACE = re.compile(r"\s+")
 PUNCT = re.compile(r"[“”\"'`]+")
+# Normalize text for comparison/deduplication (lowercase, strip, collapse).
 def norm_text(s: str) -> str:
     s = s.strip().lower()
     s = PUNCT.sub("", s)
     s = SPACE.sub(" ", s)
     return s
 
+# Compute a deduplication key per node (type + canonical text; special-case Hypothesis).
 def dedup_key(node):
     t = node["type"]
     imrad = (node.get("prov",{}) or {}).get("imrad","OTHER")
@@ -47,6 +56,7 @@ def dedup_key(node):
         key = (t, norm_text(node["text"]), imrad in ("INTRO","DISCUSSION"))
     return key
 
+# Infer default edge type for a node pair; use polarity for Result→Hypothesis.
 def _default_edge_type(pair: tuple, frm: dict, to: dict) -> str:
     # Для R→H учитываем полярность
     if pair == ("Result", "Hypothesis"):
@@ -56,11 +66,13 @@ def _default_edge_type(pair: tuple, frm: dict, to: dict) -> str:
 
 
 # ---- утилиты чтения/записи ----
+# Read a JSON file (UTF-8) and return object.
 def _read_json(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
+# Write JSON (UTF-8, pretty) and ensure parent directory.
 def _write_json(path: str, obj: Any):
     pathlib.Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -156,6 +168,7 @@ def _txt(n: Dict[str, Any]) -> str:
 
 
 # ── dedup_nodes: сохраняем исходный тип в type_raw для дебага ────────────────
+## Merge near-duplicate nodes; preserve the most confident representative.
 def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Дедуп по ключу из dedup_key(): (type, norm_text(text), SPECIAL for Hypothesis/IMRAD).
@@ -191,10 +204,12 @@ def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
+## Build an id→node index for quick lookups.
 def _node_by_id(nodes: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     return {n["id"]: n for n in nodes if n.get("id")}
 
 
+## Choose supports/refutes for Result→Hypothesis based on polarity.
 def _map_polarity_to_relation(frm: Dict[str, Any], to: Dict[str, Any]) -> str:
     """
     Если ребро допустимо по паре типов, но тип ребра «левый»/пустой — мапим по полярности.
@@ -203,6 +218,7 @@ def _map_polarity_to_relation(frm: Dict[str, Any], to: Dict[str, Any]) -> str:
     return "refutes" if "negative" in pol or "not significant" in pol else "supports"
 
 
+## Validate/rebuild edges using node types, proximity and polarity hints.
 def relink_edges(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     id2n = _node_by_id(nodes)
     out: List[Dict[str, Any]] = []
@@ -231,6 +247,7 @@ def relink_edges(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Li
     return out
 
 
+## Ensure at least a simple backbone when no edges exist (best-effort hints).
 def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
                             edges: List[Dict[str, Any]],
                             max_per_link: int = 2) -> List[Dict[str, Any]]:
@@ -276,6 +293,7 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
 
     return edges
 
+## Assign simple column/row hints by type ordering to aid UI layout.
 def _layout_columns(doc_id: str,
                     nodes: list[dict],
                     edges: list[dict],
@@ -392,6 +410,7 @@ def _layout_columns(doc_id: str,
 # Основной раннер S2
 # ──────────────────────────────────────────────────────────────────────────────
 def run_s2(export_dir: str):
+    # Stage S2: normalize, dedup, relink, optionally refine with LLM, layout, write graph.json
     """
     Stage S2:
       1) load S1 graph

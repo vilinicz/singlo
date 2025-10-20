@@ -1,3 +1,9 @@
+"""Lightweight PDF parser helpers for building S0-like context from PDFs.
+
+Uses PyMuPDF to extract text blocks, infer section headings, and detect
+caption candidates. Produces structures that can be merged with TEI-based
+data when GROBID is unavailable.
+"""
 from __future__ import annotations
 
 import re
@@ -44,6 +50,7 @@ INLINE_HEADING_RE = re.compile(
 )
 
 
+## Heuristic: treat short, capitalized lines without trailing punctuation as headings.
 def _looks_like_heading(text: str) -> bool:
     stripped = (text or "").strip()
     if not stripped:
@@ -105,6 +112,7 @@ def extract_title_and_authors(doc: pymupdf.Document) -> tuple[Optional[str], Opt
     return (title or None), (authors or None)
 
 
+## Detect "Figure/Table" caption markers and return (kind, number, tail).
 def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
     m = CAPTION_PAT.match(line or "")
     if not m:
@@ -116,6 +124,7 @@ def _match_caption(line: str) -> Optional[tuple[str, str, str]]:
     return kind, num, tail
 
 
+## Return a small preview of text blocks for debugging.
 def _extract_blocks_sample(page: pymupdf.Page, limit: int = 5) -> List[Dict[str, Any]]:
     blocks = []
     for b in page.get_text("blocks")[:limit]:
@@ -129,6 +138,7 @@ def _extract_blocks_sample(page: pymupdf.Page, limit: int = 5) -> List[Dict[str,
     return blocks
 
 
+## Split inline heading patterns like "Results - text..." into (heading, remainder).
 def _split_inline_heading(text: str) -> Optional[tuple[str, str]]:
     m = INLINE_HEADING_RE.match(text or "")
     if not m:
@@ -138,6 +148,7 @@ def _split_inline_heading(text: str) -> Optional[tuple[str, str]]:
     return title, remainder
 
 
+## Pick nearest image block bbox to a caption bbox, within a distance threshold.
 def _assign_nearest_image_bbox(caption_bbox: List[float],
                                image_blocks: List[Dict[str, Any]]) -> Optional[List[float]]:
     if not caption_bbox or not image_blocks:
@@ -173,6 +184,7 @@ def _assign_nearest_image_bbox(caption_bbox: List[float],
     return None
 
 
+## Extract basic per-page structure: lines and image blocks.
 def _extract_pdf_page_struct(page: pymupdf.Page, page_no: int) -> Dict[str, Any]:
     raw_blocks = page.get_text("blocks") or []
     lines: List[Dict[str, Any]] = []
@@ -216,6 +228,7 @@ def _extract_pdf_page_struct(page: pymupdf.Page, page_no: int) -> Dict[str, Any]
     }
 
 
+## Recognize common section headings (incl. ALLCAPS variants).
 def _is_section_heading(line: str) -> Optional[str]:
     raw = (line or "").strip()
     if not raw:
@@ -235,6 +248,7 @@ def _is_section_heading(line: str) -> Optional[str]:
     return None
 
 
+## Group lines into sections by headings; join adjacent text into chunks.
 def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     sections: List[Dict[str, Any]] = []
 
@@ -324,6 +338,7 @@ def _build_pdf_sections(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sections
 
 
+## Scan text/image blocks to collect figure/table captions with approximate bboxes.
 def _collect_captions_from_blocks(blocks: List[Any],
                                   page_no: int,
                                   image_blocks: Optional[List[Dict[str, Any]]] = None) -> List[CaptionData]:
@@ -405,6 +420,7 @@ def _collect_captions_from_blocks(blocks: List[Any],
     return caps
 
 
+## Parse a PyMuPDF Document into sections/captions/figures/tables/pages sample.
 def parse_pdf_document(doc: pymupdf.Document) -> Dict[str, Any]:
     page_count = len(doc)
     pages_sample: List[Dict[str, Any]] = []

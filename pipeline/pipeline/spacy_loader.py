@@ -21,6 +21,7 @@ from spacy.matcher import Matcher, DependencyMatcher
 # MODEL
 # ─────────────────────────────────────────────────────────────
 
+## Load spaCy model from env SPACY_MODEL; fallback to blank('en')+sentencizer.
 def load_spacy_model() -> Tuple["spacy.language.Language", bool, str]:
     """
     Пытаемся загрузить модель из ENV (SPACY_MODEL) или en_core_web_sm.
@@ -50,10 +51,12 @@ _NODE_TYPES = [
 ]
 _TYPE_CANON = {t.lower().replace(" ", ""): t for t in _NODE_TYPES}
 
+## Canonicalize a free-form label into one of the configured node types.
 def _canon_type(label: str) -> Optional[str]:
     k = (label or "").lower().replace(" ", "")
     return _TYPE_CANON.get(k)
 
+## Read a JSON array from path; raise if invalid or wrong root type.
 def _read_json_array(path: Path) -> List[dict]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -63,6 +66,7 @@ def _read_json_array(path: Path) -> List[dict]:
         raise RuntimeError(f"{path}: root must be a JSON array")
     return data
 
+## Read a JSON object lexicon from path; raise if invalid or wrong root type.
 def _read_lexicon_dict(path: Path) -> Dict[str, Any]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -72,6 +76,7 @@ def _read_lexicon_dict(path: Path) -> Dict[str, Any]:
         raise RuntimeError(f"{path}: root must be a JSON object")
     return data
 
+## Collect matcher/depmatcher/lexicon files for selected themes (always includes 'common').
 def _collect_pattern_files(themes_root: Path, themes: Optional[List[str]]) -> Tuple[List[Path], List[Path], List[Path]]:
     """
     Возвращает (matcher_paths, depmatcher_paths, lexicon_paths)
@@ -104,6 +109,7 @@ def _collect_pattern_files(themes_root: Path, themes: Optional[List[str]]) -> Tu
 # OPTIONAL NODE EXPANSION (handles {"OP":"?"} in dep patterns)
 # ─────────────────────────────────────────────────────────────
 
+## Expand DependencyMatcher sequence nodes with {"OP":"?"} into variants.
 def _expand_optional_nodes(seq: List[dict]) -> List[List[dict]]:
     """
     DependencyMatcher sequence format НЕ поддерживает 'OP' на узлах.
@@ -141,6 +147,7 @@ def _expand_optional_nodes(seq: List[dict]) -> List[List[dict]]:
 # MAIN
 # ─────────────────────────────────────────────────────────────
 
+## Load token/dependency patterns and lexicons for the given themes.
 def load_spacy_patterns(
         nlp: "spacy.language.Language",
         themes_root: str | Path,

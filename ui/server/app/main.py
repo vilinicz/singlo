@@ -1,3 +1,4 @@
+"""FastAPI gateway for Singularis: upload/queue, status, preview, graph, themes."""
 import os, json, time
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query
@@ -66,10 +67,12 @@ class ParseResp(BaseModel):
 # -------------------- Routes --------------------
 @app.get("/health")
 def health():
+    """Liveness probe used by local dev/docker healthchecks."""
     return {"status": "ok"}
 
 
 @app.post("/extract")
+# Queue pipeline for an existing doc_id; see /status/{doc_id} for progress
 def extract_graph(doc_id: str, theme: str = Query(default="auto")):
     """
     Кладём задачу в очередь RQ; прогресс смотри через /status/{doc_id}
@@ -94,6 +97,7 @@ def extract_graph(doc_id: str, theme: str = Query(default="auto")):
 
 
 @app.get("/status/{doc_id}")
+# Return current job status and parsed JSON fields
 def status(doc_id: str):
     r = _r()
     data = r.hgetall(_status_key(doc_id))
@@ -112,6 +116,7 @@ def status(doc_id: str):
 
 
 @app.get("/preview/{doc_id}/{artifact}")
+# Return small text preview of an artifact (s0|s1|s2|graph)
 def preview(doc_id: str, artifact: str):
     # куда и какой файл смотреть
     mapping = {
@@ -135,6 +140,7 @@ def preview(doc_id: str, artifact: str):
 
 
 @app.get("/graph/{doc_id}")
+# Return full graph JSON for a completed document
 def get_graph(doc_id: str):
     gpath = EXPORT_DIR / doc_id / "graph.json"
     if not gpath.exists():
@@ -147,6 +153,7 @@ def _slugify(name: str) -> str:
     return slug or 'doc'
 
 
+# Upload a PDF, store under data/<doc_id>/input.pdf and enqueue S0->S2
 @app.post("/parse", response_model=ParseResp)
 async def parse_pdf(
         doc_id: str | None = Query(default=None),
@@ -192,6 +199,7 @@ async def parse_pdf(
     return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
 
 
+# List themes preloaded from RULES_BASE_DIR/THEMES_DIR
 @app.get("/themes")
 def list_themes():
     return {"themes": sorted(THEME_REGISTRY.themes.keys())}

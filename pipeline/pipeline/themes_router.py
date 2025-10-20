@@ -40,6 +40,7 @@ from typing import Dict, List, Optional, Tuple, Any
 
 # -------- preload --------
 
+## Preload available themes and their triggers.json into a registry.
 def preload(themes_dir: str | Path) -> Dict[str, Dict[str, Any]]:
     """Сканируем themes/* и собираем реестр: {topic: {"path": Path, "triggers": {...}}}"""
     root = Path(themes_dir)
@@ -66,6 +67,7 @@ def preload(themes_dir: str | Path) -> Dict[str, Dict[str, Any]]:
 
 # -------- helpers: compile patterns --------
 
+## Compile a list of regex strings safely; ignore invalid entries.
 def _compile_list(lst: Optional[List[str]]) -> List[re.Pattern]:
     out: List[re.Pattern] = []
     for s in (lst or []):
@@ -77,6 +79,7 @@ def _compile_list(lst: Optional[List[str]]) -> List[re.Pattern]:
     return out
 
 
+## Heuristic score of a theme against S0 sentences using triggers.
 def _topic_score_for_sentences(sents: List[dict], trig: Dict[str, Any]) -> int:
     """
     Считаем баллы по триггерам темы.
@@ -115,6 +118,7 @@ def _topic_score_for_sentences(sents: List[dict], trig: Dict[str, Any]) -> int:
     return score
 
 
+## Pick likely topics (themes) using triggers and a simple threshold.
 def detect_topics(s0: Dict[str, Any], registry: Optional[Dict[str, Dict[str, Any]]],
                   *, threshold: int = 2) -> List[str]:
     """

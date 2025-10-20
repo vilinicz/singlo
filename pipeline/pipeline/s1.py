@@ -30,6 +30,13 @@ Fallback (если рёбер нет, а узлы есть):
 
 from __future__ import annotations
 
+# Stage S1 overview:
+# - Loads a spaCy model and data-driven patterns (token and optional dependency)
+# - Scores each S0 sentence into one of 8 node types with a confidence
+# - Applies light heuristics (hedging penalty, numeric bonus, IMRAD priors)
+# - Links nearby nodes into edges within a sliding sentence window
+# - Writes s1_graph.json with nodes/edges + provenance for debugging
+
 import json, re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional, Iterable, Set
@@ -110,20 +117,24 @@ LINK_WINDOW_SENTENCES = 2
 # Утилиты
 # ─────────────────────────────────────────────────────────────
 
+## Canonicalize a free-form label into one of NODE_TYPES, or None.
 def _canon_type(label: str) -> Optional[str]:
     return TYPE_CANON.get(label.lower().replace(" ", ""))
 
 
+## Return True if any token is present in the given vocabulary set.
 def _contains_any(tokens_lower: List[str], vocab: Set[str]) -> bool:
     return any(t in vocab for t in tokens_lower)
 
 
+## Heuristic: does text contain numbers/percent/p-values.
 def _has_numeric(text: str) -> bool:
     # быстрый признак «есть числа/проценты/p-values»
     t = text.lower()
     return any(c.isdigit() for c in t) or "%" in t or " p<" in t or " p =" in t
 
 
+## Classify sentiment-like polarity markers in text: positive/negative/neutral.
 def _polarity(text: str) -> str:
     t = text.lower()
     pos = any(w in t for w in POS_MARKERS)
@@ -134,19 +145,23 @@ def _polarity(text: str) -> str:
     return "neutral"
 
 
+## Compute a confidence penalty if hedging words are present in the doc.
 def _hedge_penalty_from_doc(nlp_doc: Doc) -> float:
     tokens_lower = [t.text.lower() for t in nlp_doc]
     return HEDGE_PENALTY if _contains_any(tokens_lower, HEDGING) else 0.0
 
 
+## Prior multiplier based on IMRAD section hint and target node type.
 def _section_prior(imrad_hint: str, tname: str) -> float:
     return SECTION_PRIORS.get(imrad_hint or "OTHER", {}).get(tname, 1.0)
 
 
+## Base weight for a node type before heuristics and matches.
 def _base_type_weight(tname: str) -> float:
     return BASE_TYPE_WEIGHTS.get(tname, 1.0)
 
 
+## Iterate flat sentences from S0 as (global_idx, sentence_dict).
 def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
     """
     Итерирует плоский список предложений s0["sentences"].
@@ -160,6 +175,7 @@ def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
 # Оценка и выбор типа
 # ─────────────────────────────────────────────────────────────
 
+## Score a sentence to a node type using token/dep matchers and heuristics.
 def _score_sentence(nlp_doc: Doc,
                     text: str,
                     imrad_hint: str,
@@ -228,12 +244,14 @@ def _score_sentence(nlp_doc: Doc,
 # Построение узлов/рёбер
 # ─────────────────────────────────────────────────────────────
 
+## Stable node id composed of doc_id, type, and a running index.
 def _node_id(doc_id: str, tname: str, idx: int) -> str:
     slug = doc_id.replace("/", "-").replace(":", "-")
     tslug = (tname or "").replace(" ", "")
     return f"{slug}:{tslug}:{idx:04d}"
 
 
+## Build a canonical node dict with provenance and basic layout hints.
 def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
              section_name: str, imrad_hint: str, s_idx: int,
              page: int, bbox: List[float], polarity: str) -> Dict[str, Any]:
@@ -262,6 +280,7 @@ def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
     }
 
 
+## Sentence distance between two nodes (by their s_idx), for linking.
 def _distance(a: Dict[str, Any], b: Dict[str, Any]) -> int:
     # на плоском списке меряем дистанцию по глобальному sent_idx
     sa = int(a["prov"]["sent_idx"])
@@ -269,6 +288,7 @@ def _distance(a: Dict[str, Any], b: Dict[str, Any]) -> int:
     return abs(sa - sb)
 
 
+## Create edges within a small window based on type pairs and polarity.
 def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     edges: List[Dict[str, Any]] = []
 
@@ -359,6 +379,7 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
 # ─────────────────────────────────────────────────────────────
 
 def run_s1(s0_path: str,
+           # Stage S1: load S0, apply patterns/heuristics, write s1_graph.json
            rules_path: Optional[str],
            graph_path: str,
            *,
