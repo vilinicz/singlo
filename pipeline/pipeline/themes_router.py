@@ -2,15 +2,18 @@
 """
 themes_router.py — быстрый роутер тем (top-k) с инвертированным индексом, ранним стопом и расширенной отладкой.
 
-Публичный API (совместим с прежним):
+Публичный API:
   preload(themes_root) -> ThemeRegistry
   route_themes(s0, registry, global_topk=2, stop_threshold=1.8, override=None) -> List[ThemeScore]
   select_rule_files(themes_root, chosen, common_path=None) -> Dict[str, List[Path]]
+  select_pattern_files(themes_root, chosen) -> Dict[str, List[Path]]
   explain_themes_for_debug(s0, registry, chosen) -> List[Dict[str, Any]]
-
-Новое (для отладки и s1_debug):
-  route_themes_with_candidates(s0, registry, ...) -> (chosen: List[ThemeScore], candidates: List[ThemeScore])
   explain_routing_full(s0, registry, chosen, candidates, top_n=5) -> Dict[str, Any]
+  detect_topics(s0, registry, global_topk=2, **kw) -> List[str]   # имя тем удобным списком
+
+Новое/обновлённое:
+- Полная поддержка нового S0-формата (плоский sentences[] с section_hint/is_caption), при этом legacy-режим (sections/captions) тоже работает.
+- build_showcase_buckets() теперь строит витрины из sentences[], используя section_hint (INTRO/RESULTS/…).
 """
 
 from __future__ import annotations
@@ -122,7 +125,25 @@ def route_themes(
     return chosen
 
 
-# legacy
+def detect_topics(
+        s0: Dict,
+        registry: ThemeRegistry,
+        global_topk: int = 2,
+        stop_threshold: float = 1.8,
+        max_candidates: int = 20,
+        override: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Удобный helper: вернуть ИМЕНА выбранных тем.
+    """
+    chosen = route_themes(
+        s0, registry, global_topk=global_topk, stop_threshold=stop_threshold,
+        max_candidates=max_candidates, override=override
+    )
+    return [t.name for t in chosen if t.chosen]
+
+
+# legacy (yaml-правила эпохи до spaCy)
 def select_rule_files(
         themes_root: str | Path,
         chosen: List[ThemeScore],
@@ -227,7 +248,7 @@ def route_themes_with_candidates(
                 chosen.append(ThemeScore(nm, 999.0, 0.0, True, hits=999))
         return chosen, chosen
 
-        # 1) витрина (buckets)
+    # 1) витрина (buckets)
     texts = build_showcase_buckets(s0)  # {"intro","results","rest","captions","all"}
     text_all = texts["all"]  # единая витрина для токенизации и индекса
     text_lower = text_all.lower()
@@ -429,7 +450,7 @@ def _score_theme_detail_verbose(text: str, trg: Triggers) -> Tuple[float, bool, 
 
 
 def _score_theme_detail_verbose_buckets(texts: Dict[str, str], trg: Triggers) -> Tuple[float, bool, Dict[str, Any]]:
-    # как твой _score_theme_detail_verbose, но вместо одного текста — словарь витрин
+    # как _score_theme_detail_verbose, но вместо одного текста — словарь витрин
     # scheme: all (база), intro (x1.10), results (x1.08), captions (x1.08)
     M_IN, M_RS, M_CP = 1.10, 1.08, 1.08
 
@@ -449,7 +470,7 @@ def _score_theme_detail_verbose_buckets(texts: Dict[str, str], trg: Triggers) ->
         if not ok:
             passed = False
 
-    score = 0.0;
+    score = 0.0
     matched = []
 
     def add_if(found, wt, kind, mode, token):
@@ -485,8 +506,13 @@ def _score_theme_detail_verbose_buckets(texts: Dict[str, str], trg: Triggers) ->
         add_if(hit_rx(rx, texts["captions"]), -wt * (M_CP - 1), "negative", "regex", rx.pattern)
 
     matched.sort(key=lambda m: float(m["weight"]), reverse=True)
-    det = {"score": float(score), "passed_must": passed, "matched": matched, "top_triggers": matched[:8],
-           "unmet_must": []}
+    det = {
+        "score": float(score),
+        "passed_must": passed,
+        "matched": matched,
+        "top_triggers": matched[:8],
+        "unmet_must": []
+    }
     return score, passed, det
 
 
@@ -512,11 +538,47 @@ def explain_themes_for_debug(s0: Dict, registry: ThemeRegistry, chosen: List[The
 
 
 def build_showcase_buckets(s0: Dict) -> Dict[str, str]:
+    """
+    Унифицированная «витрина» текста для роутинга тем.
+    Поддерживает два формата:
+      1) Новый S0: s0["sentences"] = [{text, section_hint, is_caption, ...}]
+      2) Legacy S0: s0["sections"]/s0["captions"]
+    Возвращает:
+      {"intro": "...", "results": "...", "rest": "...", "captions": "...", "all": "..."}
+    """
+    # --- новый формат: sentences[] ---
+    if "sentences" in s0 and isinstance(s0.get("sentences"), list):
+        intro, results, rest, caps = [], [], [], []
+        for s in s0["sentences"]:
+            text = _normalize(s.get("text") or "")
+            if not text:
+                continue
+            if s.get("is_caption"):
+                caps.append(text)
+                continue
+            hint = (s.get("section_hint") or "").upper()
+            if hint.startswith("INTRO"):
+                intro.append(text)
+            elif hint.startswith("RESULT"):
+                results.append(text)
+            else:
+                rest.append(text)
+
+        return {
+            "intro": " ".join(intro),
+            "results": " ".join(results),
+            "rest": " ".join(rest),
+            "captions": " ".join(caps),
+            "all": " ".join([*intro, *results, *rest, *caps]),
+        }
+
+    # --- legacy: sections[]/captions[] ---
     intro, results, rest, caps = [], [], [], []
     for sec in s0.get("sections", []):
         nm = (sec.get("name") or "").lower()
         t = _normalize(sec.get("text") or "")
-        if not t: continue
+        if not t:
+            continue
         if nm.startswith("abstract") or nm.startswith("introduction"):
             intro.append(t)
         elif "results" in nm:

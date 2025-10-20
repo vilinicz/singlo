@@ -1,4 +1,5 @@
 [
+
   {
     "label": "Result",
     "pattern": {
@@ -34,6 +35,24 @@
       ],
       "edges": [
         {"source": "verb", "target": "dobj"}
+      ]
+    }
+  },
+
+  {
+    "label": "Result",
+    "pattern": {
+      "nodes": [
+        {"RIGHT_ID": "root", "RIGHT_ATTRS": {"LEMMA": {"IN": ["observe","find","see","associate","correlate"]}}},
+        {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "prep", "RIGHT_ATTRS": {"LOWER": "between"}},
+        {"LEFT_ID": "prep", "REL_OP": ">", "RIGHT_ID": "obj1", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","dobj","obl"]}}},
+        {"LEFT_ID": "root", "REL_OP": "*", "RIGHT_ID": "andtok", "RIGHT_ATTRS": {"LOWER": "and"}},
+        {"LEFT_ID": "andtok", "REL_OP": ">", "RIGHT_ID": "obj2", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","conj","dobj","obl"]}}}
+      ],
+      "edges": [
+        {"source": "root", "target": "prep"},
+        {"source": "prep", "target": "obj1"},
+        {"source": "andtok", "target": "obj2"}
       ]
     }
   }

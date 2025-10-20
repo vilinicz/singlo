@@ -34,7 +34,7 @@ Fallback (если рёбер нет, а узлы есть):
 
 from __future__ import annotations
 
-import json
+import json, re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional, Iterable, Set
 
@@ -152,6 +152,121 @@ def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
         yield i, s
 
 
+def _mk_rule_key(label_type: str, source_rel: str, idx: int, engine: str) -> str:
+    # пример: "Result||src=themes/biomed/patterns/matcher.json#12||engine=token"
+    return f"{label_type}||src={source_rel}#{idx}||engine={engine}"
+
+
+def _parse_rule_key(vocab, match_id) -> dict:
+    key = vocab.strings[match_id] if isinstance(match_id, int) else str(match_id)
+    # ожидаем формат как в _mk_rule_key
+    out = {"type": None, "source": None, "index": None, "engine": None, "raw": key}
+    parts = key.split("||")
+    if parts:
+        out["type"] = parts[0]
+    for p in parts[1:]:
+        if p.startswith("src="):
+            src = p[4:]
+            if "#" in src:
+                src_path, idx = src.rsplit("#", 1)
+                out["source"] = src_path
+                try:
+                    out["index"] = int(idx)
+                except:
+                    out["index"] = idx
+            else:
+                out["source"] = src
+        elif p.startswith("engine="):
+            out["engine"] = p.split("=", 1)[1]
+    return out
+
+
+def _canon_type_from_key(key_type: str) -> str | None:
+    # TYPE_CANON объявлен выше (как и раньше)
+    return TYPE_CANON.get((key_type or "").lower().replace(" ", ""))
+
+
+def _load_spacy_patterns(nlp,
+                         themes_root: str,
+                         theme_override: Optional[List[str]] = None
+                         ) -> Tuple[Matcher, DependencyMatcher, Dict[str, float], List[dict]]:
+    """
+    Возвращает: matcher, depmatcher, type_boosts, registry
+    registry: [{ "type": "Result", "engine":"token", "source":"themes/biomed/patterns/matcher.json", "index":12, "key":"..." }, ...]
+    """
+    matcher = Matcher(nlp.vocab)
+    depmatcher = DependencyMatcher(nlp.vocab)
+    registry: List[dict] = []
+
+    themes_root_path = Path(themes_root or "/app/rules/themes")
+    roots = []
+    if theme_override:
+        for t in theme_override:
+            roots.append(themes_root_path / t / "patterns")
+    roots.append(themes_root_path / "common" / "patterns")  # common всегда
+
+    def relpath(p: Path) -> str:
+        try:
+            return str(p.relative_to(themes_root_path.parent))
+        except Exception:
+            return str(p)
+
+    for r in roots:
+        if not r.exists():
+            continue
+        # token matcher
+        mfile = r / "matcher.json"
+        if mfile.exists():
+            try:
+                items = json.loads(mfile.read_text(encoding="utf-8"))
+                if isinstance(items, list):
+                    for idx, it in enumerate(items):
+                        label = _canon_type(str(it.get("label", "")))
+                        pattern = it.get("pattern")
+                        if not label or not pattern:
+                            continue
+                        key = _mk_rule_key(label, relpath(mfile), idx, "token")
+                        matcher.add(key, [pattern])
+                        registry.append(
+                            {"type": label, "engine": "token", "source": relpath(mfile), "index": idx, "key": key})
+                # else ignore
+            except Exception:
+                pass
+        # dependency matcher
+        dfile = r / "depmatcher.json"
+        if dfile.exists():
+            try:
+                items = json.loads(dfile.read_text(encoding="utf-8"))
+                if isinstance(items, list):
+                    for idx, it in enumerate(items):
+                        label = _canon_type(str(it.get("label", "")))
+                        pat = it.get("pattern")
+                        if not label or not pat:
+                            continue
+                        key = _mk_rule_key(label, relpath(dfile), idx, "dep")
+                        depmatcher.add(key, [pat])
+                        registry.append(
+                            {"type": label, "engine": "dep", "source": relpath(dfile), "index": idx, "key": key})
+            except Exception:
+                pass
+
+    # type boosts
+    type_boosts: Dict[str, float] = {}
+    for r in roots:
+        lfile = r.parent / "lexicon.json"
+        if lfile.exists():
+            try:
+                lex = json.loads(lfile.read_text(encoding="utf-8"))
+                for k, v in (lex.get("type_boosts") or {}).items():
+                    t = _canon_type(str(k))
+                    if t:
+                        type_boosts[t] = float(v)
+            except Exception:
+                pass
+
+    return matcher, depmatcher, type_boosts, registry
+
+
 # ─────────────────────────────────────────────────────────────
 # Оценка и выбор типа
 # ─────────────────────────────────────────────────────────────
@@ -162,32 +277,39 @@ def _score_sentence(nlp_doc: Doc,
                     matcher: Matcher,
                     depmatcher: DependencyMatcher,
                     type_boosts: Dict[str, float],
-                    dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any]]:
+                    dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any], List[dict]]:
     hits: Dict[str, float] = {}
+    matched_rules: List[dict] = []
 
-    # token-patterns
-    for label, start, end in matcher(nlp_doc):
-        tname = nlp_doc.vocab.strings[label]
-        tname = _canon_type(tname) or tname
+    # token patterns
+    for match_id, start, end in matcher(nlp_doc):
+        meta = _parse_rule_key(nlp_doc.vocab, match_id)
+        tname = _canon_type_from_key(meta["type"]) or meta["type"]
         if tname in NODE_TYPES:
             hits[tname] = hits.get(tname, 0.0) + 1.0
+            frag = nlp_doc[start:end].text
+            meta_out = {**meta, "span": [start, end], "text": frag}
+            matched_rules.append(meta_out)
 
-    # dep-patterns (если есть парсер)
+    # dep patterns
     if dep_enabled:
-        for label, _ in depmatcher(nlp_doc):
-            tname = nlp_doc.vocab.strings[label]
-            tname = _canon_type(tname) or tname
+        for match_id, (token_ids,) in depmatcher(nlp_doc):
+            meta = _parse_rule_key(nlp_doc.vocab, match_id)
+            tname = _canon_type_from_key(meta["type"]) or meta["type"]
             if tname in NODE_TYPES:
                 hits[tname] = hits.get(tname, 0.0) + 1.2
+                # соберём компактный фрагмент-окно
+                toks = [nlp_doc[i].text for i in token_ids if 0 <= i < len(nlp_doc)]
+                meta_out = {**meta, "tokens": toks}
+                matched_rules.append(meta_out)
 
     if not hits:
-        return None, 0.0, {"hits": {}}
+        return None, 0.0, {"hits": {}}, matched_rules
 
-    prior_mult = {t: _section_prior(imrad_hint, t) for t in hits.keys()}
-    base_mult = {t: _base_type_weight(t) for t in hits.keys()}
+    prior_mult = {t: SECTION_PRIORS.get(imrad_hint or "OTHER", {}).get(t, 1.0) for t in hits.keys()}
+    base_mult = {t: BASE_TYPE_WEIGHTS.get(t, 1.0) for t in hits.keys()}
     theme_mult = {t: type_boosts.get(t, 1.0) for t in hits.keys()}
-
-    hedge = _hedge_penalty_from_doc(nlp_doc)
+    hedge = HEDGE_PENALTY if any(tok.text.lower() in HEDGING for tok in nlp_doc) else 0.0
     num_bonus = NUMERIC_BONUS if _has_numeric(text) else 0.0
 
     scored: Dict[str, float] = {}
@@ -199,7 +321,7 @@ def _score_sentence(nlp_doc: Doc,
         scored[t] = val
 
     best_t, best_v = max(scored.items(), key=lambda kv: kv[1])
-    return best_t, float(best_v), {
+    dbg = {
         "hits": hits,
         "prior_mult": prior_mult,
         "base_mult": base_mult,
@@ -208,6 +330,7 @@ def _score_sentence(nlp_doc: Doc,
         "num_bonus": num_bonus,
         "scored": scored
     }
+    return best_t, float(best_v), dbg, matched_rules
 
 
 # ─────────────────────────────────────────────────────────────
@@ -360,9 +483,11 @@ def run_s1(s0_path: str,
 
     # загрузка spaCy и паттернов
     nlp, dep_enabled, model_name = load_spacy_model()
-    matcher, depmatcher, type_boosts = load_spacy_patterns(
+    matcher, depmatcher, type_boosts, registry = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
+    themes_used = theme_override or ["common"]
+    pattern_sources = sorted({r["source"] for r in registry})
 
     nodes: List[Dict[str, Any]] = []
     debug_hits: List[Dict[str, Any]] = []
@@ -382,7 +507,29 @@ def run_s1(s0_path: str,
 
         # doc для spaCy
         doc = nlp(text)
-        tname, conf, dbg = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
+        tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
+
+        # --- citation guard:References/цитатные фразы → Input Fact, не Result/Technique/... ---
+        text_l = text.lower()
+        # эвристики цитирования: [12], (Smith, 2010), [Medline], [CrossRef], длинные блоки ссылок
+        looks_like_citation = (
+                (text.count("[") + text.count("]") >= 2) or
+                bool(re.search(r"\(\s?[A-Z][a-z]+(?:\s+et al\.)?,\s?\d{4}\s?\)", text)) or
+                "[medline]" in text_l or "[crossref]" in text_l or
+                bool(re.findall(r"\[\d{1,3}(?:[,\-\s]\d{1,3})*\]", text))  # группы ссылок [1,2-5,7]
+        )
+        in_refs = (imrad == "REFERENCES")
+
+        if in_refs or looks_like_citation:
+            # жёстко понижаем/переназначаем тип
+            if tname is None:
+                tname, conf = "Input Fact", 0.45
+            elif tname != "Input Fact":
+                tname = "Input Fact"
+                conf = min(conf, 0.45)  # не даём «перетягивать» семантику
+            # можно также выкинуть такие предложения вовсе:
+            # if in_refs: continue
+
         if not tname or conf < CONF_NODE_MIN:
             continue
 
@@ -401,6 +548,7 @@ def run_s1(s0_path: str,
             section_name=section_name, imrad_hint=imrad,
             s_idx=s_idx, page=page, bbox=bbox, polarity=pol
         )
+        node["matched_rules"] = rule_hits  # список объектов: {type, source, index, engine, span/text|tokens, raw}
         nodes.append(node)
         debug_hits.append({
             "sec": section_name, "imrad": imrad, "text": text[:200],
@@ -412,19 +560,27 @@ def run_s1(s0_path: str,
     edges = _link_inside(doc_id, nodes)
 
     # артефакты
-    s1_graph = {"doc_id": doc_id, "nodes": nodes, "edges": edges}
+    s1_graph = {
+        "doc_id": doc_id,
+        "themes_used": themes_used,  # НОВОЕ
+        "pattern_sources": pattern_sources,  # НОВОЕ
+        "spacy_model": model_name,  # опционально, но полезно
+        "dep_enabled": bool(dep_enabled),  # опционально
+        "nodes": nodes,
+        "edges": edges
+    }
     (out_dir / "s1_graph.json").write_text(json.dumps(s1_graph, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    s1_debug = {
-        "summary": {
-            "nodes_total": len(nodes),
-            "edges_total": len(edges),
-            "conf_node_min": CONF_NODE_MIN,
-            "conf_edge_min": CONF_EDGE_MIN,
-            "themes_loaded": theme_override or ["common"],
-            "spacy_model": model_name,
-            "dep_enabled": bool(dep_enabled),
-        },
-        "hits": debug_hits
-    }
-    (out_dir / "s1_debug.json").write_text(json.dumps(s1_debug, ensure_ascii=False, indent=2), encoding="utf-8")
+    # s1_debug = {
+    #     "summary": {
+    #         "nodes_total": len(nodes),
+    #         "edges_total": len(edges),
+    #         "conf_node_min": CONF_NODE_MIN,
+    #         "conf_edge_min": CONF_EDGE_MIN,
+    #         "themes_loaded": theme_override or ["common"],
+    #         "spacy_model": model_name,
+    #         "dep_enabled": bool(dep_enabled),
+    #     },
+    #     "hits": debug_hits
+    # }
+    # (out_dir / "s1_debug.json").write_text(json.dumps(s1_debug, ensure_ascii=False, indent=2), encoding="utf-8")

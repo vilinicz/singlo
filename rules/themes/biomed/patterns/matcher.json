@@ -1,73 +1,102 @@
 [
 
   {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
+      {"LOWER": {"IN": ["aim","aimed","aims","objective","objectives","goal","hypothesize","hypothesise","propose","postulate","test"]}},
+      {"LOWER": "to", "OP": "?"}
+    ]
+  },
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
+      {"LOWER": {"IN": ["study","work","paper"]}},
+      {"LOWER": {"IN": ["was","were","seeks","intends"]}},
+      {"LOWER": {"IN": ["to","investigate","examine","reveal","determine"]}}
+    ]
+  },
+
+
+  {
+    "label": "Dataset",
+    "pattern": [
+      {"LOWER": {"IN": ["study","subjects","participants","children","patients","preschool"]}},
+      {"LOWER": {"IN": ["population","cohort","group","groups","participants","children","subjects"]}, "OP": "?"},
+      {"LOWER": {"IN": ["were","was","included","enrolled","examined","participated"]}}
+    ]
+  },
+  {
     "label": "Dataset",
     "pattern": [
       {"LOWER": {"IN": ["n","n="]}},
       {"IS_PUNCT": true, "OP": "?"},
       {"LIKE_NUM": true},
       {"IS_PUNCT": true, "OP": "*"},
-      {"LOWER": {"IN": ["patients","participants","subjects","cases","controls"]}}
+      {"LOWER": {"IN": ["children","participants","subjects","patients","cases"]}}
     ]
   },
   {
     "label": "Dataset",
     "pattern": [
-      {"LOWER": {"IN": ["cohort","multicenter","multicentre","registry","retrospective","prospective"]}},
-      {"LOWER": {"IN": ["study","trial","analysis","dataset","series"]}}
+      {"LOWER": {"IN": ["japanese","age","aged","months","years","dmft","dt"]}}
     ]
   },
   {
-    "label": "Experiment",
+    "label": "Dataset",
     "pattern": [
-      {"LOWER": {"IN": ["randomized","randomised","double-blind","placebo-controlled","controlled"]}},
-      {"LOWER": {"IN": ["trial","study","rct","crossover","parallel"]}}
+      {"LOWER": {"IN": ["l.","lactobacillus","streptococcus","s."]}},
+      {"IS_SPACE": true, "OP": "*"},
+      {"IS_ALPHA": true, "OP": "+"}
     ]
   },
-  {
-    "label": "Experiment",
-    "pattern": [
-      {"LOWER": {"IN": ["in","on","with"]}, "OP": "?"},
-      {"LOWER": {"IN": ["vivo","vitro","silico"]}}
-    ]
-  },
+
 
   {
     "label": "Technique",
     "pattern": [
-      {"LOWER": {"IN": ["pcr","rt-pcr","qpcr","western","elisa","rna-seq","chip-seq","crispr","flow","cytometry"]}}
+      {"LOWER": {"IN": ["16s","pcr","dna","rdna","v1–v3","v1-v3","sequencing","primer","abi","bigdye","clustalw"]}}
     ]
   },
   {
     "label": "Technique",
     "pattern": [
-      {"LOWER": {"IN": ["cox","kaplan–meier","kaplan-meier","log-rank","logrank","anova","glm","mixed-effects","linear","logistic"]}},
-      {"LOWER": {"IN": ["regression","model","analysis","test","tests"]}}
+      {"LOWER": {"IN": ["agar","mlds","mrs","rogosa","anaerobically","incubated","colony","catalase","stationary","optical","od600","od550"]}}
+    ]
+  },
+  {
+    "label": "Technique",
+    "pattern": [
+      {"LOWER": {"IN": ["agglutination","agglutinin","saliva-induced","salivary","assay","spectrophotometer"]}}
+    ]
+  },
+  {
+    "label": "Technique",
+    "pattern": [
+      {"LOWER": {"IN": ["acid","resistance","acetic","lactic","ic50","dose-dependent","logistic","inhibition"]}}
     ]
   },
 
+
   {
-    "label": "Analysis",
+    "label": "Experiment",
     "pattern": [
-      {"LOWER": {"IN": ["hazard","odds","relative","risk","rate"]}},
-      {"LOWER": {"IN": ["ratio","ratios","reduction","difference"]}}
+      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
+      {"LOWER": {"IN": ["isolated","collected","measured","identified","evaluated","assessed","classified","tested"]}}
     ]
   },
   {
-    "label": "Analysis",
+    "label": "Experiment",
     "pattern": [
-      {"LOWER": {"IN": ["confidence","ci"]}},
-      {"LOWER": {"IN": ["interval","intervals"]}},
-      {"TEXT": {"REGEX": "^[\\[(]$"}, "OP": "?"},
-      {"TEXT": {"REGEX": "^\\d+(\\.\\d+)?$"}},
-      {"TEXT": ","},
-      {"TEXT": {"REGEX": "^\\d+(\\.\\d+)?$"}},
-      {"TEXT": {"REGEX": "^[\\])]$"}, "OP": "?"}
+      {"LOWER": {"IN": ["multiple","fisher’s","fishers","fisher","spearman’s","spearmans","spearman"]}},
+      {"LOWER": {"IN": ["regression","exact","test","rho","analysis","analyses"]}}
     ]
   },
 
+
   {
-    "label": "Result",
+    "label": "Analysis",
     "pattern": [
       {"LOWER": {"IN": ["p","p-value","pvalue"]}},
       {"IS_PUNCT": true, "OP": "?"},
@@ -77,10 +106,31 @@
     ]
   },
   {
+    "label": "Analysis",
+    "pattern": [
+      {"LOWER": {"IN": ["welch’s","welchs","unequal","variance"]}},
+      {"LOWER": {"IN": ["t-test","t–test","ttest"]}}
+    ]
+  },
+  {
+    "label": "Analysis",
+    "pattern": [
+      {"LOWER": {"IN": ["spearman’s","spearmans","rho","correlation","coefficient"]}}
+    ]
+  },
+  {
+    "label": "Analysis",
+    "pattern": [
+      {"LOWER": {"IN": ["linear","multiple","regression"]}}
+    ]
+  },
+
+
+  {
     "label": "Result",
     "pattern": [
       {"LOWER": {"IN": ["significant","significantly"]}},
-      {"LOWER": {"IN": ["higher","lower","increase","decrease","reduction","improvement","association"]}}
+      {"LOWER": {"IN": ["higher","lower","increase","decrease","association","influence","correlation","affect","affected"]}}
     ]
   },
   {
@@ -89,32 +139,40 @@
       {"LIKE_NUM": true},
       {"TEXT": "%"},
       {"LOWER": "of"},
-      {"LOWER": {"IN": ["patients","participants","cases","measurements","samples"]}}
+      {"LOWER": {"IN": ["children","cases","patients","subjects","measurements","isolates"]}}
+    ]
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {"LOWER": {"IN": ["positive","negative"]}},
+      {"LOWER": {"IN": ["association","correlation","tendency","influence"]}}
     ]
   },
 
-  {
-    "label": "Hypothesis",
-    "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","suggest"]}},
-      {"LOWER": "that", "OP": "?"}
-    ]
-  },
-
-  {
-    "label": "Input Fact",
-    "pattern": [
-      {"LOWER": {"IN": ["according","per","as"]}},
-      {"LOWER": {"IN": ["guidelines","who","nih","ema","fda","consensus","previous","prior","studies","literature"]}}
-    ]
-  },
 
   {
     "label": "Conclusion",
     "pattern": [
       {"LOWER": {"IN": ["in","overall","in","to"]}},
-      {"LOWER": {"IN": ["conclusion","summary","sum","conclude","conclusion,","summary,"]}}
+      {"LOWER": {"IN": ["conclusion","summary","conclude","indicate","suggest"]}}
+    ]
+  },
+
+
+  {
+    "label": "Input Fact",
+    "pattern": [
+      {"LOWER": {"IN": ["previous","prior","earlier","many"]}},
+      {"LOWER": {"IN": ["studies","reports","work","literature"]}},
+      {"LOWER": {"IN": ["have","has","showed","shown","demonstrated","reported"]}}
+    ]
+  },
+  {
+    "label": "Input Fact",
+    "pattern": [
+      {"LOWER": {"IN": ["according","per","as"]}},
+      {"LOWER": {"IN": ["guidelines","who","nih","consensus","reports","literature"]}}
     ]
   }
 ]

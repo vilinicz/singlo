@@ -1,121 +1,59 @@
 [
 
+  { "label": "Result", "pattern": [ {"LIKE_NUM": true}, {"TEXT": "%"}, {"LOWER": "of"}, {"LOWER": {"IN": ["measurements","trials","cases","participants","subjects","samples"]}} ] },
+  { "label": "Result", "pattern": [ {"LOWER": {"IN": ["significant","significantly"]}}, {"LOWER": {"IN": ["increase","decrease","improvement","reduction","difference","effect","association"]}} ] },
+  { "label": "Result", "pattern": [ {"LOWER": {"IN": ["p","p-value","pvalue"]}}, {"IS_PUNCT": true, "OP": "?"}, {"TEXT": {"REGEX": "^(<|=)$"}}, {"IS_SPACE": true, "OP": "*"}, {"TEXT": {"REGEX": "^0?\\.\\d+$"}} ] },
+
+
   {
     "label": "Result",
     "pattern": [
-      {"LIKE_NUM": true},
-      {"TEXT": "%"},
-      {"LOWER": "of"},
-      {"LOWER": {"IN": ["measurements","trials","cases","participants","subjects","samples"]}}
+      {"LOWER": {"IN": ["positive","negative","strong","weak"]}},
+      {"LOWER": {"IN": ["tendency","association","correlation","relationship","link"]}},
+      {"LOWER": "between"},
+      {"IS_ALPHA": true, "OP": "+"},
+      {"LOWER": "and"},
+      {"IS_ALPHA": true, "OP": "+"}
     ]
   },
   {
     "label": "Result",
     "pattern": [
-      {"LOWER": {"IN": ["significant","significantly"]}},
-      {"LOWER": {"IN": ["increase","decrease","improvement","reduction","difference","effect","association"]}}
-    ]
-  },
-  {
-    "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["p","p-value","pvalue"]}},
-      {"IS_PUNCT": true, "OP": "?"},
-      {"TEXT": {"REGEX": "^(<|=)$"}},
-      {"IS_SPACE": true, "OP": "*"},
-      {"TEXT": {"REGEX": "^0?\\.\\d+$"}}
+      {"LOWER": {"IN": ["observed","found","seen"]}},
+      {"LOWER": "between"},
+      {"IS_ALPHA": true, "OP": "+"},
+      {"LOWER": "and"},
+      {"IS_ALPHA": true, "OP": "+"}
     ]
   },
 
-  {
-    "label": "Technique",
-    "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["use","used","apply","applied","employ","employed","implement","implemented"]}}
-    ]
-  },
-  {
-    "label": "Technique",
-    "pattern": [
-      {"LOWER": {"REGEX": "^(svm|svr|rf|xgboost|pca|ica|csp|fbcsp|eegnet|resnet|unet|lstm|transformer)$"}}
-    ]
-  },
 
-  {
-    "label": "Experiment",
-    "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["conduct","conducted","perform","performed","run","ran","carry","carried"]}},
-      {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}}
-    ]
-  },
+  { "label": "Technique", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["use","used","apply","applied","employ","employed","implement","implemented"]}} ] },
+  { "label": "Technique", "pattern": [ {"LOWER": {"REGEX": "^(svm|svr|rf|xgboost|pca|ica|csp|fbcsp|eegnet|resnet|unet|lstm|transformer)$"}} ] },
 
-  {
-    "label": "Dataset",
-    "pattern": [
-      {"LOWER": {"IN": ["dataset","corpus","cohort","sample","recordings","measurements"]}}
-    ]
-  },
-  {
-    "label": "Dataset",
-    "pattern": [
-      {"LIKE_NUM": true},
-      {"LOWER": {"IN": ["participants","subjects","patients","records","samples"]}}
-    ]
-  },
 
-  {
-    "label": "Analysis",
-    "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["analyze","analysed","analyzed","compute","computed","estimate","estimated","fit","fitted","model","modeled","evaluate","evaluated"]}}
-    ]
-  },
-  {
-    "label": "Analysis",
-    "pattern": [
-      {"LOWER": {"IN": ["regression","anova","t-test","ttest","logistic","cox","glm","mixed-effects","bayesian"]}}
-    ]
-  },
+  { "label": "Experiment", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["conduct","conducted","perform","performed","run","ran","carry","carried"]}}, {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}} ] },
 
-  {
-    "label": "Hypothesis",
-    "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["hypothesize","hypothesise","propose","posits","assume","suggest"]}},
-      {"LOWER": "that", "OP": "?"}
-    ]
-  },
 
-  {
-    "label": "Input Fact",
-    "pattern": [
-      {"LOWER": {"IN": ["according","previous","prior","it","it","it"]}},
-      {"LOWER": {"IN": ["to","studies","work","is","is","is"]}, "OP": "?"}
-    ]
-  },
-  {
-    "label": "Input Fact",
-    "pattern": [
-      {"LOWER": {"IN": ["it","there"]}},
-      {"LOWER": {"IN": ["is","are","has","have"]}},
-      {"LOWER": {"IN": ["known","well-known","evidence","evident"]}}
-    ]
-  },
+  { "label": "Dataset", "pattern": [ {"LOWER": {"IN": ["dataset","corpus","cohort","sample","recordings","measurements"]}} ] },
+  { "label": "Dataset", "pattern": [ {"LIKE_NUM": true}, {"LOWER": {"IN": ["participants","subjects","patients","records","samples"]}} ] },
 
-  {
-    "label": "Conclusion",
-    "pattern": [
-      {"LOWER": {"IN": ["in","overall","in","to"]}},
-      {"LOWER": {"IN": ["conclusion","summary","sum","conclude","conclusion,","summary,"]}}
-    ]
-  },
-  {
-    "label": "Conclusion",
-    "pattern": [
-      {"LOWER": {"IN": ["we","these","our"]}},
-      {"LOWER": {"IN": ["conclude","results","findings","observations"]}},
-      {"LOWER": {"IN": ["suggest","indicate","support","imply"]}}
-    ]
-  }
+
+  { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["analyze","analysed","analyzed","compute","computed","estimate","estimated","fit","fitted","model","modeled","evaluate","evaluated"]}} ] },
+  { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["regression","anova","t-test","ttest","logistic","cox","glm","mixed-effects","bayesian","fisher","welch","spearman","rho","exact"]}} ] },
+
+
+  { "label": "Hypothesis", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["hypothesize","hypothesise","propose","posits","assume","suggest"]}}, {"LOWER": "that", "OP": "?"} ] },
+
+
+  { "label": "Input Fact", "pattern": [ {"LOWER": {"IN": ["according","previous","prior","it","it","it"]}}, {"LOWER": {"IN": ["to","studies","work","is","is","is"]}, "OP": "?"} ] },
+  { "label": "Input Fact", "pattern": [ {"LOWER": {"IN": ["it","there"]}}, {"LOWER": {"IN": ["is","are","has","have"]}}, {"LOWER": {"IN": ["known","well-known","evidence","evident"]}} ] },
+
+
+  { "label": "Input Fact", "pattern": [ {"TEXT": {"REGEX": "^\\[[0-9,;\\s]+\\]$"}} ] },
+  { "label": "Input Fact", "pattern": [ {"TEXT": {"REGEX": "^\\([A-Z][a-z]+(\\s+et\\sal\\.)?,\\s?\\d{4}(;\\s?\\d{4})*\\)$"}} ] },
+
+
+  { "label": "Conclusion", "pattern": [ {"LOWER": {"IN": ["in","overall","in","to"]}}, {"LOWER": {"IN": ["conclusion","summary","sum","conclude","conclusion,","summary,"]}} ] },
+  { "label": "Conclusion", "pattern": [ {"LOWER": {"IN": ["we","these","our"]}}, {"LOWER": {"IN": ["conclude","results","findings","observations"]}}, {"LOWER": {"IN": ["suggest","indicate","support","imply"]}} ] }
 ]
