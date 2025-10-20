@@ -50,7 +50,7 @@ NODE_TYPES = [
 TYPE_CANON = {t.lower().replace(" ", ""): t for t in NODE_TYPES}
 
 SECTION_PRIORS = {
-    "INTRO": {"Hypothesis": 1.10, "Input Fact": 1.05, "Conclusion": 1.00},
+    "INTRO": {"Hypothesis": 1.25, "Input Fact": 1.06, "Conclusion": 1.00},
     "METHODS": {"Technique": 1.15, "Experiment": 1.12, "Dataset": 1.10, "Analysis": 1.05},
     "RESULTS": {"Result": 1.18, "Analysis": 1.08},
     # NOTE: усилили Result в DISCUSSION, чтобы «словесные» связи проходили увереннее

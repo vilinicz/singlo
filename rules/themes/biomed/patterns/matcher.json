@@ -2,18 +2,54 @@
   {
     "label": "Hypothesis",
     "pattern": [
-      {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-      {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","aim","aimed","aims","objective","objectives","goal"]}},
-      {"LOWER": "to", "OP": "?"}
+      {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
+      {"LOWER": {"IN": ["aim","aims","objective","objectives","purpose"]}},
+      {"LOWER": "of", "OP": "?"},
+      {"LOWER": {"IN": ["this","the"]}, "OP": "?"},
+      {"LOWER": {"IN": ["study","work","paper","research"]}, "OP": "?"},
+      {"LOWER": {"IN": ["was","were","is","are"]}, "OP": "?"},
+      {"IS_PUNCT": true, "OP": "*"},
+      {"LOWER": "to"}
     ]
   },
+
   {
     "label": "Hypothesis",
     "pattern": [
-      {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
-      {"LOWER": {"IN": ["study","work","paper"]}},
-      {"LOWER": {"IN": ["aims","aimed","seeks","intends"]}},
-      {"LOWER": "to", "OP": "?"}
+      {"LOWER": "in"},
+      {"LOWER": "this"},
+      {"LOWER": {"IN": ["study","work","paper","research"]}},
+      {"IS_PUNCT": true, "OP": "*"},
+      {"LOWER": {"IN": ["we","our"]}, "OP": "?"},
+      {"LOWER": {"IN": ["aim","aimed","aims","seek","sought","intend","intended","set"]}},
+      {"LOWER": "to"}
+    ]
+  },
+
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": {"IN": ["we","our"]}, "OP": "?"},
+      {"LOWER": {"IN": ["hypothesized","hypothesise","hypothesize","predicted","expected","postulated","proposed","assumed"]}},
+      {"LOWER": "that", "OP": "?"}
+    ]
+  },
+
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": {"IN": ["we","our","the"]}},
+      {"LOWER": {"IN": ["tested","test","hypothesis"]}, "OP": "+"},
+      {"LOWER": "that"}
+    ]
+  },
+
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {"LOWER": "we"},
+      {"LOWER": {"IN": ["investigated","examined","evaluated","assessed","tested","asked"]}},
+      {"LOWER": "whether"}
     ]
   },
 
