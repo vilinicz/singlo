@@ -35,7 +35,9 @@ S0 (GROBID) → s0.json (тонкий формат с плоским списк�
 
 import os
 import re
+from typing import Iterable
 import json
+import datetime
 import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
@@ -136,6 +138,112 @@ def normalize_inline(text: str) -> str:
 
 
 # ───────────────────────────────────────────────────────────
+# Citation detection (TEI + текстовые паттерны с гвардами)
+# ───────────────────────────────────────────────────────────
+
+# (A) квадратные числовые ссылки: [1], [2–5], [3, 7, 9]
+_RX_NUMERIC_BRACKETS = re.compile(r"""
+    (?<![A-Za-z])     # не массив A[i]
+    \[
+      \s*\d{1,3}
+      (?:\s*(?:[-–,;]\s*|\s*,\s*)\d{1,3}){0,6}
+    \]                # <-- без \b
+""", re.X)
+
+# (B) автор–год: (Smith, 2019) ; (Smith et al., 2019; Wang, 2021)
+# гварды исключают служебные скобки (Fig., Table, Eq., p<, n=)
+_YEAR_MIN = 1800
+_YEAR_MAX = datetime.datetime.now().year + 1
+_RX_PAREN_AUTHOR_YEAR = re.compile(
+    r"""
+    \(
+      \s*
+      [A-Z][A-Za-z'’\-]+                           # фамилия 1
+      (?:\s+et\s+al\.)?                            # опционально et al.
+      (?:\s*,\s*(?P<y1>(?:18|19|20|21)\d{2}))      # , 2019
+      (?:                                          # ; Smith, 2020 ; Wang, 2021
+        \s*[,;]\s*
+        [A-Z][A-Za-z'’\-]+(?:\s+et\s+al\.)?\s*,\s*(?P<yN>(?:18|19|20|21)\d{2})
+      )*
+      \s*
+    \)
+    """,
+    re.X
+)
+
+# (C) негативные паттерны в круглых скобках, которые НЕ цитаты:
+# (n = 20), (p < 0.05), (CI 95%), (Fig. 2), (Table 1), (Eq. 3)
+_RX_PAREN_NON_CITATION = re.compile(
+    r"""
+    \(
+      [^)]{0,6}                # короткий префикс
+      (?:                      # набор «служебных» маркеров
+        n\s*=\s*\d+ |
+        p\s*[<≤=]\s*0?\.\d+ |
+        CI\s*\d{1,3}\s*% |
+        Fig\.?\s*\d+ |
+        Table\s*\d+ |
+        Eq\.?\s*\d+
+      )
+      [^)]{0,20}
+    \)
+    """, re.X | re.I
+)
+
+
+def _has_citation_struct(el) -> bool:
+    """Структурный TEI-сигнал: <ref type="bibl">…</ref> или target="#b…"."""
+    try:
+        for ref in el.iterfind(".//ref"):
+            ty = (ref.get("type") or "").lower()
+            tgt = (ref.get("target") or "")
+            if ty.startswith("bibl"):
+                return True
+            if tgt.startswith("#b"):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _text_has_numeric_brackets(text: str) -> bool:
+    return bool(_RX_NUMERIC_BRACKETS.search(text or ""))
+
+
+def _text_has_author_year(text: str) -> bool:
+    t = text or ""
+    if _RX_PAREN_NON_CITATION.search(t):  # <— этот гвард оставляем
+        return False
+    m = _RX_PAREN_AUTHOR_YEAR.search(t)
+    if not m:
+        return False
+    # Валидация годов (1800..текущий+1) — оставляем как было
+    for y in (m.groupdict().get("y1"), m.groupdict().get("yN")):
+        if y:
+            yi = int(y)
+            if yi < _YEAR_MIN or yi > _YEAR_MAX:
+                return False
+    return True
+
+
+def compute_citation_flags(el, text: str) -> tuple[bool, float]:
+    """
+    Возвращает (has_citation, citation_strength) c приоритетом:
+      1. TEI-структура → 1.0
+      2. Автор–год → 0.7
+      3. Квадратные номера → 0.5
+      4. Иначе → 0.0
+    """
+    if _has_citation_struct(el):
+        return True, 1.0
+    if _text_has_author_year(text):
+        return True, 0.7
+    if _text_has_numeric_brackets(text):
+        return True, 0.5
+    return False, 0.0
+
+
+# ───────────────────────────────────────────────────────────
 # IMRAD mapping
 # ───────────────────────────────────────────────────────────
 
@@ -209,13 +317,16 @@ def tei_iter_sentences(tei_xml: str):
             boxes = parse_coords_attr(el.get("coords") or "")
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
+            has_cit, cit_strength = compute_citation_flags(el, text)
             yield {
                 "text": text,
                 "page": (page0 if page0 is not None else 0),
                 "bbox": bbox,
                 "section_hint": current_imrad_section,
                 "is_caption": False,
-                "caption_type": ""
+                "caption_type": "",
+                "has_citation": has_cit,
+                "citation_strength": round(cit_strength, 2)
             }
 
         elif tag == "figDesc":
@@ -231,17 +342,19 @@ def tei_iter_sentences(tei_xml: str):
                     boxes = parse_coords_attr(fig.get("coords") or "")
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
+            has_cit, cit_strength = compute_citation_flags(el, text)
             yield {
                 "text": text,
                 "page": (page0 if page0 is not None else 0),
                 "bbox": bbox,
                 "section_hint": current_imrad_section,
                 "is_caption": True,
-                "caption_type": "Figure"
+                "caption_type": "Figure",
+                "has_citation": has_cit,
+                "citation_strength": round(cit_strength, 2)
             }
 
         elif tag == "table":
-            # caption таблицы обычно в <table><head>
             thead = el.find("./{http://www.tei-c.org/ns/1.0}head")
             if thead is None:
                 continue
@@ -251,13 +364,17 @@ def tei_iter_sentences(tei_xml: str):
             boxes = parse_coords_attr(thead.get("coords") or "") or parse_coords_attr(el.get("coords") or "")
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
+            # NB: даём в compute_citation_flags сам thead (его TEI-children часто включают <ref>)
+            has_cit, cit_strength = compute_citation_flags(thead, text)
             yield {
                 "text": text,
                 "page": (page0 if page0 is not None else 0),
                 "bbox": bbox,
                 "section_hint": current_imrad_section,
                 "is_caption": True,
-                "caption_type": "Table"
+                "caption_type": "Table",
+                "has_citation": has_cit,
+                "citation_strength": round(cit_strength, 2)
             }
 
 
