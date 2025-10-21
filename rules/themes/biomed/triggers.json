@@ -1,11 +1,12 @@
 {
   "any": [
-    "\\bp\\s*(?:<|=)\\s*0?\\.\\d+",
-    "\\bfisher(?:'s)?\\b",
-    "\\bspearman(?:'s)?\\b",
-    "\\bregression\\b",
-    "\\bcohort\\b|\\bparticipants?\\b|\\bsubjects?\\b",
-    "\\b(l\\.\\s*[a-z]+|lactobacillus|streptococcus)\\b"
+    "\\bauc|auroc\\b",
+    "\\baccuracy\\b|\\bprecision\\b|\\brecall\\b|\\bsensitivity\\b|\\bspecificity\\b|\\bf1\\b",
+    "\\bodds\\s+ratio\\b|\\bhazard\\s+ratio\\b|\\bhr\\b|\\bor\\b",
+    "\\bconfidence\\s+interval\\b|\\bci\\b",
+    "\\bcompared\\s+to\\b|\\bversus\\b|\\bvs\\b",
+    "\\brandomi[sz]ed\\b|\\bdouble-blind\\b|\\bplacebo\\b|\\bcontrolled\\b|\\bcase-control\\b|\\bcohort\\b|\\bcross-sectional\\b|\\bprospective\\b|\\bretrospective\\b",
+    "\\bclinicaltrials\\.gov\\b|\\bnct\\d+\\b"
   ],
   "intro_bias": ["\\baims?\\b|\\bobjective[s]?\\b"],
   "methods_bias": ["\\bmaterials? and methods?\\b|\\bstatistical analysis\\b"]

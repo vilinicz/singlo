@@ -1,3 +1,9 @@
+"""Stage S2: graph normalization, deduplication, relinking, and layout.
+
+Loads S1 outputs, normalizes node types and text, deduplicates near-duplicates,
+relinks/filters edges, ensures a minimal backbone when sparse, optionally refines
+with an LLM on a compact payload, and writes export/<doc_id>/graph.json.
+"""
 # pipeline/pipeline/s2.py
 from __future__ import annotations
 import json, os, pathlib, re

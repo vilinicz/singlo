@@ -36,6 +36,15 @@
   },
 
   {
+    "label": "Technique",
+    "pattern": [
+      { "RIGHT_ID": "verb", "RIGHT_ATTRS": { "POS": "VERB" } },
+      { "LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "prep", "RIGHT_ATTRS": { "LOWER": { "IN": ["using","with","by","via","through"] } } },
+      { "LEFT_ID": "prep", "REL_OP": ">", "RIGHT_ID": "tool", "RIGHT_ATTRS": { "DEP": { "IN": ["pobj","obl"] } } }
+    ]
+  },
+
+  {
     "label": "Experiment",
     "pattern": [
       {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["conduct","perform","run","carry"]}}},

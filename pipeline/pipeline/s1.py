@@ -283,41 +283,90 @@ def _sent_iter_flat(s0: Dict) -> Iterable[Tuple[int, Dict]]:
 def _score_sentence(nlp_doc: Doc,
                     text: str,
                     imrad_hint: str,
-                    matcher: Matcher,
+                    matcher: Matcher | None,
                     depmatcher: Optional[DependencyMatcher],
                     type_boosts: Dict[str, float],
                     dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any], List[dict]]:
+    """
+    Считает очки по token- и dep-паттернам, устойчив к разным формам token_maps из DependencyMatcher:
+    - list[dict[str,int]]
+    - list[list[int]] / list[tuple[int, ...]]
+    - одиночный int
+    """
     hits: Dict[str, float] = {}
     matched_rules: List[dict] = []
 
-    # token patterns
-    for match_id, start, end in matcher(nlp_doc):
-        label = nlp_doc.vocab.strings[match_id]
-        # если лейбл не канонизируется — отправляем его в «Other»
-        tname = _canon_type(label) or "Other"
-        if tname in NODE_TYPES:
-            hits[tname] = hits.get(tname, 0.0) + 1.0
-            frag = nlp_doc[start:end].text
-            matched_rules.append({"type": tname, "engine": "token", "span": [start, end], "text": frag})
-
-    # dep patterns
-    if dep_enabled and depmatcher is not None:
-        # NOTE: корректная итерация по DependencyMatcher — token_maps, а не кортеж
-        for match_id, token_maps in depmatcher(nlp_doc):
-            label = nlp_doc.vocab.strings[match_id]
+    # --- Token patterns (Matcher)
+    if matcher is not None:
+        for match_id, start, end in matcher(nlp_doc):
+            try:
+                label = nlp_doc.vocab.strings[match_id]
+            except Exception:
+                continue
             tname = _canon_type(label) or "Other"
             if tname in NODE_TYPES:
-                hits[tname] = hits.get(tname, 0.0) + 1.2
-                toks = []
-                for node_map in token_maps:
-                    for i in node_map.values():
-                        if 0 <= i < len(nlp_doc):
-                            toks.append(nlp_doc[i].text)
-                matched_rules.append({"type": tname, "engine": "dep", "tokens": toks})
+                hits[tname] = hits.get(tname, 0.0) + 1.0
+                frag = nlp_doc[start:end].text
+                matched_rules.append({"type": tname, "engine": "token", "span": [start, end], "text": frag})
+
+    # --- Dependency patterns (DependencyMatcher)
+    if dep_enabled and depmatcher is not None:
+        for match_id, token_maps in depmatcher(nlp_doc):
+            try:
+                label = nlp_doc.vocab.strings[match_id]
+            except Exception:
+                continue
+            tname = _canon_type(label) or "Other"
+            if tname not in NODE_TYPES:
+                continue
+
+            # Нормализуем token_maps в последовательность "итерируемых контейнеров" индексов
+            # Возможные входы:
+            #   - token_maps: list[dict[str,int]]
+            #   - token_maps: list[list[int]] / list[tuple[int,...]]
+            #   - token_maps: int
+            #   - token_maps: неизвестно -> считаем как 1 совпадение без токенов
+            norm_maps: List[Iterable[int]] = []
+            if isinstance(token_maps, (list, tuple)):
+                for m in token_maps:
+                    if isinstance(m, dict):
+                        norm_maps.append(m.values())
+                    elif isinstance(m, (list, tuple)):
+                        norm_maps.append(m)
+                    elif isinstance(m, int):
+                        norm_maps.append([m])
+                    else:
+                        # пропускаем странные элементы
+                        continue
+            elif isinstance(token_maps, int):
+                norm_maps = [[token_maps]]
+            else:
+                norm_maps = []
+
+            # Считаем совпадения и вытаскиваем токены для debug
+            hit_count = 0
+            toks: List[str] = []
+            for it in norm_maps:
+                any_token = False
+                for i in it:
+                    if isinstance(i, int) and 0 <= i < len(nlp_doc):
+                        toks.append(nlp_doc[i].text)
+                        any_token = True
+                # если хотя бы один токен валиден — считаем это отдельным совпадением
+                hit_count += 1 if any_token else 0
+
+            # Если ничего не распознали — всё равно зачтём хотя бы одну сработку по шаблону
+            if hit_count <= 0:
+                hit_count = 1
+
+            # Вес dep-хита немного выше, чем token-хита
+            hits[tname] = hits.get(tname, 0.0) + 1.2 * hit_count
+            matched_rules.append({"type": tname, "engine": "dep", "tokens": toks})
 
     if not hits:
         return None, 0.0, {"hits": {}}, matched_rules
 
+    # --- Приоры/веса/штрафы
     prior_mult = {t: _section_prior(imrad_hint, t) for t in hits.keys()}
     base_mult = {t: _base_type_weight(t) for t in hits.keys()}
     theme_mult = {t: type_boosts.get(t, 1.0) for t in hits.keys()}
@@ -332,6 +381,7 @@ def _score_sentence(nlp_doc: Doc,
         val -= hedge
         scored[t] = val
 
+    # --- Выбор лучшего типа
     best_t, best_v = max(scored.items(), key=lambda kv: kv[1])
     dbg = {
         "hits": hits,
@@ -571,19 +621,19 @@ def merge_adjacent(nodes: list) -> list:
 
         # базовые условия
         same_type = (n.get("type") == last.get("type"))
-        same_sec  = _same_section(n, last)
-        same_pg   = _same_page(n, last)
+        same_sec = _same_section(n, last)
+        same_pg = _same_page(n, last)
 
         # индексы предложений — оба валидные и рядом
         si_last = _sent_idx(last)
-        si_cur  = _sent_idx(n)
+        si_cur = _sent_idx(n)
         both_valid = (si_last >= 0 and si_cur >= 0)
         close_enough = both_valid and (abs(si_cur - si_last) <= 1)
 
         if same_type and same_sec and same_pg and close_enough:
             # склейка
             last_text = (last.get("text") or "").strip()
-            cur_text  = (n.get("text") or "").strip()
+            cur_text = (n.get("text") or "").strip()
             if cur_text:
                 last["text"] = (last_text + " " + cur_text).strip() if last_text else cur_text
 
@@ -614,6 +664,7 @@ def merge_adjacent(nodes: list) -> list:
         out.append(buf[-1])
 
     return out
+
 
 # ─────────────────────────────────────────────────────────────
 # Основной раннер

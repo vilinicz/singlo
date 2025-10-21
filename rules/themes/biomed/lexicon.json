@@ -1,11 +1,11 @@
 {
   "type_boosts": {
-    "Result": 1.08,
-    "Experiment": 1.06,
-    "Dataset": 1.05,
+    "Result": 1.10,
+    "Experiment": 1.07,
+    "Dataset": 1.06,
     "Technique": 1.04,
-    "Analysis": 1.03,
-    "Hypothesis": 1.05,
+    "Analysis": 1.05,
+    "Hypothesis": 1.04,
     "Conclusion": 1.02,
     "Input Fact": 1.00
   }

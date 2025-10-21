@@ -27,9 +27,26 @@
     ]
   },
 
+  { "label": "Result",
+    "pattern": [
+      { "LOWER": { "IN": ["auc","auroc","accuracy","precision","recall","f1","sensitivity","specificity","ppv","npv","rmse","mae","mse"] } }
+    ]
+  },
+  { "label": "Result",
+    "pattern": [
+      { "LOWER": { "IN": ["compared","relative","versus","vs"] } },
+      { "LOWER": { "IN": ["to","with"] } }
+    ]
+  },
+  { "label": "Result",
+    "pattern": [
+      { "LOWER": { "IN": ["confidence","ci"] } },
+      { "LOWER": { "IN": ["interval","95%","90%","99%"] } }
+    ]
+  },
+
 
   { "label": "Technique", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["use","used","apply","applied","employ","employed","implement","implemented"]}} ] },
-  { "label": "Technique", "pattern": [ {"LOWER": {"REGEX": "^(svm|svr|rf|xgboost|pca|ica|csp|fbcsp|eegnet|resnet|unet|lstm|transformer)$"}} ] },
 
 
   { "label": "Experiment", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["conduct","conducted","perform","performed","run","ran","carry","carried"]}}, {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}} ] },
