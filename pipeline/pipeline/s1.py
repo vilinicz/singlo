@@ -51,7 +51,7 @@ from .spacy_loader import load_spacy_model, load_spacy_patterns
 
 NODE_TYPES = [
     "Input Fact", "Hypothesis", "Experiment", "Technique",
-    "Result", "Dataset", "Analysis", "Conclusion"
+    "Result", "Dataset", "Analysis", "Conclusion", "Other"
 ]
 
 TYPE_CANON = {t.lower().replace(" ", ""): t for t in NODE_TYPES}
@@ -97,6 +97,24 @@ NUMERIC_BONUS = 0.06
 # пороги
 CONF_NODE_MIN = 0.40
 CONF_EDGE_MIN = 0.55
+
+# ── Тонкая настройка эвристик и бустов ───────────────────────
+# Усиление для подписей к рисункам/таблицам (после citation guard)
+CAPTION_BOOST_FIG = 0.08
+CAPTION_BOOST_TAB = 0.10
+CAPTION_BOOST_TYPES = {"Result", "Analysis", "Experiment", "Dataset"}
+
+# Эвристика «фраз вывода» (переключение в Conclusion)
+CONCLUSION_HINTS = {
+    "enable": True,
+    "sections": {"DISCUSSION", "RESULTS"},
+    # требуем, чтобы оценка Conclusion была не ниже min_ratio от лучшего класса
+    "min_ratio": 0.90
+}
+
+# Fallback-рёбра (минимальные связи при их полном отсутствии)
+# Режимы: "off" (по умолчанию), "safe" (только если >1 типа узлов и конфиденс высок)
+FALLBACK_EDGES_MODE = "off"
 
 # полярность
 POS_MARKERS = {
@@ -189,7 +207,8 @@ def _score_sentence(nlp_doc: Doc,
     # token patterns
     for match_id, start, end in matcher(nlp_doc):
         label = nlp_doc.vocab.strings[match_id]
-        tname = _canon_type(label) or label
+        # если лейбл не канонизируется — отправляем его в «Other»
+        tname = _canon_type(label) or "Other"
         if tname in NODE_TYPES:
             hits[tname] = hits.get(tname, 0.0) + 1.0
             frag = nlp_doc[start:end].text
@@ -200,7 +219,7 @@ def _score_sentence(nlp_doc: Doc,
         # NOTE: корректная итерация по DependencyMatcher — token_maps, а не кортеж
         for match_id, token_maps in depmatcher(nlp_doc):
             label = nlp_doc.vocab.strings[match_id]
-            tname = _canon_type(label) or label
+            tname = _canon_type(label) or "Other"
             if tname in NODE_TYPES:
                 hits[tname] = hits.get(tname, 0.0) + 1.2
                 toks = []
@@ -357,19 +376,21 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
 
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
 
-    # fallback, если пусто
-    if not edges and nodes:
-        res = sorted(by_type["Result"], key=lambda n: -n["conf"])[:2]
-        hyp = sorted(by_type["Hypothesis"], key=lambda n: -n["conf"])[:2]
-        if res and hyp:
-            for i, (a, b) in enumerate([(res[0], hyp[0])] + ([(res[1], hyp[0])] if len(res) > 1 else [])):
-                et = "supports" if a.get("polarity") != "negative" else "refutes"
-                add_edge(a, b, et, (a["conf"] + b["conf"]) / 2)
-        tech = sorted(by_type["Technique"], key=lambda n: -n["conf"])[:1]
-        exp = sorted(by_type["Experiment"], key=lambda n: -n["conf"])[:1]
-        if tech and (exp or res):
-            target = exp[0] if exp else res[0]
-            add_edge(tech[0], target, "uses", (tech[0]["conf"] + target["conf"]) / 2)
+    # Fallback-режим по требованию
+    if not edges and nodes and FALLBACK_EDGES_MODE != "off":
+        # «безопасный» режим: только если есть хотя бы два разных типа узлов
+        types_present = {n["type"] for n in nodes}
+        if FALLBACK_EDGES_MODE == "safe" and len(types_present) >= 2:
+            res = sorted(by_type["Result"], key=lambda n: -n["conf"])[:2]
+            hyp = sorted(by_type["Hypothesis"], key=lambda n: -n["conf"])[:2]
+            if res and hyp and (res[0]["conf"] >= 0.65 and hyp[0]["conf"] >= 0.60):
+                et = "supports" if res[0].get("polarity") != "negative" else "refutes"
+                add_edge(res[0], hyp[0], et, (res[0]["conf"] + hyp[0]["conf"]) / 2)
+            tech = sorted(by_type["Technique"], key=lambda n: -n["conf"])[:1]
+            if tech and (res or hyp):
+                target = (res[0] if res else hyp[0])
+                if tech[0]["conf"] >= 0.60 and target["conf"] >= 0.60:
+                    add_edge(tech[0], target, "uses", (tech[0]["conf"] + target["conf"]) / 2)
 
     return edges
 
@@ -421,13 +442,16 @@ def run_s1(s0_path: str,
         doc = nlp(text)
         tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
 
-        if tname and conf >= CONF_NODE_MIN:
-            tl = text.lower().strip()
-            if tl.startswith(("these results", "overall", "in conclusion", "in summary")):
-                if any(w in tl for w in ("suggest", "indicate", "support", "imply", "show")):
-                    if tname != "Conclusion":
+        # Более строгая и настраиваемая эвристика «фраз вывода»
+        if tname and conf >= CONF_NODE_MIN and CONCLUSION_HINTS["enable"]:
+            if imrad in CONCLUSION_HINTS["sections"]:
+                tl = text.lower().strip()
+                if tl.startswith(("these results", "overall", "in conclusion", "in summary")) and \
+                        any(w in tl for w in ("suggest", "indicate", "support", "imply", "show")):
+                    best_score = conf
+                    concl_score = float((dbg.get("scored") or {}).get("Conclusion", 0.0))
+                    if concl_score >= CONCLUSION_HINTS["min_ratio"] * best_score and tname != "Conclusion":
                         tname = "Conclusion"
-                        # слегка поднимем уверенность в DISCUSSION
                         if imrad == "DISCUSSION":
                             conf = max(conf, 0.52)
 
@@ -449,6 +473,13 @@ def run_s1(s0_path: str,
             elif tname != "Input Fact":
                 tname = "Input Fact"
                 conf = min(conf, 0.45)
+
+        # Caption-boost (только ПОСЛЕ citation guard и только для «содержательных» типов)
+        if tname and tname in CAPTION_BOOST_TYPES and is_cap:
+            if cap_type == "Figure":
+                conf = min(1.0, conf + CAPTION_BOOST_FIG)
+            elif cap_type == "Table":
+                conf = min(1.0, conf + CAPTION_BOOST_TAB)
 
         if not tname or conf < CONF_NODE_MIN:
             continue
