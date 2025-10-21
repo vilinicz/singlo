@@ -96,12 +96,12 @@ NUMERIC_BONUS = 0.06
 
 # пороги
 CONF_NODE_MIN = 0.40
-CONF_EDGE_MIN = 0.55
+CONF_EDGE_MIN = 0.52
 
 # ── Тонкая настройка эвристик и бустов ───────────────────────
 # Усиление для подписей к рисункам/таблицам (после citation guard)
 CAPTION_BOOST_FIG = 0.08
-CAPTION_BOOST_TAB = 0.10
+CAPTION_BOOST_TAB = 0.08
 CAPTION_BOOST_TYPES = {"Result", "Analysis", "Experiment", "Dataset"}
 
 # Эвристика «фраз вывода» (переключение в Conclusion)
@@ -130,10 +130,46 @@ NEG_MARKERS = {
 
 LINK_WINDOW_SENTENCES = 2
 
+_RX_CIT_AUTHOR_YEAR = re.compile(
+    r'\((?:[A-Z][a-zA-Z\-]+(?:\s+et\s+al\.)?(?:\s*&\s*[A-Z][a-zA-Z\-]+)?,?\s*)\d{4}[a-z]?\)', re.U)
+_RX_CIT_BRACKETS_NUM = re.compile(r'\[(?:\d+(?:\s*[-–]\s*\d+)?(?:\s*,\s*\d+)*)\]', re.U)
+_RX_GUARD_NOT_CIT = re.compile(r'\((?:n\s*=\s*\d+|p\s*[<≤]\s*0\.\d+|Fig\.|Table|Eq\.)', re.I | re.U)
+
+_RX_NUMERIC_HINT = re.compile(
+    r'(?:\b\d+(?:\.\d+)?\s?%|\bby\s+\d+(?:\.\d+)?\b|\bp\s*[<≤]\s*0\.(?:0[1-5]|05)\b|\bAUC\b|\bRMSE\b)',
+    re.I | re.U)
+
 
 # ─────────────────────────────────────────────────────────────
 # Утилиты
 # ─────────────────────────────────────────────────────────────
+
+
+def _estimate_citation_strength(text: str) -> float:
+    """Heuristic strength: 1.0 structural (we can't see TEI here), 0.7 author-year, 0.5 [n]."""
+    t = text or ""
+    if not t:
+        return 0.0
+    # Guards to avoid misreading (n=), (p<), (Fig.), ...
+    if _RX_GUARD_NOT_CIT.search(t):
+        # allow brackets outside guard
+        has_num = bool(_RX_CIT_BRACKETS_NUM.search(t))
+        return 0.5 if has_num else 0.0
+    if _RX_CIT_AUTHOR_YEAR.search(t):
+        return 0.7
+    if _RX_CIT_BRACKETS_NUM.search(t):
+        return 0.5
+    return 0.0
+
+
+def _citation_heavy(text: str) -> bool:
+    """True if the sentence is mostly citations (to demote via citation_soft)."""
+    if not text:
+        return False
+    cit_tokens = len(_RX_CIT_AUTHOR_YEAR.findall(text)) + len(_RX_CIT_BRACKETS_NUM.findall(text))
+    # crude density: many cites or small text dominated by them
+    return cit_tokens >= 2 or (cit_tokens >= 1 and len(text) < 120)
+
 
 ## Canonicalize a free-form label into one of NODE_TYPES, or None.
 def _canon_type(label: str) -> Optional[str]:
@@ -377,6 +413,12 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
                 "to": {"sec": dst["prov"]["section"], "s": dst["prov"]["sent_idx"]},
             }
         })
+        # --- PATCH: small post-hoc reinforcement for nodes that participate in edges
+        for n in (src, dst):
+            try:
+                n["conf"] = float(min(1.0, (n.get("conf") or 0.0) + 0.02))
+            except Exception:
+                pass
 
     def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2) -> List[Tuple[Dict, Dict, int]]:
         cands = []
@@ -474,6 +516,105 @@ def write_markdown_summary(path: str, records: List[Dict[str, Any]], max_per_lab
             f.write("\n")
 
 
+# --- PATCH: merge_adjacent pre-pass
+def merge_adjacent(nodes: list) -> list:
+    """
+    Склеивает соседние однотипные узлы в пределах одной страницы и одной секции,
+    ТОЛЬКО если у обоих узлов есть валидные sent_idx (>=0) и |Δsent_idx| <= 1.
+    Текст конкатенируется, conf усредняется, span объединяется.
+    """
+    if not nodes:
+        return nodes
+
+    def _prov(n: dict) -> dict:
+        return n.get("prov", {}) if isinstance(n, dict) else {}
+
+    def _sec(n: dict) -> str:
+        return (_prov(n).get("section") or "").lower()
+
+    def _page(n: dict) -> int:
+        # пробуем сначала базовое поле, затем prov.page
+        return n.get("page") or _prov(n).get("page") or -1
+
+    def _sent_idx(n: dict) -> int:
+        p = _prov(n)
+        try:
+            si = p.get("sent_idx", -1)
+            return int(si) if si is not None else -1
+        except Exception:
+            return -1
+
+    def _same_page(a: dict, b: dict) -> bool:
+        return _page(a) == _page(b)
+
+    def _same_section(a: dict, b: dict) -> bool:
+        return _sec(a) == _sec(b)
+
+    # стабильная сортировка, чтобы соседние кандидаты оказались рядом
+    def _key(n: dict):
+        return (n.get("type"),
+                _sec(n),
+                _page(n),
+                _sent_idx(n))
+
+    nodes_sorted = sorted(nodes, key=_key)
+
+    out = []
+    buf = []
+
+    for n in nodes_sorted:
+        if not buf:
+            buf.append(n)
+            continue
+
+        last = buf[-1]
+
+        # базовые условия
+        same_type = (n.get("type") == last.get("type"))
+        same_sec  = _same_section(n, last)
+        same_pg   = _same_page(n, last)
+
+        # индексы предложений — оба валидные и рядом
+        si_last = _sent_idx(last)
+        si_cur  = _sent_idx(n)
+        both_valid = (si_last >= 0 and si_cur >= 0)
+        close_enough = both_valid and (abs(si_cur - si_last) <= 1)
+
+        if same_type and same_sec and same_pg and close_enough:
+            # склейка
+            last_text = (last.get("text") or "").strip()
+            cur_text  = (n.get("text") or "").strip()
+            if cur_text:
+                last["text"] = (last_text + " " + cur_text).strip() if last_text else cur_text
+
+            # усредняем уверенность (можно заменить на max, если предпочтительнее)
+            try:
+                a = float(last.get("conf") or 0.0)
+                b = float(n.get("conf") or 0.0)
+                last["conf"] = float(min(1.0, (a + b) / 2.0))
+            except Exception:
+                pass
+
+            # объединяем span, если есть у обоих
+            lp, np = _prov(last), _prov(n)
+            ls, ns = lp.get("span"), np.get("span")
+            if isinstance(ls, (list, tuple)) and len(ls) == 2 and isinstance(ns, (list, tuple)) and len(ns) == 2:
+                try:
+                    last["prov"]["span"] = [min(int(ls[0]), int(ns[0])), max(int(ls[1]), int(ns[1]))]
+                except Exception:
+                    # оставляем прежний span при ошибке преобразования
+                    pass
+
+            # page/section/ids оставляем от первого узла
+        else:
+            out.append(buf[-1])
+            buf = [n]
+
+    if buf:
+        out.append(buf[-1])
+
+    return out
+
 # ─────────────────────────────────────────────────────────────
 # Основной раннер
 # ─────────────────────────────────────────────────────────────
@@ -532,14 +673,22 @@ def run_s1(s0_path: str,
         has_struct_cit = bool(sent.get("has_citation"))
         cit_strength = float(sent.get("citation_strength") or 0.0)
 
-        # бонус к Input Fact при структурной цитате (TEI <ref>)
-        if has_struct_cit and tname == "Input Fact":
-            conf = min(1.0, conf + 0.20)  # коэффициент можно вынести в конфиг
+        # 3.a) Непрерывный бонус от цитат (используем S0 strength, иначе оцениваем по тексту)
+        if tname in ("Input Fact", "Result", "Conclusion"):
+            if cit_strength <= 0.0:
+                cit_strength = _estimate_citation_strength(text)
+            conf = min(1.0, conf + min(0.12, 0.08 * round(10 * cit_strength) / 10.0))
 
-        # 3) «citation-soft»: если Input Fact только за счёт текстовой «цитатности» — понизить
-        if tname == "Input Fact" and not has_struct_cit and looks_like_textual_citation(text):
-            if conf < (CONF_NODE_MIN + 0.10):
-                tname, conf = "Other", 0.39
+        # 3.b) Сохраняем жёсткий буст для Input Fact при структурной цитате (TEI <ref>)
+        if has_struct_cit and tname == "Input Fact":
+            conf = min(1.0, conf + 0.12)  # уменьшили до +0.12, т.к. есть общий бонус выше
+
+        # 3.c) citation-soft: «почти целиком цитатное» — мягко понижаем
+        if _citation_heavy(text):
+            conf = max(0.0, conf - 0.08)
+        # а если это ещё и Input Fact без структурной цитаты — можно «уронить» в Other при слабой уверенности
+        if tname == "Input Fact" and not has_struct_cit and conf < (CONF_NODE_MIN + 0.02):
+            tname, conf = "Other", 0.39
 
         # Более строгая и настраиваемая эвристика «фраз вывода»
         if tname and conf >= CONF_NODE_MIN and CONCLUSION_HINTS["enable"]:
@@ -560,6 +709,12 @@ def run_s1(s0_path: str,
                 conf = min(1.0, conf + CAPTION_BOOST_FIG)
             elif cap_type == "Table":
                 conf = min(1.0, conf + CAPTION_BOOST_TAB)
+
+        # 4) Лёгкий bias в секции RESULTS: числовой фрагмент и слабый выбор класса → подтолкнуть к Result
+        if tname in ("Other", "Input Fact", "Analysis") and imrad.startswith("RESULT") and _RX_NUMERIC_HINT.search(
+                text):
+            tname = "Result"
+            conf = max(conf, 0.46)
 
         if not tname or conf < CONF_NODE_MIN:
             continue
@@ -591,6 +746,8 @@ def run_s1(s0_path: str,
             "conf": round(conf, 3)
         })
         idx += 1
+
+    nodes = merge_adjacent(nodes)
 
     # линковка
     edges = _link_inside(doc_id, nodes)
