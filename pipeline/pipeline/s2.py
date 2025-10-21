@@ -36,9 +36,10 @@ DEFAULT_EDGE_FOR_PAIR = {
     ("Result", "Conclusion"): "supports",
 }
 
-
 SPACE = re.compile(r"\s+")
 PUNCT = re.compile(r"[“”\"'`]+")
+
+
 # Normalize text for comparison/deduplication (lowercase, strip, collapse).
 def norm_text(s: str) -> str:
     s = s.strip().lower()
@@ -46,15 +47,18 @@ def norm_text(s: str) -> str:
     s = SPACE.sub(" ", s)
     return s
 
+
 # Compute a deduplication key per node (type + canonical text; special-case Hypothesis).
 def dedup_key(node):
     t = node["type"]
-    imrad = (node.get("prov",{}) or {}).get("imrad","OTHER")
+    imrad_raw = (node.get("prov", {}) or {}).get("imrad", "OTHER")
     key = (t, norm_text(node["text"]))
     if t == "Hypothesis":
         # разделяем гипотезы, если они из разных контекстов INTRO vs DISCUSSION
-        key = (t, norm_text(node["text"]), imrad in ("INTRO","DISCUSSION"))
+        imrad_norm = "INTRO" if "INTRO" in imrad_raw else ("DISCUSSION" if "DISCUSSION" in imrad_raw else "OTHER")
+        key = (t, norm_text(node["text"]), imrad_norm)
     return key
+
 
 # Infer default edge type for a node pair; use polarity for Result→Hypothesis.
 def _default_edge_type(pair: tuple, frm: dict, to: dict) -> str:
@@ -78,6 +82,21 @@ def _write_json(path: str, obj: Any):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
 
+
+def _mark_retyped(prov: dict | None) -> dict:
+    """
+    Помечает ребро как изменённое типологически: prov.hint += 'retyped'
+    (не перетирая существующие подсказки).
+    """
+    p = dict(prov or {})
+    hint = p.get("hint")
+    if not hint:
+        p["hint"] = "retyped"
+    else:
+        s = str(hint)
+        if "retyped" not in s:
+            p["hint"] = f"{s};retyped"
+    return p
 
 
 # Синонимы и «наследие» старых правил → канон
@@ -125,7 +144,7 @@ def normalize_type(t: str) -> str:
     Терпим опечатки, двоеточия, суффиксы вроде 'HypothesisStatement'.
     """
     if not t:
-        return "Analysis"
+        return "Other"
     t0 = str(t).strip()
 
     # точное попадание в канон
@@ -160,7 +179,7 @@ def normalize_type(t: str) -> str:
             or TYPE_SYNONYMS.get(t0.title())
             or TYPE_SYNONYMS.get(t0.lower().capitalize())
     )
-    return cand or "Analysis"
+    return cand or "Other"
 
 
 def _txt(n: Dict[str, Any]) -> str:
@@ -195,7 +214,7 @@ def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if provs:
             top["prov_multi"] = provs
         # полярность: если разношёрстная — neutral
-        pols = { (a.get("polarity") or "neutral") for a in arr }
+        pols = {(a.get("polarity") or "neutral") for a in arr}
         if len(pols) > 1:
             top["polarity"] = "neutral"
         # conf: максимум
@@ -243,6 +262,8 @@ def relink_edges(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Li
             if mapped in ALLOWED_EDGE_TYPES[pair]:
                 e2 = dict(e)
                 e2["type"] = mapped
+                # помечаем, что тип ребра был изменён на допустимый
+                e2["prov"] = _mark_retyped(e2.get("prov"))
                 out.append(e2)
     return out
 
@@ -259,7 +280,13 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
     for n in nodes:
         ids_by_type[n["type"]].append(n["id"])
 
+    seen = {(e["from"], e["to"], e["type"]) for e in edges}
+
     def add(frm_id: str, to_id: str, etype: str, conf: float = 0.56, hint: str = "fallback") -> None:
+        key = (frm_id, to_id, etype)
+        if key in seen:
+            return
+        seen.add(key)
         edges.append({
             "from": frm_id,
             "to": to_id,
@@ -269,9 +296,17 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
         })
 
     # Result → Hypothesis
+    # for r in ids_by_type["Result"][:max_per_link]:
+    #     for h in ids_by_type["Hypothesis"][:max_per_link]:
+    #         add(r, h, "supports")
+    # Подстроим тип по полярности результата
+    id2n = {n["id"]: n for n in nodes}
     for r in ids_by_type["Result"][:max_per_link]:
+        rnode = id2n.get(r, {})
+        pol = (rnode.get("polarity") or "").lower()
+        et = "refutes" if ("negative" in pol or "not significant" in pol) else "supports"
         for h in ids_by_type["Hypothesis"][:max_per_link]:
-            add(r, h, "supports")
+            add(r, h, et)
 
     # Technique/Dataset → Experiment
     for t in ids_by_type["Technique"][:max_per_link]:
@@ -292,6 +327,7 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
             add(f, h, "informs")
 
     return edges
+
 
 ## Assign simple column/row hints by type ordering to aid UI layout.
 def _layout_columns(doc_id: str,
@@ -438,9 +474,11 @@ def run_s2(export_dir: str):
             "Result", "Dataset", "Analysis", "Conclusion"
         ]
 
-    # Разрешённые типы рёбер (минимальный базовый набор)
+    # Используем объединение допустимых типов из всего пайплайна,
+    # чтобы не терять семантику LLM-ответа.
     ALLOWED_EDGE_TYPES_LOCAL = {
-        "uses", "produces", "supports", "refutes", "derives", "relates"
+        "uses", "produces", "supports", "refutes", "derives", "relates",
+        "feeds", "informs", "summarizes", "used_by"
     }
 
     # --- пути ---
@@ -499,6 +537,7 @@ def run_s2(export_dir: str):
     for n in nodes:
         counts[sec_normalize(n.get("type", ""))] = counts.get(sec_normalize(n.get("type", "")), 0) + 1
 
+    # todo сомнительно
     force_llm = os.environ.get("FORCE_LLM", "").lower() in ("1", "true", "yes")
     need_llm = force_llm or (counts.get("Result", 0) < 1) or (counts.get("Hypothesis", 0) < 1) or (coherence < 0.6)
 
@@ -527,7 +566,16 @@ def run_s2(export_dir: str):
             sec = prov.get("section")
         elif isinstance(prov, list) and prov:
             sec = prov[0].get("section")
-        return (float(n.get("conf", 0.0)), float(sec_weight.get(sec or "Unknown", 0.5)))
+        sec_key = (sec or "Unknown")
+        sk = sec_key.lower()
+        # Мягкое сопоставление
+        if "result" in sk and "discussion" in sk:
+            sec_key = "Results"  # считать как Results
+        elif "figure" in sk:
+            sec_key = "FigureCaption"
+        elif "table" in sk:
+            sec_key = "TableCaption"
+        return (float(n.get("conf", 0.0)), float(sec_weight.get(sec_key, 0.5)))
 
     # top-K по типам
     topk_by_type = {
@@ -621,14 +669,36 @@ def run_s2(export_dir: str):
         for re_ in r_edges:
             f, t = re_.get("from"), re_.get("to")
             if f in valid_ids and t in valid_ids:
-                et = (re_.get("type") or "").lower().strip()
-                if et not in ALLOWED_EDGE_TYPES_LOCAL:
-                    et = "relates"
-                valid_edges.append({"from": f, "to": t, "type": et, "conf": float(re_.get("conf", 0.0))})
+                et = (re_.get("type") or "").strip()
+                et_low = et.lower()
+                et = et if et_low in ALLOWED_EDGE_TYPES_LOCAL else "relates"
+                valid_edges.append({
+                    "from": f, "to": t, "type": et, "conf": float(re_.get("conf", 0.0))
+                })
+                et = (re_.get("type") or "").strip()
+                et_low = et.lower()
+                changed = et_low not in ALLOWED_EDGE_TYPES_LOCAL
 
+                if changed:
+                    et = "relates"
+                prov = re_.get("prov") or {}
+
+                if changed:
+                    prov = _mark_retyped(prov)
+                valid_edges.append({
+                    "from": f,
+                    "to": t,
+                    "type": et,
+                    "conf": float(re_.get("conf", 0.0)),
+                    "prov": prov,
+                })
         # если LLM вернул совсем пусто — остаёмся на прежней версии
-        if valid_nodes and valid_edges:
-            refined_nodes, refined_edges = valid_nodes, valid_edges
+        # if valid_nodes and valid_edges:
+        #     refined_nodes, refined_edges = valid_nodes, valid_edges
+        # если LLM хорошо нормализовал узлы, но рёбра не успел/не смог — это всё равно полезно
+        if valid_nodes:
+            refined_nodes = valid_nodes
+            refined_edges = valid_edges  # может быть пустым — ниже сгенерим каркас
 
     # --- 8) итоговые узлы/рёбра ---
     if refined_nodes is not None:
@@ -658,4 +728,3 @@ def run_s2(export_dir: str):
     # --- 9) раскладка по колонкам и запись ---
     graph = _layout_columns(doc_id, nodes, edges)  # noqa: F405
     _write_json(str(out_path), graph)  # noqa: F405
-
