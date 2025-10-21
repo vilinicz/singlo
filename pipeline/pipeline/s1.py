@@ -129,6 +129,7 @@ NEG_MARKERS = {
 }
 
 LINK_WINDOW_SENTENCES = 2
+LINK_WINDOW_FORWARD = 6  # чуть шире, но только вперёд по тексту
 
 _RX_CIT_AUTHOR_YEAR = re.compile(
     r'\((?:[A-Z][a-zA-Z\-]+(?:\s+et\s+al\.)?(?:\s*&\s*[A-Z][a-zA-Z\-]+)?,?\s*)\d{4}[a-z]?\)', re.U)
@@ -482,13 +483,24 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             except Exception:
                 pass
 
-    def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2) -> List[Tuple[Dict, Dict, int]]:
+    def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2, forward_only: bool = True) -> List[
+        Tuple[Dict, Dict, int]]:
         cands = []
         for a in src_list:
             best: List[Tuple[Dict, Dict, int]] = []
             for b in dst_list:
+                # --- forward-only: запрещаем рёбра "назад" по тексту
+                if forward_only:
+                    try:
+                        if int(b["prov"]["sent_idx"]) <= int(a["prov"]["sent_idx"]):
+                            continue
+                    except Exception:
+                        # если индексы битые — лучше перестраховаться и не линковать
+                        continue
                 d = _distance(a, b)
-                if d > LINK_WINDOW_SENTENCES:
+                # для forward-окна разрешим чуть больше расстояние
+                max_d = LINK_WINDOW_FORWARD if forward_only else LINK_WINDOW_SENTENCES
+                if d > max_d:
                     continue
                 best.append((a, b, d))
             best.sort(key=lambda t: t[2])
@@ -504,28 +516,28 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
         return out
 
     # Technique → Experiment / Result
-    for a, b, _ in nearest(by_type["Technique"], by_type["Experiment"], max_k=2):
+    for a, b, _ in nearest(by_type["Technique"], by_type["Experiment"], max_k=2, forward_only=True):
         add_edge(a, b, "uses", (a["conf"] + b["conf"]) / 2)
-    for a, b, _ in nearest(by_type["Technique"], by_type["Result"], max_k=1):
+    for a, b, _ in nearest(by_type["Technique"], by_type["Result"], max_k=1, forward_only=True):
         add_edge(a, b, "uses", (a["conf"] + b["conf"]) / 2)
 
     # Experiment → Result
-    for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=2):
+    for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=2, forward_only=True):
         add_edge(a, b, "produces", (a["conf"] + b["conf"]) / 2)
 
     # Result → Hypothesis
-    for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=2):
+    for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=2, forward_only=True):
         et = "supports" if a.get("polarity") != "negative" else "refutes"
         add_edge(a, b, et, (a["conf"] + b["conf"]) / 2)
 
     # Dataset → Experiment/Analysis
-    for a, b, _ in nearest(by_type["Dataset"], by_type["Experiment"], max_k=1):
+    for a, b, _ in nearest(by_type["Dataset"], by_type["Experiment"], max_k=1, forward_only=True):
         add_edge(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
-    for a, b, _ in nearest(by_type["Dataset"], by_type["Analysis"], max_k=1):
+    for a, b, _ in nearest(by_type["Dataset"], by_type["Analysis"], max_k=1, forward_only=True):
         add_edge(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
 
     # Analysis → Result
-    for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1):
+    for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1, forward_only=True):
         add_edge(a, b, "informs", (a["conf"] + b["conf"]) / 2)
 
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
