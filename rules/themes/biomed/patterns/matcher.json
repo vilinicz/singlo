@@ -22,6 +22,44 @@
       {"LOWER": {"IN": ["to","with"]}}
     ]
   },
+  { "label": "Result",
+  "pattern": [
+    {"LOWER": "no"},
+    {"LOWER": {"IN": ["significant","statistically"]}},
+    {"LOWER": {"IN": ["difference","differences","effect","effects","association","associations"]}}
+  ]
+},
+{ "label": "Result",
+  "pattern": [
+    {"LOWER": {"IN": ["significant","statistically"]}},
+    {"LOWER": {"IN": ["difference","differences","association","associations","increase","decrease","reduction","improvement"]}}
+  ]
+},
+{ "label": "Result",
+  "pattern": [
+    {"LOWER": {"IN": ["associated","correlated"]}},
+    {"LOWER": "with"}
+  ]
+},
+ { "label": "Result",
+    "pattern": [
+      { "LOWER": "we" },
+      { "LOWER": { "IN": ["found","showed","observed","demonstrated","reported","indicated"] } },
+      { "LOWER": "that", "OP": "?" }
+    ]
+  },
+  [
+  { "label": "Result",
+    "pattern": [
+      { "LOWER": { "IN": ["was","were","is","are"] } },
+      { "LOWER": { "IN": ["associated","correlated","linked","related"] } },
+      { "LOWER": "with" }
+    ]
+  },
+    { "label": "Result", "pattern": [ {"LOWER":"p"}, {"LOWER":{"IN":["=","<","≤","<="]}}, {"LIKE_NUM":true} ] }
+
+],
+
 
   { "label": "Experiment",
     "pattern": [
@@ -32,14 +70,6 @@
     "pattern": [
       {"LOWER": {"IN": ["we","our","this"]}, "OP": "?"},
       {"LOWER": {"IN": ["conducted","performed","ran","administered","enrolled","recruited","assigned","randomized"]}}
-    ]
-  },
-
-  { "label": "Technique",
-    "pattern": [
-      {"LOWER": {"IN": ["using","with","via","by","through"]}},
-      {"IS_SPACE": true, "OP": "*"},
-      {"IS_ALPHA": true, "OP": "+"}
     ]
   },
 
@@ -75,5 +105,15 @@
       {"LOWER": {"IN": ["known","established","reported"]}},
       {"LOWER": "that"}
     ]
-  }
+  },
+  { "label": "Input Fact",
+  "pattern": [
+    { "LOWER": { "IN": ["approved","performed","conducted","carried"] } },
+    { "LOWER": { "IN": ["by","according"] } },
+    { "LOWER": { "IN": ["to"] }, "OP": "?" },
+    { "LOWER": { "IN": ["ethics","committee","declaration","helsinki","guidelines"] } }
+  ]
+},
+  { "label": "Hypothesis", "pattern": [ { "LOWER": "hypothesis" } ] }
+
 ]

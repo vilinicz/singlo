@@ -44,7 +44,13 @@
       { "LOWER": { "IN": ["interval","95%","90%","99%"] } }
     ]
   },
-
+ { "label": "Result",
+    "pattern": [
+      { "LOWER": "we" },
+      { "LOWER": { "IN": ["found","showed","observed","demonstrated","reported","indicated"] } },
+      { "LOWER": "that", "OP": "?" }
+    ]
+  },
 
   { "label": "Technique", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["use","used","apply","applied","employ","employed","implement","implemented"]}} ] },
 
@@ -52,8 +58,8 @@
   { "label": "Experiment", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["conduct","conducted","perform","performed","run","ran","carry","carried"]}}, {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}} ] },
 
 
-  { "label": "Dataset", "pattern": [ {"LOWER": {"IN": ["dataset","corpus","cohort","sample","recordings","measurements"]}} ] },
-  { "label": "Dataset", "pattern": [ {"LIKE_NUM": true}, {"LOWER": {"IN": ["participants","subjects","patients","records","samples"]}} ] },
+  { "label": "Dataset", "pattern": [ {"LOWER": {"IN": ["dataset","corpus","cohort","recordings","measurements"]}} ] },
+  { "label": "Dataset", "pattern": [ {"LIKE_NUM": true}, {"LOWER": {"IN": ["participants","subjects","patients","records"]}} ] },
 
 
   { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["analyze","analysed","analyzed","compute","computed","estimate","estimated","fit","fitted","model","modeled","evaluate","evaluated"]}} ] },

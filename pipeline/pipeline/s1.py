@@ -309,6 +309,8 @@ def _score_sentence(nlp_doc: Doc,
                 frag = nlp_doc[start:end].text
                 matched_rules.append({"type": tname, "engine": "token", "span": [start, end], "text": frag})
 
+    has_dep_result = False
+
     # --- Dependency patterns (DependencyMatcher)
     if dep_enabled and depmatcher is not None:
         for match_id, token_maps in depmatcher(nlp_doc):
@@ -319,6 +321,8 @@ def _score_sentence(nlp_doc: Doc,
             tname = _canon_type(label) or "Other"
             if tname not in NODE_TYPES:
                 continue
+            if tname == "Result":
+                has_dep_result = True
 
             # Нормализуем token_maps в последовательность "итерируемых контейнеров" индексов
             # Возможные входы:
@@ -383,6 +387,13 @@ def _score_sentence(nlp_doc: Doc,
 
     # --- Выбор лучшего типа
     best_t, best_v = max(scored.items(), key=lambda kv: kv[1])
+
+    # Перетягиваем спорные случаи из Input Fact → Result в RESULTS/DISCUSSION,
+    # если есть dep-хит на Result и он близок по баллу.
+    if imrad_hint in ("RESULTS", "DISCUSSION") and best_t == "Input Fact":
+        if has_dep_result and (scored.get("Result", 0.0) >= 0.88 * best_v):
+            best_t, best_v = "Result", scored["Result"]
+
     dbg = {
         "hits": hits,
         "prior_mult": prior_mult,
@@ -390,7 +401,8 @@ def _score_sentence(nlp_doc: Doc,
         "theme_mult": theme_mult,
         "hedge": hedge,
         "num_bonus": num_bonus,
-        "scored": scored
+        "scored": scored,
+        "has_dep_result": has_dep_result
     }
     return best_t, float(best_v), dbg, matched_rules
 

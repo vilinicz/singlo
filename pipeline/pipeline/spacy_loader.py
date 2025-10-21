@@ -25,21 +25,47 @@ from spacy.matcher import Matcher, DependencyMatcher
 def load_spacy_model() -> Tuple["spacy.language.Language", bool, str]:
     """
     Пытаемся загрузить модель из ENV (SPACY_MODEL) или en_core_web_sm.
-    Если не получилось — fallback на blank('en') с sentencizer.
+    Если не получилось — fallback на blank('en') с sentencizer + lemmatizer.
     Возвращаем (nlp, dep_enabled, model_name).
     """
     name = os.getenv("SPACY_MODEL", "en_core_web_sm")
     try:
-        nlp = spacy.load(name, disable=["ner", "textcat", "lemmatizer"])
+        # ВАЖНО: не отключаем lemmatizer
+        nlp = spacy.load(name, disable=["ner", "textcat"])
+        # Гарантируем наличие лемматизатора (на случай кастомной модели)
+        if "lemmatizer" not in nlp.pipe_names:
+            if "attribute_ruler" not in nlp.pipe_names:
+                nlp.add_pipe("attribute_ruler", before="lemmatizer")
+            nlp.add_pipe("lemmatizer", config={"mode": "rule"})
+            try:
+                nlp.initialize()
+            except Exception:
+                # Если модель уже инициализирована — игнорируем
+                pass
+
         dep_enabled = "parser" in nlp.pipe_names
         if not dep_enabled and "sentencizer" not in nlp.pipe_names:
             nlp.add_pipe("sentencizer")
+
         return nlp, dep_enabled, name
+
     except Exception:
+        # Fallback: blank('en') + sentencizer + lemmatizer(rule)
         nlp = spacy.blank("en")
         if "sentencizer" not in nlp.pipe_names:
             nlp.add_pipe("sentencizer")
+        if "attribute_ruler" not in nlp.pipe_names:
+            nlp.add_pipe("attribute_ruler")
+        if "lemmatizer" not in nlp.pipe_names:
+            nlp.add_pipe("lemmatizer", config={"mode": "rule"})
+        try:
+            nlp.initialize()
+        except Exception:
+            pass
+
+        # parser в blank-пайплайне отсутствует → dep-мэтчи отключим
         return nlp, False, f"blank_en (fallback; missing {name})"
+
 
 # ─────────────────────────────────────────────────────────────
 # HELPERS
