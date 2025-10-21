@@ -160,10 +160,87 @@ _RX_NUMERIC_HINT = re.compile(
     r'(?:\b\d+(?:\.\d+)?\s?%|\bby\s+\d+(?:\.\d+)?\b|\bp\s*[<≤]\s*0\.(?:0[1-5]|05)\b|\bAUC\b|\bRMSE\b)',
     re.I | re.U)
 
+IMRAD_NORMAL = {
+    "INTRO": "INTRODUCTION", "BACKGROUND": "INTRODUCTION",
+    "METHODS": "METHODS", "MATERIALS AND METHODS": "METHODS",
+    "RESULTS": "RESULTS", "RESULTS AND DISCUSSION": "DISCUSSION",
+    "DISCUSSION": "DISCUSSION", "CONCLUSION": "CONCLUSION", "CONCLUSIONS": "CONCLUSION",
+    "OTHER": "OTHER", "UNKNOWN": "OTHER", "ABSTRACT": "INTRODUCTION",
+    "REFERENCES": "REFERENCES", "BIBLIOGRAPHY": "REFERENCES"
+}
+
+_RX_FIG_REF = re.compile(r'\b(?:Fig\.|Figure)\s*([IVXLC\d]+)\b', re.I)  # римские и арабские
+_RX_TABLE_REF = re.compile(r'\b(?:Table)\s*([IVXLC\d]+)\b', re.I)
+
 
 # ─────────────────────────────────────────────────────────────
 # Утилиты
 # ─────────────────────────────────────────────────────────────
+
+
+def extract_fig_table_refs(text: str):
+    figs = [m.group(1) for m in _RX_FIG_REF.finditer(text or "")]
+    tabs = [m.group(1) for m in _RX_TABLE_REF.finditer(text or "")]
+    # нормализуем римские → верхний регистр, арабские как есть
+    return set(_normalize_ref_token(t) for t in figs), set(_normalize_ref_token(t) for t in tabs)
+
+
+def _normalize_ref_token(tok: str) -> str:
+    t = (tok or "").strip().upper()
+    # простой нормалайзер: "II" → "II", "2" → "2"
+    return t
+
+
+def imrad_norm(sec: str) -> str:
+    return IMRAD_NORMAL.get((sec or "").upper(), "OTHER")
+
+
+# Разрешённые пары с направлением "вперёд":
+# (from_type, to_type) -> функция-предикат по секциям
+def imrad_ok(from_type: str, from_sec: str, to_type: str, to_sec: str) -> bool:
+    fs = imrad_norm(from_sec)
+    ts = imrad_norm(to_sec)
+    if fs == "REFERENCES" or ts == "REFERENCES":
+        return False  # никаких ребер с References
+
+    # Типичные траектории:
+    if from_type == "Experiment" and to_type in {"Result", "Analysis", "Conclusion"}:
+        return ts in {"RESULTS", "DISCUSSION", "CONCLUSION"}
+    if from_type == "Result" and to_type in {"Result", "Conclusion", "Hypothesis"}:
+        return ts in {"RESULTS", "DISCUSSION", "CONCLUSION"}
+    if from_type in {"Technique", "Dataset"} and to_type in {"Experiment", "Analysis"}:
+        return ts in {"METHODS", "RESULTS", "DISCUSSION"}
+    if from_type == "Input Fact" and to_type in {"Hypothesis", "Experiment", "Result", "Conclusion"}:
+        # факты чаще из INTRO → дальше куда угодно вперёд
+        return ts in {"METHODS", "RESULTS", "DISCUSSION", "CONCLUSION"}
+
+    # по умолчанию — разрешим, если не явная аномалия
+    return True
+
+
+def edge_min_threshold(base_min: float, dsent: int, dpage: int) -> float:
+    """
+    Гистерезис порога: для очень близких ребер порог ниже, для дальних — выше.
+    base_min: базовый порог (например, 0.55)
+    """
+    # бонус для близких
+    bonus = 0.0
+    if dsent <= 1:
+        bonus += 0.05  # самые близкие — проще пропустить
+    elif dsent <= 2:
+        bonus += 0.03
+    if dpage == 0:
+        bonus += 0.02  # на одной странице — проще
+    # штраф для дальних
+    malus = 0.0
+    if dsent >= 8:
+        malus += 0.04
+    if dpage >= 2:
+        malus += 0.03
+
+    thr = base_min - bonus + malus
+    # ограничим разумными рамками
+    return max(0.40, min(0.70, thr))
 
 
 def _estimate_citation_strength(text: str) -> float:
@@ -519,6 +596,47 @@ def _mk_node(doc_id: str, idx: int, tname: str, text: str, conf: float,
     }
 
 
+def add_figure_table_edges(nodes, base_min=CONF_EDGE_MIN):
+    new_edges = []
+
+    # индекс по ссылкам
+    by_fig, by_tab = {}, {}
+    for n in nodes:
+        figs, tabs = extract_fig_table_refs(n.get("text", ""))
+        for f in figs: by_fig.setdefault(f, []).append(n)
+        for t in tabs: by_tab.setdefault(t, []).append(n)
+
+    def link_group(group, kind: str):
+        # разбиваем на подписи и «тело»
+        caps = [n for n in group if n.get("prov", {}).get("section") in ("FigureCaption", "TableCaption")]
+        body = [n for n in group if n not in caps]
+        for c in caps:
+            # ближайшие вперёд по тексту
+            body_sorted = sorted(
+                (b for b in body if int(b["prov"]["sent_idx"]) > int(c["prov"]["sent_idx"])),
+                key=lambda b: abs(int(b["prov"]["sent_idx"]) - int(c["prov"]["sent_idx"]))
+            )[:3]
+            for b in body_sorted:
+                etype = "summarizes" if b["type"] in ("Result", "Conclusion") else "informs"
+                ds = abs(int(b["prov"]["sent_idx"]) - int(c["prov"]["sent_idx"]))
+                dp = abs(int(b.get("page", 0)) - int(c.get("page", 0)))
+                # базовый конф — повыше, т.к. это сильный сигнал совпадения
+                conf = 0.60
+                thr = edge_min_threshold(base_min, ds, dp) - 0.05  # чуть мягче порог за счёт совпадения
+                if conf >= thr:
+                    new_edges.append({
+                        "from": c["id"], "to": b["id"], "type": etype, "conf": round(conf, 3),
+                        "prov": {"hint": kind.lower(), kind.lower(): True, "prox": {"ds": ds, "dp": dp}}
+                    })
+
+    for f, group in by_fig.items():
+        link_group(group, "Figure")
+    for t, group in by_tab.items():
+        link_group(group, "Table")
+
+    return new_edges
+
+
 ## Sentence distance between two nodes (by their s_idx), for linking.
 def _distance(a: Dict[str, Any], b: Dict[str, Any]) -> int:
     # на плоском списке меряем дистанцию по глобальному sent_idx
@@ -534,6 +652,18 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     by_type: Dict[str, List[Dict[str, Any]]] = {t: [] for t in NODE_TYPES}
     for n in nodes:
         by_type.get(n["type"], []).append(n)
+
+    def add_edge_hysteresis(src: Dict, dst: Dict, etype: str, base_conf: float):
+        # локальные расстояния
+        try:
+            ds = abs(int(src["prov"]["sent_idx"]) - int(dst["prov"]["sent_idx"]))
+            dp = abs(int(src.get("page", 0)) - int(dst.get("page", 0)))
+        except Exception:
+            return  # перестраховка при битых индексах
+
+        thr = edge_min_threshold(CONF_EDGE_MIN, ds, dp)
+        if base_conf >= thr:
+            add_edge(src, dst, etype, base_conf)
 
     def add_edge(src: Dict, dst: Dict, etype: str, conf: float):
         edges.append({
@@ -578,6 +708,10 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
                     try:
                         if int(b["prov"]["sent_idx"]) <= int(a["prov"]["sent_idx"]):
                             continue
+                        if abs(int(a.get("page", 0)) - int(b.get("page", 0))) > PAGE_DELTA_MAX:
+                            continue
+                        if not imrad_ok(a["type"], a["prov"]["section"], b["type"], b["prov"]["section"]):
+                            continue
                     except Exception:
                         # если индексы битые — лучше перестраховаться и не линковать
                         continue
@@ -608,41 +742,43 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
 
     # Technique → Experiment / Result
     for a, b, _ in nearest(by_type["Technique"], by_type["Experiment"], max_k=2, forward_only=True):
-        add_edge(a, b, "uses", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "uses", (a["conf"] + b["conf"]) / 2)
     for a, b, _ in nearest(by_type["Technique"], by_type["Result"], max_k=1, forward_only=True):
-        add_edge(a, b, "uses", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "uses", (a["conf"] + b["conf"]) / 2)
 
     # Experiment → Result
-    for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=2, forward_only=True):
-        add_edge(a, b, "produces", (a["conf"] + b["conf"]) / 2)
+    for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=3, forward_only=True):
+        add_edge_hysteresis(a, b, "produces", (a["conf"] + b["conf"]) / 2)
 
     # Result → Hypothesis
-    for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=2, forward_only=True):
+    for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=3, forward_only=True):
         et = "supports" if a.get("polarity") != "negative" else "refutes"
-        add_edge(a, b, et, (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, et, (a["conf"] + b["conf"]) / 2)
 
     # Dataset → Experiment/Analysis
     for a, b, _ in nearest(by_type["Dataset"], by_type["Experiment"], max_k=1, forward_only=True):
-        add_edge(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
     for a, b, _ in nearest(by_type["Dataset"], by_type["Analysis"], max_k=1, forward_only=True):
-        add_edge(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
 
     # Analysis → Result
     for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1, forward_only=True):
-        add_edge(a, b, "informs", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "informs", (a["conf"] + b["conf"]) / 2)
 
     # --- Result → Result  (цепочки промежуточных результатов)
     # строгие ворота уже обеспечены: только вперёд, близко по страницам, малое окно предложений
     for a, b, _ in nearest(by_type["Result"], by_type["Result"], max_k=1, forward_only=True):
         if a["id"] == b["id"]:
             continue
-        add_edge(a, b, "follows", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "follows", (a["conf"] + b["conf"]) / 2)
 
     # --- Dataset → Result  (описательные/репортинговые результаты по датасету)
     for a, b, _ in nearest(by_type["Dataset"], by_type["Result"], max_k=1, forward_only=True):
-        add_edge(a, b, "summarizes", (a["conf"] + b["conf"]) / 2)
+        add_edge_hysteresis(a, b, "summarizes", (a["conf"] + b["conf"]) / 2)
 
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
+
+    edges.extend(add_figure_table_edges(nodes, base_min=CONF_EDGE_MIN))
 
     # Fallback-режим по требованию
     if not edges and nodes and FALLBACK_EDGES_MODE != "off":
@@ -653,12 +789,12 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             hyp = sorted(by_type["Hypothesis"], key=lambda n: -n["conf"])[:2]
             if res and hyp and (res[0]["conf"] >= 0.65 and hyp[0]["conf"] >= 0.60):
                 et = "supports" if res[0].get("polarity") != "negative" else "refutes"
-                add_edge(res[0], hyp[0], et, (res[0]["conf"] + hyp[0]["conf"]) / 2)
+                add_edge_hysteresis(res[0], hyp[0], et, (res[0]["conf"] + hyp[0]["conf"]) / 2)
             tech = sorted(by_type["Technique"], key=lambda n: -n["conf"])[:1]
             if tech and (res or hyp):
                 target = (res[0] if res else hyp[0])
                 if tech[0]["conf"] >= 0.60 and target["conf"] >= 0.60:
-                    add_edge(tech[0], target, "uses", (tech[0]["conf"] + target["conf"]) / 2)
+                    add_edge_hysteresis(tech[0], target, "uses", (tech[0]["conf"] + target["conf"]) / 2)
 
     return edges
 
