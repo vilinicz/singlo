@@ -138,6 +138,9 @@ ALLOWED_EDGE_TYPES: Dict[Tuple[str, str], set] = {
     ("Technique", "Analysis"): {"uses"},
     ("Analysis", "Conclusion"): {"supports", "refutes", "summarizes"},
     ("Result", "Conclusion"): {"supports", "refutes"},
+    # --- расширение допустимых пар из S1
+    ("Result", "Result"): {"follows", "informs"},
+    ("Dataset", "Result"): {"summarizes", "informs"},
 }
 
 
@@ -387,14 +390,32 @@ def _layout_columns(doc_id: str,
         else:
             other.append(n)  # тип вне канона — складываем отдельно
 
-    # Сортировка внутри каждой колонки: conf ↓, затем id (стабильно)
-    def _score(n: dict) -> tuple:
-        c = float(n.get("conf", 0.0))
+    # Сортировка внутри колонки: текстовый порядок (page, sent_idx, y, id)
+    def _ord_key(n: dict) -> tuple:
+        prov = (n.get("prov") or {})
+        # page: node['page'] или prov['page']; если нет — в конец
+        try:
+            page = int(n.get("page")) if n.get("page") is not None else int(prov.get("page", 10 ** 9))
+        except Exception:
+            page = 10 ** 9
+        # sent_idx: если нет/отрицательный — в конец своей страницы
+        try:
+            sent = int(prov.get("sent_idx", 10 ** 9))
+            if sent < 0:
+                sent = 10 ** 9
+        except Exception:
+            sent = 10 ** 9
+        # y-координата верхнего края bbox (если есть) — стабилизирует порядок на странице
+        bbox = n.get("bbox") or []
+        try:
+            y = float(bbox[1]) if len(bbox) >= 2 else 10 ** 6
+        except Exception:
+            y = 10 ** 6
         nid = str(n.get("id", ""))
-        return (c, nid)
+        return (page, sent, y, nid)
 
     for t in order:
-        buckets[t].sort(key=_score, reverse=True)
+        buckets[t].sort(key=_ord_key)  # возрастающе: как в тексте
 
     # Выкладка (позиции)
     laid_nodes: list[dict] = []
@@ -417,7 +438,7 @@ def _layout_columns(doc_id: str,
         ci = len(order)
         x_positions[ci] = left_margin + ci * (x_step + col_padding)
         order.append("Other")
-        other.sort(key=_score, reverse=True)
+        other.sort(key=_ord_key)
         for ri, n in enumerate(other):
             nx = x_positions[ci]
             ny = top_margin + ri * y_step

@@ -130,6 +130,8 @@ NEG_MARKERS = {
 
 LINK_WINDOW_SENTENCES = 2
 LINK_WINDOW_FORWARD = 6  # чуть шире, но только вперёд по тексту
+# max allowed page distance for edge candidates
+PAGE_DELTA_MAX = 2
 
 _RX_CIT_AUTHOR_YEAR = re.compile(
     r'\((?:[A-Z][a-zA-Z\-]+(?:\s+et\s+al\.)?(?:\s*&\s*[A-Z][a-zA-Z\-]+)?,?\s*)\d{4}[a-z]?\)', re.U)
@@ -483,6 +485,18 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             except Exception:
                 pass
 
+    def _page_of(n: Dict) -> int | None:
+        """Страница узла: сперва поле node['page'], затем prov['page']; None если не найдено/нечисло."""
+        try:
+            p = n.get("page", None)
+            if p is None:
+                p = n.get("prov", {}).get("page", None)
+            if p is None:
+                return None
+            return int(p)
+        except Exception:
+            return None
+
     def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2, forward_only: bool = True) -> List[
         Tuple[Dict, Dict, int]]:
         cands = []
@@ -497,6 +511,13 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
                     except Exception:
                         # если индексы битые — лучше перестраховаться и не линковать
                         continue
+
+                # --- page filter: если у обоих есть страницы, ограничиваем разницу
+                pa, pb = _page_of(a), _page_of(b)
+                if pa is not None and pb is not None:
+                    if abs(pb - pa) > PAGE_DELTA_MAX:
+                        continue
+
                 d = _distance(a, b)
                 # для forward-окна разрешим чуть больше расстояние
                 max_d = LINK_WINDOW_FORWARD if forward_only else LINK_WINDOW_SENTENCES
@@ -539,6 +560,17 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     # Analysis → Result
     for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1, forward_only=True):
         add_edge(a, b, "informs", (a["conf"] + b["conf"]) / 2)
+
+    # --- Result → Result  (цепочки промежуточных результатов)
+    # строгие ворота уже обеспечены: только вперёд, близко по страницам, малое окно предложений
+    for a, b, _ in nearest(by_type["Result"], by_type["Result"], max_k=1, forward_only=True):
+        if a["id"] == b["id"]:
+            continue
+        add_edge(a, b, "follows", (a["conf"] + b["conf"]) / 2)
+
+    # --- Dataset → Result  (описательные/репортинговые результаты по датасету)
+    for a, b, _ in nearest(by_type["Dataset"], by_type["Result"], max_k=1, forward_only=True):
+        add_edge(a, b, "summarizes", (a["conf"] + b["conf"]) / 2)
 
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
 
