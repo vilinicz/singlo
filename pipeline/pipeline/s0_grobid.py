@@ -72,6 +72,26 @@ def grobid_fulltext_tei(server: str, pdf_path: str, timeout: int = 120) -> str:
     return r.text
 
 
+# ——— Noisy <head> filter ———
+IGNORE_NOISY_HEADERS = True  # можно вынести в аргументы CLI/ENV
+NOISY_HEAD_MAX_HEIGHT = 12.0  # эмпирически: очень плоские «пробегающие» заголовки
+
+
+def _should_ignore_head(el, imrad_label: str) -> bool:
+    if not IGNORE_NOISY_HEADERS:
+        return False
+    # игнорируем только «безопасные» разделы, где часто бегут колонтитулы
+    if imrad_label not in {"INTRO", "REFERENCES"}:
+        return False
+    boxes = parse_coords_attr(el.get("coords") or "")
+    page, bbox = union_bbox(boxes)
+    if not bbox or len(bbox) != 4:
+        return False
+    x0, y0, x1, y1 = bbox
+    h = max(0.0, float(y1) - float(y0))
+    return h < NOISY_HEAD_MAX_HEIGHT
+
+
 # ───────────────────────────────────────────────────────────
 # Координаты / нормализация
 # ───────────────────────────────────────────────────────────
@@ -109,12 +129,6 @@ def union_bbox(boxes: List[Dict]) -> Tuple[Optional[int], List[float]]:
     xs1 = [b["x"] + b["w"] for b in boxes if b["page"] == page]
     ys1 = [b["y"] + b["h"] for b in boxes if b["page"] == page]
     return page, [min(xs0), min(ys0), max(xs1), max(ys1)]
-
-
-# Helper: infer 0-based page index from boxes.
-def page0_from_boxes(boxes: List[Dict]) -> Optional[int]:
-    p, _ = union_bbox(boxes)
-    return (p - 1) if p is not None else None
 
 
 _WS_MULTI = re.compile(r"[ \t\u00A0]+")
@@ -189,6 +203,22 @@ _RX_PAREN_NON_CITATION = re.compile(
     \)
     """, re.X | re.I
 )
+
+
+def caption_boxes_with_fallback(caption_el, parent_tag: str) -> List[Dict]:
+    """
+    Возвращает списки боксов для caption: сначала пробуем сам caption,
+    затем — родитель (figure/table). Если есть оба — склеиваем.
+    """
+    boxes = parse_coords_attr(caption_el.get("coords") or "")
+    parent = caption_el.getparent()
+    if parent is not None and etree.QName(parent).localname.lower() == parent_tag:
+        parent_boxes = parse_coords_attr(parent.get("coords") or "")
+    else:
+        parent_boxes = []
+    if boxes and parent_boxes:
+        return boxes + parent_boxes
+    return boxes or parent_boxes
 
 
 def _has_citation_struct(el) -> bool:
@@ -295,7 +325,6 @@ def tei_iter_sentences(tei_xml: str):
       - эмитит записи для <s>, <figDesc> (Figure), <table><head> (Table).
     """
     root = etree.fromstring(tei_xml.encode("utf-8")) if isinstance(tei_xml, str) else tei_xml
-    NS = {"t": root.nsmap.get(None) or "http://www.tei-c.org/ns/1.0"}
     txt = lambda el: "".join(el.itertext()).strip()
 
     current_imrad_section = "OTHER"
@@ -306,8 +335,7 @@ def tei_iter_sentences(tei_xml: str):
         if tag == "head":
             head_txt = txt(el)
             label = map_head_to_hint(head_txt)
-            # Если подзаголовок даёт OTHER — не меняем основную IMRAD-секцию
-            if label != "OTHER":
+            if label != "OTHER" and not _should_ignore_head(el, label):
                 current_imrad_section = label
 
         elif tag == "s":
@@ -333,13 +361,7 @@ def tei_iter_sentences(tei_xml: str):
             text = normalize_inline(txt(el))
             if not text:
                 continue
-            boxes = parse_coords_attr(el.get("coords") or "")
-            if not boxes:
-                # иногда coords на <figure>
-                fig = el.getparent() if el.getparent() is not None and etree.QName(
-                    el.getparent()).localname == "figure" else None
-                if fig is not None:
-                    boxes = parse_coords_attr(fig.get("coords") or "")
+            boxes = caption_boxes_with_fallback(el, "figure")
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
             has_cit, cit_strength = compute_citation_flags(el, text)
@@ -361,10 +383,12 @@ def tei_iter_sentences(tei_xml: str):
             text = normalize_inline(txt(thead))
             if not text:
                 continue
-            boxes = parse_coords_attr(thead.get("coords") or "") or parse_coords_attr(el.get("coords") or "")
+            # объединяем head.coords и table.coords (если оба есть)
+            head_boxes = parse_coords_attr(thead.get("coords") or "")
+            table_boxes = parse_coords_attr(el.get("coords") or "")
+            boxes = head_boxes + table_boxes if (head_boxes and table_boxes) else (head_boxes or table_boxes)
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
-            # NB: даём в compute_citation_flags сам thead (его TEI-children часто включают <ref>)
             has_cit, cit_strength = compute_citation_flags(thead, text)
             yield {
                 "text": text,

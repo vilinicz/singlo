@@ -152,6 +152,56 @@ def _has_numeric(text: str) -> bool:
     return any(c.isdigit() for c in t) or "%" in t or " p<" in t or " p =" in t
 
 
+# ——— Reference-like detector (bibliography-looking lines) ———
+_REF_INLINE = re.compile(r"\b(vol\.?|no\.?|pp\.?|doi:?|issn|et al\.)\b", re.I)
+_REF_YEAR = re.compile(r"\b(19|20)\d{2}\b")
+_REF_PAGES = re.compile(r"\b\d{1,4}\s*[–\-]\s*\d{1,4}\b")
+
+
+def looks_like_reference(text: str) -> bool:
+    if not text or len(text) < 30:
+        return False
+    # явные маркеры "vol./no./pp./doi/ISSN/et al."
+    if _REF_INLINE.search(text):
+        return True
+    # год + диапазон страниц (частый паттерн библиографии)
+    if _REF_YEAR.search(text) and _REF_PAGES.search(text):
+        return True
+    return False
+
+
+_RX_NUM_BRACK = re.compile(r"\[\s*\d{1,3}(?:\s*(?:[,–\-]\s*|\s*,\s*)\d{1,3}){0,6}\s*\]")
+_RX_PAREN_AUTHYEAR = re.compile(
+    r"\(\s*[A-Z][A-Za-z'’\-]+(?:\s+et\s+al\.)?\s*,\s*(?:18|19|20|21)\d{2}\s*(?:[,;]\s*[A-Z][A-Za-z'’\-]+(?:\s+et\s+al\.)?\s*,\s*(?:18|19|20|21)\d{2})*\s*\)")
+_RX_PAREN_NONCIT = re.compile(
+    r"\(\s*(?:n\s*=\s*\d+|p\s*[<≤=]\s*0?\.\d+|CI\s*\d{1,3}\s*%|Fig\.?\s*\d+|Table\s*\d+|Eq\.?\s*\d+)[^)]{0,20}\)", re.I)
+
+
+def looks_like_textual_citation(text: str) -> bool:
+    if not text: return False
+    if _RX_PAREN_NONCIT.search(text):  # гвард: это не цитата
+        return False
+    return bool(_RX_NUM_BRACK.search(text) or _RX_PAREN_AUTHYEAR.search(text))
+
+
+TIEBREAK_ORDER = ["Result", "Experiment", "Technique", "Analysis", "Dataset", "Hypothesis", "Conclusion", "Input Fact",
+                  "Other"]
+
+
+def tiebreak_label(scored: Dict[str, float], current_best: str) -> str:
+    if not scored:
+        return current_best
+    # берём максимум и список «ничьих»
+    best_val = max(scored.values())
+    cands = [k for k, v in scored.items() if abs(v - best_val) < 1e-9]
+    if len(cands) == 1:
+        return cands[0]
+    for lab in TIEBREAK_ORDER:
+        if lab in cands:
+            return lab
+    return current_best
+
+
 ## Classify sentiment-like polarity markers in text: positive/negative/neutral.
 def _polarity(text: str) -> str:
     t = text.lower()
@@ -395,6 +445,35 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     return edges
 
 
+# ——— Debug outputs: per-sentence JSONL + grouped Markdown ———
+from collections import defaultdict
+
+
+def write_jsonl_per_sentence(path: str, records: List[Dict[str, Any]]) -> None:
+    """Пишет JSONL: по строке на предложение с меткой/конфом/секцией."""
+    with open(path, "w", encoding="utf-8") as f:
+        for r in records:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+
+def write_markdown_summary(path: str, records: List[Dict[str, Any]], max_per_label: int = 12) -> None:
+    """Группируем по label, показываем топ-фрагменты."""
+    buckets = defaultdict(list)
+    for r in records:
+        buckets[r["label"]].append(r)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# S1 summary (preview)\n\n")
+        for lab in sorted(buckets.keys()):
+            f.write(f"## {lab}\n\n")
+            show = sorted(buckets[lab], key=lambda x: -x.get("conf", 0.0))[:max_per_label]
+            for it in show:
+                sec = it.get("section") or it.get("imrad", "")
+                pg = it.get("page", 0)
+                conf = it.get("conf", 0.0)
+                f.write(f"- **p.{pg} · {sec} · conf={conf:.3f}** — {it['text']}\n")
+            f.write("\n")
+
+
 # ─────────────────────────────────────────────────────────────
 # Основной раннер
 # ─────────────────────────────────────────────────────────────
@@ -423,7 +502,7 @@ def run_s1(s0_path: str,
     themes_used = theme_override or ["common"]
 
     nodes: List[Dict[str, Any]] = []
-    debug_hits: List[Dict[str, Any]] = []
+    debug_records: List[Dict[str, Any]] = []
     idx = 1
     doc_id = s0.get("doc_id", "doc")
 
@@ -441,6 +520,26 @@ def run_s1(s0_path: str,
         # doc для spaCy
         doc = nlp(text)
         tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
+        if tname is not None and dbg.get("scored"):
+            tname = tiebreak_label(dbg["scored"], tname)
+
+        # 1) Жёсткий guard библиографии/референсов
+        if imrad == "REFERENCES" or looks_like_reference(text):
+            # всё, что «похоже на библиографию», не должно становиться содержательными узлами
+            tname, conf = "Other", 0.39
+
+        # 2) Подружить S1 с «структурной» цитатой из S0:
+        has_struct_cit = bool(sent.get("has_citation"))
+        cit_strength = float(sent.get("citation_strength") or 0.0)
+
+        # бонус к Input Fact при структурной цитате (TEI <ref>)
+        if has_struct_cit and tname == "Input Fact":
+            conf = min(1.0, conf + 0.20)  # коэффициент можно вынести в конфиг
+
+        # 3) «citation-soft»: если Input Fact только за счёт текстовой «цитатности» — понизить
+        if tname == "Input Fact" and not has_struct_cit and looks_like_textual_citation(text):
+            if conf < (CONF_NODE_MIN + 0.10):
+                tname, conf = "Other", 0.39
 
         # Более строгая и настраиваемая эвристика «фраз вывода»
         if tname and conf >= CONF_NODE_MIN and CONCLUSION_HINTS["enable"]:
@@ -454,25 +553,6 @@ def run_s1(s0_path: str,
                         tname = "Conclusion"
                         if imrad == "DISCUSSION":
                             conf = max(conf, 0.52)
-
-        # --- citation guard: References/цитатные фразы → Input Fact ---
-        text_l = text.lower()
-        # эвристики цитирования: [12], (Smith, 2010), [Medline], [CrossRef], длинные блоки ссылок
-        looks_like_citation = (
-                (text.count("[") + text.count("]") >= 2) or
-                bool(re.search(r"\(\s?[A-Z][a-z]+(?:\s+et al\.)?,\s?\d{4}\s?\)", text)) or
-                "[medline]" in text_l or "[crossref]" in text_l or
-                bool(re.findall(r"\[\d{1,3}(?:[,\-\s]\d{1,3})*\]", text))  # группы ссылок [1,2-5,7]
-        )
-        in_refs = (imrad == "REFERENCES")
-
-        if in_refs or looks_like_citation:
-            # жёстко понижаем/переназначаем тип
-            if tname is None:
-                tname, conf = "Input Fact", 0.45
-            elif tname != "Input Fact":
-                tname = "Input Fact"
-                conf = min(conf, 0.45)
 
         # Caption-boost (только ПОСЛЕ citation guard и только для «содержательных» типов)
         if tname and tname in CAPTION_BOOST_TYPES and is_cap:
@@ -501,9 +581,14 @@ def run_s1(s0_path: str,
         )
         node["matched_rules"] = rule_hits
         nodes.append(node)
-        debug_hits.append({
-            "sec": section_name, "imrad": imrad, "text": text[:200],
-            "chosen": tname, "conf": round(conf, 3), **dbg
+        debug_records.append({
+            "text": text,
+            "page": page,
+            "bbox": bbox,
+            "section": section_name,  # Body / FigureCaption / TableCaption
+            "imrad": imrad,  # INTRO / METHODS / RESULTS / DISCUSSION / ...
+            "label": tname,  # выбранный класс
+            "conf": round(conf, 3)
         })
         idx += 1
 
@@ -522,16 +607,7 @@ def run_s1(s0_path: str,
     }
     (out_dir / "s1_graph.json").write_text(json.dumps(s1_graph, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # s1_debug = {
-    #     "summary": {
-    #         "nodes_total": len(nodes),
-    #         "edges_total": len(edges),
-    #         "conf_node_min": CONF_NODE_MIN,
-    #         "conf_edge_min": CONF_EDGE_MIN,
-    #         "themes_loaded": theme_override or ["common"],
-    #         "spacy_model": model_name,
-    #         "dep_enabled": bool(dep_enabled),
-    #     },
-    #     "hits": debug_hits
-    # }
-    # (out_dir / "s1_debug.json").write_text(json.dumps(s1_debug, ensure_ascii=False, indent=2), encoding="utf-8")
+    # Сохраняем JSONL/MD рядом с graph_path
+    base = Path(graph_path)
+    write_jsonl_per_sentence(str(base.with_suffix(".jsonl")), debug_records)
+    write_markdown_summary(str(base.with_suffix(".md")), debug_records)
