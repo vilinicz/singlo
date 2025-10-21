@@ -116,16 +116,34 @@ CONCLUSION_HINTS = {
 # Режимы: "off" (по умолчанию), "safe" (только если >1 типа узлов и конфиденс высок)
 FALLBACK_EDGES_MODE = "off"
 
-# полярность
-POS_MARKERS = {
-    "demonstrate", "demonstrates", "demonstrated", "show", "shows", "shown",
-    "increase", "increases", "increased", "improve", "improves", "improved", "significant", "significantly",
-    "supports", "fit", "fits", "fitted", "correlates", "reduce", "reduces", "reduced", "outperform", "outperforms"
+# Леммы, сигнализирующие «позитивный» исход/оценку
+_POS_LEMMAS = {
+    "demonstrate", "show",
+    "increase", "improve", "enhance", "benefit", "boost", "broaden", "expand", "raise",
+    "validate", "confirm", "corroborate", "replicate", "support",
+    "fit", "correlate", "outperform", "reduce"  # reduce — слабый позитив (шум/ошибка/вред)
 }
-NEG_MARKERS = {
-    "no", "not", "lack", "lacks", "didnt", "didn't", "failed", "fails",
-    "insignificant", "non-significant", "nonsignificant", "refute", "refutes", "refuted",
-    "decrease", "decreases", "decreased", "worse", "worsened", "negative result", "null result"
+
+# Леммы, сигнализирующие «негативный» исход/оценку
+_NEG_LEMMAS = {
+    "decrease", "worsen", "worse",
+    "fail", "lack",
+}
+
+# Фразовые негативы, которые не всегда удобно ловить леммами
+_NEG_PHRASES = (
+    "not significant",
+    "not statistically significant",
+    "non significant",
+    "non-significant",
+    "null result",
+    "negative result",
+)
+
+# Нейтрализаторы: явная негация перед «негативными» леммами
+# (e.g., "no decrease", "not worsened") — не считаем это за negative
+_NEUTRALIZE_NEG = {
+    "decrease", "worsen", "worse"
 }
 
 LINK_WINDOW_SENTENCES = 2
@@ -209,20 +227,6 @@ def looks_like_reference(text: str) -> bool:
     return False
 
 
-_RX_NUM_BRACK = re.compile(r"\[\s*\d{1,3}(?:\s*(?:[,–\-]\s*|\s*,\s*)\d{1,3}){0,6}\s*\]")
-_RX_PAREN_AUTHYEAR = re.compile(
-    r"\(\s*[A-Z][A-Za-z'’\-]+(?:\s+et\s+al\.)?\s*,\s*(?:18|19|20|21)\d{2}\s*(?:[,;]\s*[A-Z][A-Za-z'’\-]+(?:\s+et\s+al\.)?\s*,\s*(?:18|19|20|21)\d{2})*\s*\)")
-_RX_PAREN_NONCIT = re.compile(
-    r"\(\s*(?:n\s*=\s*\d+|p\s*[<≤=]\s*0?\.\d+|CI\s*\d{1,3}\s*%|Fig\.?\s*\d+|Table\s*\d+|Eq\.?\s*\d+)[^)]{0,20}\)", re.I)
-
-
-def looks_like_textual_citation(text: str) -> bool:
-    if not text: return False
-    if _RX_PAREN_NONCIT.search(text):  # гвард: это не цитата
-        return False
-    return bool(_RX_NUM_BRACK.search(text) or _RX_PAREN_AUTHYEAR.search(text))
-
-
 TIEBREAK_ORDER = ["Result", "Experiment", "Technique", "Analysis", "Dataset", "Hypothesis", "Conclusion", "Input Fact",
                   "Other"]
 
@@ -241,14 +245,79 @@ def tiebreak_label(scored: Dict[str, float], current_best: str) -> str:
     return current_best
 
 
-## Classify sentiment-like polarity markers in text: positive/negative/neutral.
-def _polarity(text: str) -> str:
-    t = text.lower()
-    pos = any(w in t for w in POS_MARKERS)
-    neg = any(w in t for w in NEG_MARKERS)
-    if pos and not neg: return "positive"
-    if neg and not pos: return "negative"
-    if pos and neg: return "neutral"
+def _has_phrase(hay: str, needle: str) -> bool:
+    return needle in hay
+
+
+def _polarity(doc: Doc) -> str:
+    """
+    Лёгкая, но устойчивая полярность:
+      - смотрим на леммы (spaCy) из _POS_LEMMAS/_NEG_LEMMAS,
+      - учитываем зависимость neg (scope отрицания),
+      - ловим частые фразовые паттерны ("not significant", "non-significant", ...),
+      - нейтрализуем "no decrease"/"not worsened" и т.п.
+    Возвращает: 'positive' | 'negative' | 'neutral'
+    """
+    if doc is None or len(doc) == 0:
+        return "neutral"
+
+    t_lower = doc.text.lower()
+
+    # 1) Фразовые негативы (самые надёжные сигналы)
+    has_neg_phrase = any(_has_phrase(t_lower, p) for p in _NEG_PHRASES)
+
+    # 2) Леммы и neg-scope
+    pos_hit = False
+    neg_hit = False
+
+    # Соберём набор токенов, над которыми висит neg (или сами neg-токены)
+    # Пример: "did not improve" → "improve" имеет child.dep_ == 'neg'
+    negated_heads = set()
+    for tok in doc:
+        if tok.dep_ == "neg":
+            # Обычно neg → head — глагол/прилагательное, которого касается отрицание
+            negated_heads.add(tok.head.i)
+
+    # Нейтрализаторы «no decrease / not worsened»
+    neutralize_negative = False
+    for tok in doc:
+        if tok.dep_ == "neg" and tok.head.lemma_ in _NEUTRALIZE_NEG:
+            neutralize_negative = True
+            break
+        # или простая линейная форма "no decrease"
+        if tok.text.lower() == "no":
+            nxt = tok.nbor(1) if tok.i + 1 < len(doc) else None
+            if nxt is not None and nxt.lemma_ in _NEUTRALIZE_NEG:
+                neutralize_negative = True
+                break
+
+    # Сигналы по леммам с учётом neg-области
+    for tok in doc:
+        lem = tok.lemma_.lower()
+
+        # позитивный индикатор: токен из _POS_LEMMAS и НЕ под neg
+        if lem in _POS_LEMMAS and tok.i not in negated_heads:
+            pos_hit = True
+
+        # негативный индикатор: токен из _NEG_LEMMAS и НЕ нейтрализован "no/not <neg-lemma>"
+        if lem in _NEG_LEMMAS:
+            if neutralize_negative:
+                continue
+            # если сам негативный токен под neg — это уже «двойная негация» → не считаем её негативом
+            if tok.i in negated_heads:
+                continue
+            neg_hit = True
+
+    # 3) Комбинируем признаки
+    # Фразовые негативы имеют приоритет и включают neg_hit,
+    # но «нейтрализатор» может их смягчить до neutral (редко встречается вместе)
+    if has_neg_phrase:
+        neg_hit = True
+
+    if pos_hit and not neg_hit:
+        return "positive"
+    if neg_hit and not pos_hit:
+        return "negative"
     return "neutral"
 
 
@@ -485,12 +554,13 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             except Exception:
                 pass
 
-    def _page_of(n: Dict) -> int | None:
-        """Страница узла: сперва поле node['page'], затем prov['page']; None если не найдено/нечисло."""
+    def _page_of(n: dict) -> int | None:
+        """
+        Возвращает номер страницы из верхнеуровневого поля node['page'].
+        Если страницы нет или она нечисловая — вернёт None.
+        """
         try:
             p = n.get("page", None)
-            if p is None:
-                p = n.get("prov", {}).get("page", None)
             if p is None:
                 return None
             return int(p)
@@ -639,8 +709,15 @@ def merge_adjacent(nodes: list) -> list:
         return (_prov(n).get("section") or "").lower()
 
     def _page(n: dict) -> int:
-        # пробуем сначала базовое поле, затем prov.page
-        return n.get("page") or _prov(n).get("page") or -1
+        """
+        Страница берётся только из node['page'].
+        Если нет — возвращаем -1 (будет считаться «неизвестной» и не склеится по странице).
+        """
+        try:
+            p = n.get("page", None)
+            return int(p) if p is not None else -1
+        except Exception:
+            return -1
 
     def _sent_idx(n: dict) -> int:
         p = _prov(n)
@@ -826,7 +903,7 @@ def run_s1(s0_path: str,
         if not tname or conf < CONF_NODE_MIN:
             continue
 
-        pol = _polarity(text)
+        pol = _polarity(doc)
 
         # секционное имя (для фронта/аналитики)
         if is_cap and cap_type == "Figure":
