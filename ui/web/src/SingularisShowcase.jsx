@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import axios from "axios";
 import cytoscape from "cytoscape";
+import PdfPane from "./PdfPane";
 
 // ─── constants ─────────────────────────────────────────────
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -133,7 +134,10 @@ export default function SingularisShowcase() {
     const graphHostRef = useRef(null);
     const fileInputRef = useRef(null);
     const [modalNode, setModalNode] = useState(null); // {id,type,text,conf,page}
-    const pdfUrl = status?.artifacts?.pdf || null;    // от /status
+    // pdf
+    const pdfRef = useRef(null);
+    const [pdfOpen, setPdfOpen] = useState(false);
+    const pdfUrl = status?.artifacts?.pdf || null;
 
     useEffect(() => {
         function onKey(e) {
@@ -214,7 +218,7 @@ export default function SingularisShowcase() {
                 cy = cyRef.current = cytoscape({
                     container: host,
                     pixelRatio: 1,
-                    wheelSensitivity: 0.8,
+                    wheelSensitivity: 0.9,
                     minZoom: 0.2,
                     maxZoom: 2,
                     style: [
@@ -399,13 +403,19 @@ export default function SingularisShowcase() {
                 clickTimer = null;
                 lastId = null;
                 lastTs = 0;
+
                 const d = n.data();
+                // ⚠️ сюда подставь корректные поля, откуда ты берёшь страницу и bbox
+                const page = d.page ?? d?.prov?.page ?? null;
+                const bbox = d.bbox ?? d?.prov?.bbox ?? null;
+
                 setModalNode({
                     id: d.id,
                     type: d.type,
                     text: d.text || d.label || "",
                     conf: d.conf ?? 0,
-                    page: d.page ?? d?.prov?.page ?? d?.prov?.["page"] ?? null // если есть
+                    page,
+                    bbox, // <— важно!
                 });
                 return;
             }
@@ -477,21 +487,30 @@ export default function SingularisShowcase() {
                 {/* HERO stacked */}
                 {!docId && (
                     <div className="mx-auto max-w-3xl">
-                        <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
-                             onClick={() => fileInputRef.current?.click()}
-                             className="flex min-h-[260px] items-center justify-center rounded-3xl border-2 border-dashed border-emerald-500/50 bg-slate-900/50 p-6 text-center shadow-2xl cursor-pointer">
-                            <label className="w-full cursor-pointer">
-                                <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden"
-                                       onChange={onBrowse}/>
-                                <div className="mx-auto max-w-sm">
-                                    <div className="text-lg font-medium text-emerald-200/90">Drop PDF here</div>
-                                    <div className="mt-1 text-xs text-emerald-200/70">or click to choose a file
-                                    </div>
-                                    {file &&
-                                        <div className="mt-3 truncate text-xs text-emerald-300">{file.name}</div>}
-                                </div>
-                            </label>
+                        <div
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={onDrop}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                            }}
+                            className="flex min-h-[260px] items-center justify-center rounded-3xl border-2 border-dashed border-emerald-500/50 bg-slate-900/50 p-6 text-center shadow-2xl cursor-pointer"
+                        >
+                            {/* просто контент, без <label> */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={onBrowse}
+                            />
+                            <div className="mx-auto max-w-sm">
+                                <div className="text-lg font-medium text-emerald-200/90">Drop PDF here</div>
+                                <div className="mt-1 text-xs text-emerald-200/70">or click to choose a file</div>
+                                {file && <div className="mt-3 truncate text-xs text-emerald-300">{file.name}</div>}
+                            </div>
                         </div>
+
 
                         <div
                             className="mt-6 rounded-3xl border border-emerald-600/40 bg-slate-900/60 p-8 text-center shadow-xl">
@@ -598,68 +617,111 @@ export default function SingularisShowcase() {
             {/* Modal */}
             {modalNode && (
                 <div
-                    className="fixed inset-0 z-[1000] flex items-center justify-center"
-                    aria-modal="true" role="dialog"
-                    onClick={() => setModalNode(null)}
+                    className={[
+                        "fixed inset-y-0 left-0 z-[1000] transition-all duration-150",
+                        pdfOpen ? "right-[46vw] md:right-[720px]" : "right-0",
+                        "pointer-events-none"
+                    ].join(" ")}
                 >
-                    {/* backdrop */}
-                    <div className="absolute inset-0 bg-black/60"/>
-
-                    {/* dialog */}
+                    {/* ── Бекдроп: закрывает только левую часть, если открыт сайдбар ── */}
                     <div
-                        className="relative z-10 w-[min(900px,92vw)] max-h-[86vh] rounded-2xl bg-slate-900/95 border border-emerald-500/30 shadow-xl p-6"
-                        onClick={(e) => e.stopPropagation()}
+                        className="absolute inset-0 bg-black/60 pointer-events-auto"
+                        onClick={() => setModalNode(null)}
+                    />
+
+                    {/* ── Контейнер выравнивания: даём правый отступ равный ширине сайдбара ── */}
+                    <div
+                        className={[
+                            "absolute inset-0 flex items-center justify-center transition-[padding] duration-150",
+                            pdfOpen ? "pr-[46vw] md:pr-[720px]" : ""
+                        ].join(" ")}
+                        // ВАЖНО: не гасим клики по сайдбару — правую часть не перекрывает ни один блок
+                        // события идут только по левому бекдропу (см. выше) и по самой модалке (см. ниже)
                     >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <div className="text-emerald-300 font-semibold text-lg">
-                                    {modalNode.type} <span
-                                    className="text-emerald-200/60 text-sm">({modalNode.id})</span>
+                        {/* ── Собственно модальное окно ── */}
+                        <div
+                            className="relative z-10 w-[min(900px,92vw)] max-h-[86vh] rounded-2xl bg-slate-900/95 border border-emerald-500/30 shadow-xl p-6 pointer-events-auto"
+                            // останавливаем всплытие, чтобы клик внутри не закрывал модалку
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <div className="text-emerald-300 font-semibold text-lg">
+                                        {modalNode.type} <span
+                                        className="text-emerald-200/60 text-sm">({modalNode.id})</span>
+                                    </div>
+                                    <div className="text-emerald-200/60 text-xs mt-1">
+                                        conf: {(modalNode.conf || 0).toFixed(2)}{modalNode.page != null ? ` · page ${modalNode.page}` : ""}
+                                    </div>
                                 </div>
-                                <div className="text-emerald-200/60 text-xs mt-1">
-                                    conf: {(modalNode.conf || 0).toFixed(2)}{modalNode.page != null ? ` · page ${modalNode.page}` : ""}
-                                </div>
-                            </div>
-                            <button
-                                className="px-3 py-1 rounded-md border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
-                                onClick={() => setModalNode(null)}
-                            >
-                                Close
-                            </button>
-                        </div>
-
-                        <div className="mt-4">
-                            <div className="text-emerald-50 whitespace-pre-wrap leading-relaxed text-[15px]">
-                                {modalNode.text || "(no text)"}
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex items-center justify-between">
-                            <div className="text-emerald-200/60 text-xs">
-                                Double-click node → open details
-                            </div>
-                            {pdfUrl ? (
-                                <a
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400 text-emerald-100"
-                                    href={`${pdfUrl}#page=${encodeURIComponent(modalNode.page || 1)}`}
-                                    target="_blank" rel="noopener noreferrer"
-                                >
-                                    Show in PDF
-                                </a>
-                            ) : (
                                 <button
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600 text-slate-300 cursor-not-allowed"
-                                    title="PDF URL is not available from status.artifacts.pdf"
+                                    className="px-3 py-1 rounded-md border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                                    onClick={() => setModalNode(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+
+                            <div className="mt-4">
+                                <div className="text-emerald-50 whitespace-pre-wrap leading-relaxed text-[15px]">
+                                    {modalNode.text || "(no text)"}
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-between">
+                                <div className="text-emerald-200/60 text-xs">
+                                </div>
+
+                                <button
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400 text-emerald-100"
+                                    onClick={() => {
+                                        if (!pdfUrl) return;            // status.artifacts.pdf
+                                        if (!modalNode) return;
+
+                                        // нормализуем bbox к массиву прямоугольников
+                                        const rects = Array.isArray(modalNode.bbox?.[0])
+                                            ? modalNode.bbox
+                                            : (modalNode.bbox ? [modalNode.bbox] : []);
+
+                                        setPdfOpen(true);
+                                        // подождём, чтобы панель примонтировалась
+                                        setTimeout(() => {
+                                            pdfRef.current?.openHighlight({
+                                                page: modalNode.page || 1,
+                                                rects,
+                                                // zoom: 1.4, // опционально: форснуть масштаб
+                                            });
+                                        }, 0);
+                                    }}
                                 >
                                     Show in PDF
                                 </button>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
+            {/* Right sidebar for PDF */
+            }
+            <div className={[
+                "fixed right-0 top-0 h-screen w-[min(720px,46vw)] bg-slate-900/95 border-l border-emerald-500/30 shadow-2xl transition-transform duration-200",
+                pdfOpen ? "translate-x-0" : "translate-x-full"
+            ].join(" ")}>
+                {pdfUrl ? (
+                    <PdfPane
+                        ref={pdfRef}
+                        pdfUrl={pdfUrl}
+                        onClose={() => setPdfOpen(false)}
+                    />
+                ) : (
+                    <div className="h-full flex items-center justify-center text-emerald-200/60">
+                        PDF URL is not available
+                    </div>
+                )}
+            </div>
         </div>
-    );
+    )
+        ;
 }
 
 // Canvas-based animated Matrix rain
