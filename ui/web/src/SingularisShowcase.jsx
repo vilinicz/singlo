@@ -2,16 +2,18 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import axios from "axios";
 import cytoscape from "cytoscape";
 
-// One‑pager showcase for the Singularis pipeline (Tailwind UI)
-// Updates in this version:
-// 1) Matrix rain animation (canvas)
-// 2) "Ready" centered and larger CTA
-// 3) Progress section stable; indicator stops spinning when done
-// 4) Stages laid out VERTICALLY, active stage highlighted
-// 5) Smooth fade/translate transition to graph section; progress stays above
-
+// ─── constants ─────────────────────────────────────────────
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const STAGES_ORDER = ["S0", "S1", "S2", "finalize"]; // expected order
+
+const STAGE_ORDER = ["S0", "S1", "S2", "finalize"];
+const STAGE_DISPLAY = {S0: "Step 1", S1: "Step 2", S2: "Step 3", finalize: "Total"};
+const STAGE_DESC = {
+    S0: "Reading a document (GROBID)",
+    S1: "Heuristic extraction of atoms (Hypothesis/Method/Result/...).",
+    S2: "Building typed edges, layout hints, dedup & cleaning.",
+    finalize: "Packaging previews and final graph payload."
+};
+const stageDisplayName = (n) => STAGE_DISPLAY[n] || n;
 
 export default function SingularisShowcase() {
     const [file, setFile] = useState(null);
@@ -23,18 +25,13 @@ export default function SingularisShowcase() {
     const graphHostRef = useRef(null);
     const fileInputRef = useRef(null);
 
-
-    // total duration for finalize display
-    const totalDurationMs = useMemo(() => (status?.stages || []).reduce((s, x) => s + (x?.duration_ms || 0), 0), [status]);
-
-    // progress in %
-    const pipelineProgress = useMemo(() => {
-        if (!status) return 0;
-        if (status.state === "done") return 100;
-        const idx = STAGES_ORDER.indexOf(status.stage);
-        const doneIdx = Math.max(0, idx + (status.state === "running" ? 1 : 0));
-        return Math.min(100, Math.round((doneIdx / STAGES_ORDER.length) * 100));
-    }, [status]);
+    function progressValue() {
+        if (!status || !status.stage) return 0;
+        const idx = STAGE_ORDER.indexOf(status.stage);
+        if (idx < 0) return 0;
+        const doneIdx = status.state === "done" ? STAGE_ORDER.length : idx + 1;
+        return Math.min(100, Math.round((doneIdx / STAGE_ORDER.length) * 100));
+    }
 
     // Drag & drop
     const onDrop = useCallback((e) => {
@@ -188,25 +185,32 @@ export default function SingularisShowcase() {
         }
     }
 
-    const StageCard = ({stage, active, duration, notes}) => (
-        <div
-            className={`transition-all rounded-2xl border border-emerald-500/40 bg-slate-900/60 px-5 py-4 shadow-xl ${active ? "scale-[1.03] ring-2 ring-emerald-400/70" : "opacity-85"}`}>
-            <div className="flex items-center justify-between gap-2">
-                <div
-                    className={`font-semibold tracking-wide ${active ? "text-emerald-300" : "text-emerald-200"}`}>{stage}</div>
-                <div
-                    className="text-xs text-emerald-200/70">{duration ? `${(duration / 1000).toFixed(2)} s` : "—"}</div>
-            </div>
-            <p className="mt-2 line-clamp-4 text-xs leading-relaxed text-emerald-100/80 min-h-10">{notes || descriptionFor(stage)}</p>
-        </div>
-    );
-
-    const descriptionFor = (stage) => ({
-        S0: "Parsing PDF → text/blocks with coordinates (TEI/JSON).",
-        S1: "Heuristic extraction of atoms (Hypothesis/Method/Result/…).",
-        S2: "Building typed edges, layout hints, dedup & cleaning.",
-        finalize: "Packaging previews and final graph payload.",
-    }[stage] || "Processing…");
+    function Donut({value = 0, size = 120, stroke = 10}) {
+        const r = (size - stroke) / 2;
+        const c = 2 * Math.PI * r;
+        const off = c - (c * Math.min(100, Math.max(0, value))) / 100;
+        return (
+            <svg width={size} height={size} className="block">
+                <g transform={`translate(${size / 2},${size / 2})`}>
+                    <circle r={r} className="fill-none stroke-emerald-500/20" strokeWidth={stroke}/>
+                    <circle
+                        r={r}
+                        className="fill-none stroke-emerald-400 transition-[stroke-dashoffset] duration-200"
+                        strokeWidth={stroke}
+                        strokeLinecap="round"
+                        strokeDasharray={c}
+                        strokeDashoffset={off}
+                        transform="rotate(-90)"
+                    />
+                </g>
+                <foreignObject x="0" y="0" width={size} height={size}>
+                    <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-emerald-200 font-semibold text-lg">{Math.round(value)}%</div>
+                    </div>
+                </foreignObject>
+            </svg>
+        );
+    }
 
     return (
         <div className="min-h-screen w-full bg-slate-950 text-emerald-100">
@@ -257,29 +261,78 @@ export default function SingularisShowcase() {
 
                 {/* PROGRESS (always visible after start; vertical stages) */}
                 {docId && (
-                    <div
-                        className="mx-auto mt-6 max-w-6xl rounded-3xl border border-emerald-600/40 bg-slate-900/60 p-6 shadow-2xl">
-                        <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch">
-                            {/* Vertical stages */}
-                            <div className="flex flex-1 flex-col gap-4">
-                                {STAGES_ORDER.map((s) => {
-                                    const rec = status?.stages?.find((x) => x.name === s);
-                                    const active = status?.stage === s && status?.state === "running";
-                                    const dur = s === "finalize" ? (totalDurationMs || rec?.duration_ms) : rec?.duration_ms;
-                                    return <StageCard key={s} stage={s} active={active} duration={dur}
-                                                      notes={rec?.notes}/>;
-                                })}
+                    <>
+                        {/* ── Fancy status/stages card (как в исходном дизайне) ── */}
+                        <div
+                            className="rounded-[28px] border border-emerald-500/30 p-6 md:p-8 bg-white/0 backdrop-blur-sm">
+                            {/* шапка слева + индикатор справа */}
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-10 items-start">
+                                {/* левая колонка */}
+                                <div className="space-y-2 text-emerald-200/90">
+                                    <div><b className="text-emerald-200">State:</b> <span
+                                        className="text-emerald-200/80">{status?.state || "—"}</span></div>
+                                    <div><b className="text-emerald-200">Stage:</b> <span
+                                        className="text-emerald-200/80">
+                                        {status?.stage ? stageDisplayName(status.stage) : "—"}
+                                      </span></div>
+                                    <div><b className="text-emerald-200">Total:</b> <span
+                                        className="text-emerald-200/80">
+                                        {status?.duration_ms ? `${(status.duration_ms / 1000).toFixed(2)} s` : "—"}
+                                      </span></div>
+                                </div>
+
+                                {/* индикатор справа */}
+                                <div className="flex flex-col items-center justify-center">
+                                    <Donut value={progressValue()}/>
+                                    <div className="mt-1 text-emerald-200/70 text-sm">{status?.state || "—"}</div>
+                                </div>
                             </div>
-                            {/* Gauge */}
-                            <div
-                                className="flex w-full max-w-[240px] flex-col items-center justify-center gap-3 self-stretch min-h-[240px]">
-                                <SpinnerCircle progress={pipelineProgress} done={status?.state === "done"}/>
-                                <div className="text-xs text-emerald-200/80">{pipelineProgress}%</div>
-                                <div
-                                    className="text-[11px] text-emerald-200/60">{status?.state === "running" ? `Processing: ${status?.stage}` : status?.state || "—"}</div>
-                            </div>
+
+                            {/* список стадий как карточки */}
+                            {(() => {
+                                const map = Object.fromEntries((status?.stages || []).map(s => [s.name, s]));
+                                const current = status?.stage || null;
+                                const items = STAGE_ORDER.map(name => {
+                                    const meta = map[name];
+                                    const isDone = !!meta || status?.state === "done";
+                                    const isRunning = status?.state === "running" && current === name;
+                                    const dur = meta?.duration_ms;
+                                    const desc = name === "S0"
+                                        ? (meta?.notes || STAGE_DESC.S0)
+                                        : STAGE_DESC[name];
+
+                                    const base =
+                                        "flex items-start justify-between gap-4 rounded-2xl border px-5 py-4 md:px-6 md:py-5";
+                                    const palette = isRunning
+                                        ? "border-emerald-400/60 bg-emerald-400/5 ring-2 ring-emerald-400/40"
+                                        : isDone
+                                            ? "border-emerald-500/30 bg-white/0"
+                                            : "border-emerald-500/20 bg-white/0";
+
+                                    return (
+                                        <div key={name} className={`${base} ${palette} mt-4`}>
+                                            <div className="min-w-0">
+                                                <div className="text-emerald-200 font-semibold text-base md:text-lg">
+                                                    {stageDisplayName(name)}
+                                                </div>
+                                                {desc && (
+                                                    <div className="text-emerald-200/70 text-sm md:text-[15px] mt-2">
+                                                        {desc}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="shrink-0 text-emerald-200/80 text-sm md:text-base">
+                                                {isRunning ? "running…" : (dur != null ? `${(dur / 1000).toFixed(2)} s` : (isDone ? "done" : ""))}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+
+                                return <div className="mt-6 md:mt-8">{items}</div>;
+                            })()}
                         </div>
-                    </div>
+
+                    </>
                 )}
             </section>
             <div className="mx-auto mt-3 h-1 w-28 rounded-full bg-emerald-400/70 mb-8"/>
