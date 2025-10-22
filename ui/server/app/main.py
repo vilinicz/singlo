@@ -198,8 +198,3 @@ async def parse_pdf(
 
     return {"doc_id": doc_id, "s0_path": str(doc_dir / "s0.json")}
 
-
-# List themes preloaded from RULES_BASE_DIR/THEMES_DIR
-@app.get("/themes")
-def list_themes():
-    return {"themes": sorted(THEME_REGISTRY.themes.keys())}
