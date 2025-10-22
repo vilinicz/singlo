@@ -276,6 +276,17 @@ def run_pipeline(
         s0_stage_t = time.time()
         grobid_url = os.getenv("GROBID_URL", "http://grobid:8070")
         tei = grobid_fulltext_tei(grobid_url, str(pdf_copy))  # используем локальную копию
+
+        # сохраняем сырой TEI рядом с артефактами в export/<doc_id>
+        try:
+            stem = pdf_copy.stem
+            tei_filename = f"{stem}.tei.xml"
+            tei_path = out_dir / tei_filename
+            tei_path.write_text(tei, encoding="utf-8")
+            _set_artifact(doc_id_eff, "tei", str(tei_path))
+        except Exception as tei_err:
+            print(f"[warn] failed to save TEI for {doc_id_eff}: {tei_err}")
+
         s0 = tei_to_s0(tei, str(pdf_copy))
 
         # при необходимости фиксируем doc_id в артефактах

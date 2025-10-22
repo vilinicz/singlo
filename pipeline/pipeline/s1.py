@@ -57,6 +57,7 @@ NODE_TYPES = [
 TYPE_CANON = {t.lower().replace(" ", ""): t for t in NODE_TYPES}
 
 SECTION_PRIORS = {
+    "ABSTRACT": {"Hypothesis": 1.18},
     "INTRO": {"Hypothesis": 1.25, "Input Fact": 1.06, "Conclusion": 1.00},
     "METHODS": {"Technique": 1.15, "Experiment": 1.12, "Dataset": 1.10, "Analysis": 1.05},
     "RESULTS": {"Result": 1.18, "Analysis": 1.08},
@@ -68,6 +69,7 @@ SECTION_PRIORS = {
         "Dataset": 0.95,
         "Analysis": 1.03
     },
+    "CONCLUSION": {"Conclusion": 1.22},
     "REFERENCES": {},
     "OTHER": {"Input Fact": 1.02}
 }
@@ -435,6 +437,7 @@ def _score_sentence(nlp_doc: Doc,
                     matcher: Matcher | None,
                     depmatcher: Optional[DependencyMatcher],
                     type_boosts: Dict[str, float],
+                    rule_labels: Dict[str, str],
                     dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any], List[dict]]:
     """
     Считает очки по token- и dep-паттернам, устойчив к разным формам token_maps из DependencyMatcher:
@@ -449,14 +452,20 @@ def _score_sentence(nlp_doc: Doc,
     if matcher is not None:
         for match_id, start, end in matcher(nlp_doc):
             try:
-                label = nlp_doc.vocab.strings[match_id]
+                rule_name = nlp_doc.vocab.strings[match_id]
             except Exception:
                 continue
-            tname = _canon_type(label) or "Other"
+            tname = rule_labels.get(rule_name) or _canon_type(rule_name) or "Other"
             if tname in NODE_TYPES:
                 hits[tname] = hits.get(tname, 0.0) + 1.0
                 frag = nlp_doc[start:end].text
-                matched_rules.append({"type": tname, "engine": "token", "span": [start, end], "text": frag})
+                matched_rules.append({
+                    "type": tname,
+                    "engine": "token",
+                    "rule": rule_name,
+                    "span": [start, end],
+                    "text": frag
+                })
 
     has_dep_result = False
 
@@ -464,10 +473,10 @@ def _score_sentence(nlp_doc: Doc,
     if dep_enabled and depmatcher is not None:
         for match_id, token_maps in depmatcher(nlp_doc):
             try:
-                label = nlp_doc.vocab.strings[match_id]
+                rule_name = nlp_doc.vocab.strings[match_id]
             except Exception:
                 continue
-            tname = _canon_type(label) or "Other"
+            tname = rule_labels.get(rule_name) or _canon_type(rule_name) or "Other"
             if tname not in NODE_TYPES:
                 continue
             if tname == "Result":
@@ -514,7 +523,7 @@ def _score_sentence(nlp_doc: Doc,
 
             # Вес dep-хита немного выше, чем token-хита
             hits[tname] = hits.get(tname, 0.0) + 1.2 * hit_count
-            matched_rules.append({"type": tname, "engine": "dep", "tokens": toks})
+            matched_rules.append({"type": tname, "engine": "dep", "rule": rule_name, "tokens": toks})
 
     if not hits:
         return None, 0.0, {"hits": {}}, matched_rules
@@ -957,7 +966,7 @@ def run_s1(s0_path: str,
     # загрузка spaCy и паттернов
     nlp, dep_enabled, model_name = load_spacy_model()
     # NOTE: spacy_loader теперь возвращает loaded_paths, а не registry
-    matcher, depmatcher, type_boosts, loaded_paths = load_spacy_patterns(
+    matcher, depmatcher, type_boosts, rule_labels, loaded_paths = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
     themes_used = theme_override or ["common"]
@@ -980,7 +989,9 @@ def run_s1(s0_path: str,
 
         # doc для spaCy
         doc = nlp(text)
-        tname, conf, dbg, rule_hits = _score_sentence(doc, text, imrad, matcher, depmatcher, type_boosts, dep_enabled)
+        tname, conf, dbg, rule_hits = _score_sentence(
+            doc, text, imrad, matcher, depmatcher, type_boosts, rule_labels, dep_enabled
+        )
         if tname is not None and dbg.get("scored"):
             tname = tiebreak_label(dbg["scored"], tname)
 
@@ -1055,6 +1066,11 @@ def run_s1(s0_path: str,
             s_idx=s_idx, page=page, bbox=bbox, polarity=pol
         )
         node["matched_rules"] = rule_hits
+        rule_summary: Dict[str, int] = {}
+        for rh in rule_hits:
+            rname = rh.get("rule")
+            if rname:
+                rule_summary[rname] = rule_summary.get(rname, 0) + 1
         nodes.append(node)
         debug_records.append(
             {
@@ -1066,11 +1082,12 @@ def run_s1(s0_path: str,
                 "imrad": imrad,  # INTRO / METHODS / RESULTS / DISCUSSION / ...
                 "conf": round(conf, 3),
                 "hits": dbg.get("hits", {}),
+                "rule_hits": rule_summary,
             }
         )
         idx += 1
 
-    nodes = merge_adjacent(nodes)
+    #nodes = merge_adjacent(nodes)
 
     # линковка
     edges = _link_inside(doc_id, nodes)

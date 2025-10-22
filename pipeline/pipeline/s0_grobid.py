@@ -291,7 +291,7 @@ def _clean_head_text(txt: str) -> str:
 def map_head_to_hint(head_text: str) -> str:
     t = _clean_head_text(head_text)
     if not t: return "OTHER"
-    if re.search(rf"{_WORD}(abstract|introduction|background|aims and scope){_EOW}", t): return "INTRO"
+    if re.search(rf"{_WORD}(introduction|background|aims and scope){_EOW}", t): return "INTRO"
     if (re.search(rf"{_WORD}(materials? and methods?){_EOW}", t) or
         re.search(rf"{_WORD}(methods?|methodology){_EOW}", t) or
         re.search(rf"{_WORD}(experimental(?: section)?){_EOW}", t) or

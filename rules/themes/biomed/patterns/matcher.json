@@ -1,119 +1,580 @@
 [
-  { "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["auc","auroc","accuracy","precision","recall","f1","sensitivity","specificity","ppv","npv","rmse"]}}
+  {
+    "name": "DATA_SURFACE",
+    "label": "Dataset",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "dataset",
+              "data",
+              "registry",
+              "cohort",
+              "biobank",
+              "database"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "mimic",
+              "mimic-iii",
+              "mimic-iv",
+              "uk",
+              "biobank",
+              "eicu",
+              "clinicaltrials.gov",
+              "tcga",
+              "physionet"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "patients",
+              "participants",
+              "subjects",
+              "children",
+              "preschool",
+              "volunteers"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": "n"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "LOWER": "="
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ],
+      [
+        {
+          "LOWER": "nct"
+        },
+        {
+          "IS_DIGIT": true,
+          "OP": "+"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "a",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": "total"
+        },
+        {
+          "LOWER": "of"
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ],
+      [
+        {
+          "TEXT": {
+            "REGEX": "^n\\s*=\\s*\\d+$"
+          }
+        }
+      ],
+      [
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "males",
+              "females",
+              "children",
+              "participants",
+              "subjects",
+              "patients"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "mean",
+              "median",
+              "sd",
+              "s.d.",
+              "std",
+              "iqr",
+              "dt",
+              "dmft"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": "sample"
+        },
+        {
+          "LOWER": "of"
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ],
+      [
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "adults",
+              "elderly",
+              "participants",
+              "subjects",
+              "patients"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "older",
+              "community-dwelling",
+              "community"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "adults",
+              "participants",
+              "subjects"
+            ]
+          }
+        }
+      ]
     ]
   },
-  { "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["odds","hazard"]}},
-      {"LOWER": "ratio"}
+  {
+    "name": "EXP_SURFACE",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "participants",
+              "subjects",
+              "patients",
+              "children",
+              "preschool",
+              "volunteers"
+            ]
+          }
+        },
+        {
+          "LEMMA": "be"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "recruit",
+              "enroll",
+              "examine"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "samples",
+              "swabs",
+              "colonies",
+              "specimens"
+            ]
+          }
+        },
+        {
+          "LEMMA": "be"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "collect",
+              "isolate",
+              "purify",
+              "plate"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LEMMA": {
+            "IN": [
+              "collect",
+              "isolate",
+              "purify",
+              "incubate",
+              "plate",
+              "swab",
+              "examine"
+            ]
+          }
+        },
+        {
+          "TAG": {
+            "REGEX": "VBN|VBD"
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "informed",
+              "written"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "consent"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "control",
+              "controlled"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "group",
+              "condition",
+              "trial"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": "each"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "colony",
+              "sample",
+              "specimen"
+            ]
+          }
+        },
+        {
+          "LEMMA": "be"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "pick",
+              "transfer",
+              "spread",
+              "purify"
+            ]
+          }
+        }
+      ]
     ]
   },
-  { "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["confidence","ci"]}},
-      {"LOWER": {"IN": ["interval","95%","90%","99%"]}}
+  {
+    "name": "TEC_ABS_HEAD_METHODS",
+    "label": "Technique",
+    "patterns": [
+      [
+        {
+          "IS_TITLE": true,
+          "TEXT": {
+            "IN": [
+              "Methods",
+              "METHODS",
+              "Design",
+              "DESIGN"
+            ]
+          }
+        },
+        {
+          "TEXT": {
+            "IN": [
+              ":",
+              "—",
+              "-",
+              "–"
+            ]
+          }
+        }
+      ]
     ]
   },
-  { "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["compared","relative","versus","vs"]}},
-      {"LOWER": {"IN": ["to","with"]}}
+  {
+    "name": "TEC_SURFACE",
+    "label": "Technique",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "using",
+              "with",
+              "via",
+              "through",
+              "by"
+            ]
+          }
+        },
+        {
+          "POS": {
+            "IN": [
+              "DET",
+              "ADJ"
+            ]
+          },
+          "OP": "*"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "method",
+              "technique",
+              "protocol",
+              "assay",
+              "algorithm",
+              "pipeline",
+              "architecture",
+              "classifier",
+              "model"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "pcr",
+              "rt-pcr",
+              "western",
+              "elisa",
+              "mass",
+              "spectrometry",
+              "mrna",
+              "rna-seq",
+              "immunohistochemistry",
+              "random-forest",
+              "svm",
+              "cox",
+              "kaplan-meier"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "assay",
+              "assays",
+              "protocol",
+              "protocols"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LEMMA": {
+            "IN": [
+              "measure",
+              "calculate",
+              "perform",
+              "amplify",
+              "sequence",
+              "normalize"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "using",
+              "with",
+              "by"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "classified",
+              "categorized",
+              "graded"
+            ]
+          }
+        },
+        {
+          "LOWER": "as"
+        },
+        {
+          "TEXT": {
+            "REGEX": "c[0-4]([/,-]\\s*c[0-4])?"
+          }
+        }
+      ],
+      [
+        {
+          "TEXT": {
+            "REGEX": "^c[0-4]$"
+          }
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "IS_ALPHA": true,
+          "OP": "*"
+        }
+      ],
+      [
+        {
+          "LOWER": "cross"
+        },
+        {
+          "LOWER": "sectional"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "cross-sectional",
+              "crosssectional"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "survey",
+              "surveys",
+              "questionnaire",
+              "questionnaires"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "sampling",
+              "sample",
+              "design",
+              "multistage",
+              "cluster",
+              "stratified",
+              "probability",
+              "pps",
+              "p.p.s."
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "random",
+              "randomly"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "select",
+              "sample",
+              "assign"
+            ]
+          }
+        }
+      ]
     ]
   },
-  { "label": "Result",
-  "pattern": [
-    {"LOWER": "no"},
-    {"LOWER": {"IN": ["significant","statistically"]}},
-    {"LOWER": {"IN": ["difference","differences","effect","effects","association","associations"]}}
-  ]
-},
-{ "label": "Result",
-  "pattern": [
-    {"LOWER": {"IN": ["significant","statistically"]}},
-    {"LOWER": {"IN": ["difference","differences","association","associations","increase","decrease","reduction","improvement"]}}
-  ]
-},
-{ "label": "Result",
-  "pattern": [
-    {"LOWER": {"IN": ["associated","correlated"]}},
-    {"LOWER": "with"}
-  ]
-},
- { "label": "Result",
-    "pattern": [
-      { "LOWER": "we" },
-      { "LOWER": { "IN": ["found","showed","observed","demonstrated","reported","indicated"] } },
-      { "LOWER": "that", "OP": "?" }
+  {
+    "name": "TEC_USING",
+    "label": "Technique",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "measured",
+              "calculated",
+              "performed",
+              "amplified",
+              "sequenced",
+              "evaluated"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "using",
+              "with",
+              "by"
+            ]
+          }
+        }
+      ]
     ]
-  },
-  [
-  { "label": "Result",
-    "pattern": [
-      { "LOWER": { "IN": ["was","were","is","are"] } },
-      { "LOWER": { "IN": ["associated","correlated","linked","related"] } },
-      { "LOWER": "with" }
-    ]
-  },
-    { "label": "Result", "pattern": [ {"LOWER":"p"}, {"LOWER":{"IN":["=","<","≤","<="]}}, {"LIKE_NUM":true} ] }
-
-],
-
-
-  { "label": "Experiment",
-    "pattern": [
-      {"LOWER": {"IN": ["randomized","randomised","double-blind","single-blind","controlled","placebo-controlled","case-control","cohort","cross-sectional","prospective","retrospective"]}}
-    ]
-  },
-  { "label": "Experiment",
-    "pattern": [
-      {"LOWER": {"IN": ["we","our","this"]}, "OP": "?"},
-      {"LOWER": {"IN": ["conducted","performed","ran","administered","enrolled","recruited","assigned","randomized"]}}
-    ]
-  },
-
-  { "label": "Dataset",
-    "pattern": [
-      {"LOWER": {"IN": ["clinicaltrials.gov","nct"]}},
-      {"IS_ALPHA": true, "OP": "*"}
-    ]
-  },
-  { "label": "Dataset",
-    "pattern": [
-      {"LOWER": {"IN": ["cohort","case-control","cross-sectional","prospective","retrospective"]}}
-    ]
-  },
-
-  { "label": "Conclusion",
-    "pattern": [
-      {"LOWER": {"IN": ["in","overall"]}},
-      {"LOWER": {"IN": ["conclusion","summary"]}}
-    ]
-  },
-  { "label": "Conclusion",
-    "pattern": [
-      {"LOWER": {"IN": ["we","our","these"]}},
-      {"LOWER": {"IN": ["conclude","confirm","support","suggest","indicate","underscore","highlight"]}}
-    ]
-  },
-
-  { "label": "Input Fact",
-    "pattern": [
-      {"LOWER": {"IN": ["it","this"]}},
-      {"LOWER": {"IN": ["is","was","has","have"]}},
-      {"LOWER": {"IN": ["known","established","reported"]}},
-      {"LOWER": "that"}
-    ]
-  },
-  { "label": "Input Fact",
-  "pattern": [
-    { "LOWER": { "IN": ["approved","performed","conducted","carried"] } },
-    { "LOWER": { "IN": ["by","according"] } },
-    { "LOWER": { "IN": ["to"] }, "OP": "?" },
-    { "LOWER": { "IN": ["ethics","committee","declaration","helsinki","guidelines"] } }
-  ]
-},
-  { "label": "Hypothesis", "pattern": [ { "LOWER": "hypothesis" } ] }
-
+  }
 ]

@@ -1,64 +1,527 @@
 [
-  { "label": "Technique",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obl", "RIGHT_ATTRS": {"DEP": {"IN": ["obl","agent","pobj"]}}},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "adp", "RIGHT_ATTRS": {"LOWER": {"IN": ["using","with","by","via","through"]}}}
-    ]
-  },
-
-  { "label": "Experiment",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["conduct","perform","administer","enroll","recruit","assign","randomize"]}}},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"LEMMA": {"IN": ["experiment","study","trial","assessment","evaluation","analysis"]}, "DEP": {"IN": ["dobj","obj","pobj","obl"]}}}
-    ]
-  },
-
-  { "label": "Conclusion",
-    "pattern": [
-      {"RIGHT_ID": "v", "RIGHT_ATTRS": {"LEMMA": {"IN": ["conclude","confirm","support","suggest","indicate","underscore","highlight"]}}},
-      {"LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}}
-    ]
-  },
-
-  { "label": "Result",
-    "pattern": [
-      {"RIGHT_ID": "v", "RIGHT_ATTRS": {"LEMMA": {"IN": ["improve","increase","decrease","reduce","associate","correlate"]}}},
-      {"LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "obl_by", "RIGHT_ATTRS": {"LOWER": "by"}, "OP": "?"},
-      {"LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "num", "RIGHT_ATTRS": {"LIKE_NUM": true}, "OP": "?"}
+  {
+    "name": "DATA_COUNT_NOUN",
+    "label": "Dataset",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "n",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "participant",
+                "subject",
+                "patient",
+                "adult",
+                "child",
+                "sample"
+              ]
+            },
+            "POS": "NOUN"
+          }
+        },
+        {
+          "LEFT_ID": "n",
+          "REL_OP": ">>",
+          "RIGHT_ID": "num",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "nummod",
+                "amod"
+              ]
+            },
+            "LIKE_NUM": true
+          }
+        }
+      ]
     ]
   },
   {
-  "label": "Result",
-  "pattern": [
-    {"RIGHT_ID": "v", "RIGHT_ATTRS": {"LEMMA": {"IN": ["find","show","demonstrate","observe","report","indicate"]}}},
-    {"LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"LOWER": {"IN": ["we","our","results"]}, "DEP": {"IN": ["nsubj","nsubjpass"]}}},
-    {"LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "that", "RIGHT_ATTRS": {"LOWER": "that"}, "OP": "?"}
-  ]
-},
+    "name": "DATA_SAMPLE_OF",
+    "label": "Dataset",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "head",
+          "RIGHT_ATTRS": {
+            "LOWER": "sample"
+          }
+        },
+        {
+          "LEFT_ID": "head",
+          "REL_OP": ">>",
+          "RIGHT_ID": "prep",
+          "RIGHT_ATTRS": {
+            "DEP": "prep",
+            "LOWER": "of"
+          }
+        },
+        {
+          "LEFT_ID": "prep",
+          "REL_OP": ">>",
+          "RIGHT_ID": "num",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj",
+            "LIKE_NUM": true
+          }
+        }
+      ]
+    ]
+  },
   {
-  "label": "Result",
-  "pattern": [
-    { "RIGHT_ID": "v", "RIGHT_ATTRS": { "LEMMA": "observe" } },
-    { "LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "auxpass", "RIGHT_ATTRS": { "DEP": "auxpass" }, "OP": "?" },
-    { "LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "neg", "RIGHT_ATTRS": { "DEP": "neg" }, "OP": "?" },
-    { "LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "nsubj", "RIGHT_ATTRS": { "DEP": { "IN": ["nsubjpass","nsubj"] } }, "OP": "?" }
-  ]
-},
-{
-  "label": "Hypothesis",
-  "pattern": [
-    { "RIGHT_ID": "v", "RIGHT_ATTRS": { "LEMMA": { "IN": ["propose","hypothesize","suggest"] } } },
-    { "LEFT_ID": "v", "REL_OP": ">", "RIGHT_ID": "nsubj", "RIGHT_ATTRS": { "LOWER": { "IN": ["we","authors","study","paper","work","results"] }, "DEP": { "IN": ["nsubj","nsubjpass"] } } }
-  ]
-},
+    "name": "DATA_SOURCE",
+    "label": "Dataset",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "collect",
+                "use",
+                "utilize",
+                "obtain",
+                "source",
+                "recruit",
+                "enroll",
+                "include"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "obj",
+                "dobj"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "data",
+                "dataset",
+                "datasets",
+                "patients",
+                "participants",
+                "subjects",
+                "records",
+                "cohort"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
   {
-  "label": "Hypothesis",
-  "pattern": [
-    { "RIGHT_ID": "h", "RIGHT_ATTRS": { "LOWER": "hypothesis" } },
-    { "LEFT_ID": "h", "REL_OP": "<", "RIGHT_ID": "v", "RIGHT_ATTRS": { "LEMMA": { "IN": ["propose","explain","support","suggest"] } } }
-  ]
-}
-
-
+    "name": "EXP_BY_SUBJ",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "use",
+                "recruit",
+                "interview",
+                "survey",
+                "contact",
+                "locate",
+                "screen",
+                "sample"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obl",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "agent",
+                "prep"
+              ]
+            },
+            "LOWER": "by"
+          }
+        },
+        {
+          "LEFT_ID": "obl",
+          "REL_OP": ">>",
+          "RIGHT_ID": "agent",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj",
+            "LOWER": {
+              "IN": [
+                "participants",
+                "subjects",
+                "adults",
+                "patients",
+                "respondents",
+                "sample",
+                "samples",
+                "dwellings",
+                "households"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "EXP_DOBJ",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "collect",
+                "isolate",
+                "purify",
+                "incubate",
+                "plate",
+                "swab",
+                "recruit",
+                "enroll",
+                "examine"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "dobj",
+                "obj"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "sample",
+                "samples",
+                "swab",
+                "swabs",
+                "colony",
+                "colonies",
+                "participants",
+                "subjects",
+                "patients",
+                "children"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "EXP_PASSIVE_PROC",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "TAG": "VBN",
+            "LEMMA": {
+              "IN": [
+                "immerse",
+                "treat",
+                "recruit",
+                "enroll",
+                "randomize",
+                "interview"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "auxp",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "auxpass",
+                "aux"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "was",
+                "were"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "EXP_IMMERSE_SALIVA",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": "immerse"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "in",
+          "RIGHT_ATTRS": {
+            "DEP": "prep",
+            "LOWER": "in"
+          }
+        },
+        {
+          "LEFT_ID": "in",
+          "REL_OP": ">>",
+          "RIGHT_ID": "mat",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj",
+            "LOWER": {
+              "IN": [
+                "saliva",
+                "artificial"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "EXP_ETCH_ENAMEL",
+    "label": "Experiment",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "etch",
+                "demineralize",
+                "remineralize"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "dobj",
+                "obj"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "enamel",
+                "surface",
+                "tooth",
+                "teeth"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_IDENTIFY_SPECIES_AS",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": "identify"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "as",
+          "RIGHT_ATTRS": {
+            "DEP": "prep",
+            "LOWER": "as"
+          }
+        },
+        {
+          "LEFT_ID": "as",
+          "REL_OP": ">>",
+          "RIGHT_ID": "species",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj",
+            "LEMMA": {
+              "IN": [
+                "species",
+                "taxon",
+                "genus",
+                "strain"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "TEC_USING",
+    "label": "Technique",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "POS": "VERB"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obl",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "prep",
+                "agent"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "using",
+                "via"
+              ]
+            }
+          }
+        }
+      ],
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "POS": "VERB"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obl",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "prep",
+                "agent"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "with",
+                "by",
+                "through"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "obl",
+          "REL_OP": ">>",
+          "RIGHT_ID": "tool",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "pobj",
+                "pcomp"
+              ]
+            },
+            "LEMMA": {
+              "IN": [
+                "method",
+                "technique",
+                "protocol",
+                "assay",
+                "algorithm",
+                "pipeline",
+                "architecture",
+                "classifier",
+                "model",
+                "regression",
+                "analyzer",
+                "spectrometer",
+                "spectrophotometer",
+                "software",
+                "sas",
+                "stata",
+                "spss",
+                "r",
+                "sampler",
+                "design",
+                "procedure",
+                "assay"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "TEC_VICKERS_MICROHARDNESS",
+    "label": "Technique",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "n",
+          "RIGHT_ATTRS": {
+            "LOWER": "microhardness"
+          }
+        },
+        {
+          "LEFT_ID": "n",
+          "REL_OP": ">>",
+          "RIGHT_ID": "mod",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "compound",
+                "amod"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "vickers"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  }
 ]
