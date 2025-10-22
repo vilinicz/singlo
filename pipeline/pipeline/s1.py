@@ -1056,15 +1056,18 @@ def run_s1(s0_path: str,
         )
         node["matched_rules"] = rule_hits
         nodes.append(node)
-        debug_records.append({
-            "text": text,
-            "page": page,
-            "bbox": bbox,
-            "section": section_name,  # Body / FigureCaption / TableCaption
-            "imrad": imrad,  # INTRO / METHODS / RESULTS / DISCUSSION / ...
-            "label": tname,  # выбранный класс
-            "conf": round(conf, 3)
-        })
+        debug_records.append(
+            {
+                "label": tname,  # выбранный класс
+                "text": text,
+                "page": page,
+                "bbox": bbox,
+                "section": section_name,  # Body / FigureCaption / TableCaption
+                "imrad": imrad,  # INTRO / METHODS / RESULTS / DISCUSSION / ...
+                "conf": round(conf, 3),
+                "hits": dbg.get("hits", {}),
+            }
+        )
         idx += 1
 
     nodes = merge_adjacent(nodes)

@@ -290,27 +290,33 @@ def _clean_head_text(txt: str) -> str:
 ## Map TEI <head> text to a coarse IMRAD section hint.
 def map_head_to_hint(head_text: str) -> str:
     t = _clean_head_text(head_text)
-    if not t:
-        return "OTHER"
-    if re.search(rf"{_WORD}(abstract|aims and scope|background|introduction){_EOW}", t):
-        return "INTRO"
+    if not t: return "OTHER"
+    if re.search(rf"{_WORD}(abstract|introduction|background|aims and scope){_EOW}", t): return "INTRO"
     if (re.search(rf"{_WORD}(materials? and methods?){_EOW}", t) or
-            re.search(rf"{_WORD}(methods?|methodology){_EOW}", t) or
-            re.search(rf"{_WORD}(experimental(?: section)?){_EOW}", t) or
-            re.search(rf"{_WORD}(patients? and methods?|subjects? and methods?){_EOW}", t) or
-            re.search(rf"{_WORD}(study design){_EOW}", t) or
-            re.search(rf"{_WORD}(statistical (analysis|methods?)){_EOW}", t)):
+        re.search(rf"{_WORD}(methods?|methodology){_EOW}", t) or
+        re.search(rf"{_WORD}(experimental(?: section)?){_EOW}", t) or
+        re.search(rf"{_WORD}(patients? and methods?|subjects? and methods?){_EOW}", t) or
+        re.search(rf"{_WORD}(study design){_EOW}", t) or
+        re.search(rf"{_WORD}(statistical (analysis|methods?)){_EOW}", t)):
         return "METHODS"
     if (re.search(rf"{_WORD}(results? and discussion){_EOW}", t) or
-            re.search(
-                rf"{_WORD}(general discussion|discussion|conclusions?|concluding remarks|implications|limitations){_EOW}",
-                t)):
+        re.search(rf"{_WORD}(general discussion|discussion|conclusions?|concluding remarks|implications|limitations){_EOW}", t)):
         return "DISCUSSION"
-    if re.search(rf"{_WORD}(results?|findings|outcomes){_EOW}", t):
-        return "RESULTS"
-    if re.search(rf"{_WORD}(references|bibliography|works cited){_EOW}", t):
-        return "REFERENCES"
+    if re.search(rf"{_WORD}(results?|findings|outcomes){_EOW}", t): return "RESULTS"
+    if re.search(rf"{_WORD}(references|bibliography|works cited){_EOW}", t): return "REFERENCES"
     return "OTHER"
+
+
+def is_in_abstract(node: etree._Element) -> bool:
+    el = node
+    while el is not None:
+        tag = etree.QName(el).localname.lower()
+        if tag == "abstract":
+            return True
+        if tag == "div" and (el.get("type") or "").lower() in {"abstract", "summary"}:
+            return True
+        el = el.getparent()
+    return False
 
 
 # ───────────────────────────────────────────────────────────
@@ -346,11 +352,12 @@ def tei_iter_sentences(tei_xml: str):
             page, bbox = union_bbox(boxes)
             page0 = (page - 1) if page is not None else None
             has_cit, cit_strength = compute_citation_flags(el, text)
+            section_hint = "ABSTRACT" if is_in_abstract(el) else current_imrad_section
             yield {
                 "text": text,
                 "page": (page0 if page0 is not None else 0),
                 "bbox": bbox,
-                "section_hint": current_imrad_section,
+                "section_hint": section_hint,
                 "is_caption": False,
                 "caption_type": "",
                 "has_citation": has_cit,
