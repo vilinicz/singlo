@@ -137,7 +137,7 @@ export default function SingularisShowcase() {
     // pdf
     const pdfRef = useRef(null);
     const [pdfOpen, setPdfOpen] = useState(false);
-    const pdfUrl = status?.artifacts?.pdf || null;
+    const pdfUrl = status?.artifacts?.pdf_url || null;
 
     useEffect(() => {
         function onKey(e) {
@@ -468,7 +468,9 @@ export default function SingularisShowcase() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-slate-950 text-emerald-100">
+        <div className="min-h-screen w-full bg-slate-950 text-emerald-100"
+             style={{"--sb-w": "min(800px, 46vw)"}}   // <— единый источник ширины сайдбара
+        >
             {/* Matrix rain background */}
             <div
                 className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.06),transparent_60%)]"/>
@@ -617,11 +619,8 @@ export default function SingularisShowcase() {
             {/* Modal */}
             {modalNode && (
                 <div
-                    className={[
-                        "fixed inset-y-0 left-0 z-[1000] transition-all duration-150",
-                        pdfOpen ? "right-[46vw] md:right-[720px]" : "right-0",
-                        "pointer-events-none"
-                    ].join(" ")}
+                    className="fixed inset-y-0 left-0 z-[1000] transition-all duration-150 pointer-events-none"
+                    style={{right: pdfOpen ? "var(--sb-w)" : 0}}
                 >
                     {/* ── Бекдроп: закрывает только левую часть, если открыт сайдбар ── */}
                     <div
@@ -630,18 +629,9 @@ export default function SingularisShowcase() {
                     />
 
                     {/* ── Контейнер выравнивания: даём правый отступ равный ширине сайдбара ── */}
-                    <div
-                        className={[
-                            "absolute inset-0 flex items-center justify-center transition-[padding] duration-150",
-                            pdfOpen ? "pr-[46vw] md:pr-[720px]" : ""
-                        ].join(" ")}
-                        // ВАЖНО: не гасим клики по сайдбару — правую часть не перекрывает ни один блок
-                        // события идут только по левому бекдропу (см. выше) и по самой модалке (см. ниже)
-                    >
-                        {/* ── Собственно модальное окно ── */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div
                             className="relative z-10 w-[min(900px,92vw)] max-h-[86vh] rounded-2xl bg-slate-900/95 border border-emerald-500/30 shadow-xl p-6 pointer-events-auto"
-                            // останавливаем всплытие, чтобы клик внутри не закрывал модалку
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-start justify-between gap-4">
@@ -701,16 +691,18 @@ export default function SingularisShowcase() {
                     </div>
                 </div>
             )}
-            {/* Right sidebar for PDF */
-            }
-            <div className={[
-                "fixed right-0 top-0 h-screen w-[min(720px,46vw)] bg-slate-900/95 border-l border-emerald-500/30 shadow-2xl transition-transform duration-200",
-                pdfOpen ? "translate-x-0" : "translate-x-full"
-            ].join(" ")}>
+            {/* Right sidebar for PDF */}
+            <div
+                className={[
+                    "fixed right-0 top-0 h-screen bg-slate-900/95 border-l border-emerald-500/30 shadow-2xl transition-transform duration-200",
+                    "w-[var(--sb-w)]",                       // <— ширина из переменной
+                    pdfOpen ? "translate-x-0" : "translate-x-full"
+                ].join(" ")}
+            >
                 {pdfUrl ? (
                     <PdfPane
                         ref={pdfRef}
-                        pdfUrl={pdfUrl}
+                        pdfUrl={API + pdfUrl}
                         onClose={() => setPdfOpen(false)}
                     />
                 ) : (
@@ -719,6 +711,28 @@ export default function SingularisShowcase() {
                     </div>
                 )}
             </div>
+            {/* Slim triangle opener (center-right) */}
+            {pdfUrl && !pdfOpen && (
+                <button
+                    type="button"
+                    aria-label="Open PDF sidebar"
+                    onClick={() => setPdfOpen(true)}
+                    className={[
+                        "fixed right-0 top-1/2 -translate-y-1/2 z-[1200]",
+                        "h-28 w-5 md:h-36 md:w-6",                 // узкий «плавник»
+                        "bg-emerald-500/70 hover:bg-emerald-400/80",
+                        "border-l border-emerald-300/70 shadow-lg",
+                        // треугольная форма: тонкий клин вправо
+                        "[clip-path:polygon(0_50%,100%_44%,100%_56%)]",
+                        "transition-colors"
+                    ].join(" ")}
+                    style={{transform: "translate(6px, -50%)"}}  // чуть «за край»
+                >
+                    <span className="sr-only">Open PDF</span>
+                </button>
+            )}
+
+
         </div>
     )
         ;

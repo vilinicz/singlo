@@ -1,8 +1,9 @@
 """FastAPI gateway for Singularis: upload/queue, status, preview, graph, themes."""
 import os, json, time
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import redis
 from uuid import uuid4
@@ -97,8 +98,11 @@ def extract_graph(doc_id: str, theme: str = Query(default="auto")):
 
 
 @app.get("/status/{doc_id}")
-# Return current job status and parsed JSON fields
-def status(doc_id: str):
+def status(doc_id: str, request: Request):
+    """Return current job status and parsed JSON fields.
+
+    Adds artifacts.pdf_url pointing to `/pdf/{doc_id}` for convenience.
+    """
     r = _r()
     data = r.hgetall(_status_key(doc_id))
     if not data:
@@ -112,6 +116,12 @@ def status(doc_id: str):
                 pass
     if "started_at" in out and "ended_at" in out:
         out["duration_ms"] = int((float(out["ended_at"]) - float(out["started_at"])) * 1000)
+    # Ensure artifacts dict and inject a URL to the source PDF
+    artifacts = out.get("artifacts")
+    if not isinstance(artifacts, dict):
+        artifacts = {}
+    artifacts["pdf_url"] = f"/pdf/{doc_id}"
+    out["artifacts"] = artifacts
     return out
 
 
@@ -146,6 +156,16 @@ def get_graph(doc_id: str):
     if not gpath.exists():
         raise HTTPException(404, f"graph not found for {doc_id}")
     return json.loads(gpath.read_text())
+
+
+@app.get("/pdf/{doc_id}")
+def get_pdf(doc_id: str):
+    """Serve the uploaded source PDF for a document id."""
+    pdf_path = DATA_DIR / doc_id / "input.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(404, f"pdf not found for {doc_id}")
+    # Inline display in browser
+    return FileResponse(str(pdf_path), media_type="application/pdf")
 
 
 def _slugify(name: str) -> str:

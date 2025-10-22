@@ -1,20 +1,27 @@
 // PdfPane.jsx
 import React, {useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle} from "react";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+// ESM билды (v4)
+import * as pdfjsLib from "pdfjs-dist/build/pdf.mjs";
+import {TextLayerBuilder, EventBus} from "pdfjs-dist/web/pdf_viewer.mjs";
+// (опционально, для корректных стилей выделения-выбора текста)
+import "pdfjs-dist/web/pdf_viewer.css";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdf.worker.min.js",
-    import.meta.url
-).toString();
+// ✅ создаём воркер через бандлер
+const pdfjsWorker = new Worker(
+    new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url),
+    {type: "module"}
+);
+// отдаём порт pdf.js
+pdfjsLib.GlobalWorkerOptions.workerPort = pdfjsWorker;
 
 /**
  * Props:
- *  - pdfUrl: string
+ *  - pdfUrl: string (обязателен)
  *  - initialHighlight?: { page: number, rects: Array<[x0,y0,x1,y1]> | {x0,y0,x1,y1} }
  *  - onClose?: () => void
  *
  * Imperative API (via ref):
- *  - openHighlight({ page, rects })  // rects: bbox или массив bbox в PDF-координатах
+ *  - openHighlight({ page, rects, zoom? })
  *  - setZoom(scale:number)
  *  - goToPage(page:number)
  */
@@ -26,6 +33,11 @@ const PdfPane = forwardRef(function PdfPane(
     const canvasRef = useRef(null);
     const textLayerRef = useRef(null);
     const overlayRef = useRef(null);
+    // активные задачи рендера
+    const renderTaskRef = useRef(null);     // PDFRenderTask от page.render(...)
+    const textLayerReadyRef = useRef(Promise.resolve()); // промис “text layer готов”
+    const renderTokenRef = useRef(0);       // поколение рендера (для защиты от гонок)
+
 
     const [pdfDoc, setPdfDoc] = useState(null);
     const [pageNum, setPageNum] = useState(initialHighlight?.page || 1);
@@ -33,10 +45,8 @@ const PdfPane = forwardRef(function PdfPane(
     const [numPages, setNumPages] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // текущий viewport страницы (после renderPage)
     const viewportRef = useRef(null);
 
-    // helper: нормализуем rects к массиву
     const normalizeRects = (rects) => {
         if (!rects) return [];
         if (Array.isArray(rects) && Array.isArray(rects[0])) return rects;
@@ -48,30 +58,57 @@ const PdfPane = forwardRef(function PdfPane(
         return [];
     };
 
-    // загрузка документа
+    // Загрузка документа
+    // Загрузка документа один раз (pdfUrl постоянный)
     useEffect(() => {
-        let cancelled = false;
         if (!pdfUrl) return;
+        let cancelled = false;
         setLoading(true);
-        pdfjsLib.getDocument(pdfUrl).promise.then((doc) => {
-            if (cancelled) return;
-            setPdfDoc(doc);
-            setNumPages(doc.numPages || 0);
-            setLoading(false);
-        }).catch((e) => {
-            console.error("PDF load error", e);
-            setLoading(false);
+
+        const task = pdfjsLib.getDocument({
+            url: pdfUrl,
+            disableStream: true,
+            disableRange: true,
+            verbosity: pdfjsLib.VerbosityLevel.ERRORS,
         });
+
+        task.promise
+            .then((doc) => {
+                if (cancelled) return;
+                setPdfDoc(doc);
+                setNumPages(doc.numPages || 0);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error("PDF load error:", err);
+                setLoading(false);
+            });
+
+        // ВАЖНО: не вызываем task.destroy() в cleanup — это и рвёт worker.
         return () => {
             cancelled = true;
         };
-    }, [pdfUrl]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // ← пустой список зависимостей
 
-    // рендер выбранной страницы
+
+    // Рендер выбранной страницы
     const renderPage = async (pageN = pageNum, targetScale = scale) => {
         if (!pdfDoc) return;
+
+        // инкремент поколения — всё, что завершится не для этого поколения, игнорируем
+        const myToken = ++renderTokenRef.current;
+
+        // если шёл предыдущий рендер — отменим
+        if (renderTaskRef.current) {
+            try {
+                renderTaskRef.current.cancel();
+            } catch {
+            }
+            renderTaskRef.current = null;
+        }
+
         const page = await pdfDoc.getPage(pageN);
-        // учитываем поворот страницы
         const viewport = page.getViewport({scale: targetScale, rotation: page.rotate || 0});
         viewportRef.current = viewport;
 
@@ -83,55 +120,81 @@ const PdfPane = forwardRef(function PdfPane(
         canvas.style.width = `${canvas.width}px`;
         canvas.style.height = `${canvas.height}px`;
 
-        await page.render({canvasContext: ctx, viewport}).promise;
+        // стартуем рендер страницы
+        const renderTask = page.render({canvasContext: ctx, viewport});
+        renderTaskRef.current = renderTask;
+
+        try {
+            await renderTask.promise; // может бросить RenderingCancelledException — это ок
+        } catch (err) {
+            if (err?.name !== "RenderingCancelledException") throw err;
+            // рендер отменён — выходим тихо
+            return;
+        } finally {
+            if (renderTaskRef.current === renderTask) renderTaskRef.current = null;
+        }
+
+        // если за время рендера сменилось поколение — не продолжаем
+        if (renderTokenRef.current !== myToken) return;
 
         // textLayer
         const textLayerDiv = textLayerRef.current;
-        textLayerDiv.innerHTML = ""; // очистим прошлый слой
+        const overlay = overlayRef.current;
+        textLayerDiv.innerHTML = "";
+        overlay.innerHTML = "";
+
         textLayerDiv.style.width = `${canvas.width}px`;
         textLayerDiv.style.height = `${canvas.height}px`;
-
-        const textContent = await page.getTextContent();
-        // у legacy api есть renderer
-        await pdfjsLib.renderTextLayer({
-            textContent,
-            container: textLayerDiv,
-            viewport,
-            textDivs: []
-        }).promise;
-
-        // overlay для геометрических прямоугольников (на всякий)
-        const overlay = overlayRef.current;
-        overlay.innerHTML = "";
         overlay.style.width = `${canvas.width}px`;
         overlay.style.height = `${canvas.height}px`;
+
+        const eventBus = new EventBus();
+        const textLayer = new TextLayerBuilder({
+            textLayerDiv,
+            pageIndex: page.pageNumber - 1,
+            viewport,
+            eventBus,
+        });
+
+        // v4: потоковый контент
+        const source = page.streamTextContent();
+        const textLayerPromise = (async () => {
+            textLayer.setTextContentSource(source);
+            await textLayer.render();
+        })();
+
+        // запоминаем “слой готов”
+        textLayerReadyRef.current = textLayerPromise;
+        await textLayerPromise;
+
+        // если за это время сменилось поколение — не трогаем дальше DOM
+        if (renderTokenRef.current !== myToken) return;
     };
 
-    // подсветка span'ов textLayer, чьи rect пересекаются с bbox'ами
+    // Подсветка span'ов по bbox
     const highlightSpansByBBoxes = (rects, tolerance = 1.0) => {
         const viewport = viewportRef.current;
         if (!viewport) return;
+
         const textLayerDiv = textLayerRef.current;
         const overlay = overlayRef.current;
-        if (!textLayerDiv) return;
+        if (!textLayerDiv || !overlay) return;
+
         const list = normalizeRects(rects);
         if (!list.length) return;
 
-        // Преобразуем PDF-координаты bbox → CSS координаты.
-        // PDF origin: левый-нижний. CSS origin: левый-верхний.
-        // viewport.height уже учтен с ротацией.
+        // Конвертируем PDF-координаты в CSS
         const cssRects = list.map(([x0, y0, x1, y1]) => {
             const X0 = x0 * viewport.scale;
-            const Y0 = (viewport.height - y1 * viewport.scale); // верхний
+            const Y0 = viewport.height - y1 * viewport.scale; // PDF origin bottom-left → CSS top-left
             const W = (x1 - x0) * viewport.scale;
             const H = (y1 - y0) * viewport.scale;
             return {x: X0, y: Y0, w: W, h: H};
         });
 
-        // 1) Overlay прямоугольники (для стабильной визуальной подсветки)
+        // Overlay прямоугольники
         cssRects.forEach(({x, y, w, h}) => {
             const r = document.createElement("div");
-            r.className = "pdf-hl-region";
             Object.assign(r.style, {
                 position: "absolute",
                 left: `${x}px`,
@@ -142,24 +205,24 @@ const PdfPane = forwardRef(function PdfPane(
                 outline: "1px solid rgba(245, 158, 11, 0.4)",
                 borderRadius: "4px",
                 mixBlendMode: "multiply",
-                pointerEvents: "none"
+                pointerEvents: "none",
+                boxSizing: "border-box",
             });
             overlay.appendChild(r);
         });
 
-        // 2) Подсветим текстовые дивы (span'ы) textLayer по пересечению
+        // Подсветка textLayer span'ов
         const spans = Array.from(textLayerDiv.querySelectorAll("span"));
-        const intersects = (a, b) => {
-            return !(
+        const parentBox = textLayerDiv.getBoundingClientRect();
+
+        const intersects = (a, b) =>
+            !(
                 a.x + a.w < b.x + tolerance ||
                 a.x > b.x + b.w - tolerance ||
                 a.y + a.h < b.y + tolerance ||
                 a.y > b.y + b.h - tolerance
             );
-        };
 
-        // для скорости возьмём boundingClientRect родителя и пересчитаем в локальные координаты
-        const parentBox = textLayerDiv.getBoundingClientRect();
         spans.forEach((sp) => sp.classList.remove("pdf-span-hl"));
         spans.forEach((sp) => {
             const r = sp.getBoundingClientRect();
@@ -167,7 +230,7 @@ const PdfPane = forwardRef(function PdfPane(
                 x: r.left - parentBox.left,
                 y: r.top - parentBox.top,
                 w: r.width,
-                h: r.height
+                h: r.height,
             };
             for (const cr of cssRects) {
                 if (intersects(local, cr)) {
@@ -176,33 +239,35 @@ const PdfPane = forwardRef(function PdfPane(
                 }
             }
         });
+
+        // авто-скролл к первому overlay
+        const first = overlay.firstElementChild;
+        if (first && wrapRef.current) {
+            const box = first.getBoundingClientRect();
+            const host = wrapRef.current.getBoundingClientRect();
+            const dy = box.top - host.top - host.height * 0.25;
+            wrapRef.current.scrollBy({top: dy, behavior: "smooth"});
+        }
     };
 
-    // публичный API
+    // публичный API (Подсветка)
     useImperativeHandle(ref, () => ({
         openHighlight: async ({page, rects, zoom}) => {
             if (typeof page === "number") setPageNum(page);
             if (typeof zoom === "number") setScale(zoom);
-            // подождём рендера (ниже useEffect перерисует)
-            // после перерисовки вызовем подсветку
-            setTimeout(() => {
-                highlightSpansByBBoxes(rects);
-                // авто-скролл к первому прямоугольнику
-                const overlay = overlayRef.current;
-                const first = overlay?.firstElementChild;
-                if (first && wrapRef.current) {
-                    const box = first.getBoundingClientRect();
-                    const host = wrapRef.current.getBoundingClientRect();
-                    const dy = box.top - host.top - host.height * 0.25;
-                    wrapRef.current.scrollBy({top: dy, behavior: "smooth"});
-                }
-            }, 30);
+            // дождёмся текущего textLayer перед подсветкой
+            try {
+                await textLayerReadyRef.current;
+            } catch {
+            }
+            // небольшая задержка, чтобы DOM применил размеры
+            setTimeout(() => highlightSpansByBBoxes(rects), 0);
         },
         setZoom: (z) => setScale(z),
         goToPage: (p) => setPageNum(p),
     }), []);
 
-    // рендер при смене doc/page/scale
+    // Перерисовка при смене doc/page/scale
     useEffect(() => {
         if (!pdfDoc) return;
         (async () => {
@@ -215,10 +280,10 @@ const PdfPane = forwardRef(function PdfPane(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pdfDoc, pageNum, scale]);
 
-    const zoomIn = () => setScale(s => Math.min(4, +(s + 0.2).toFixed(2)));
-    const zoomOut = () => setScale(s => Math.max(0.4, +(s - 0.2).toFixed(2)));
-    const nextPage = () => setPageNum(p => Math.min(numPages || p + 1, p + 1));
-    const prevPage = () => setPageNum(p => Math.max(1, p - 1));
+    const zoomIn = () => setScale((s) => Math.min(4, +(s + 0.2).toFixed(2)));
+    const zoomOut = () => setScale((s) => Math.max(0.4, +(s - 0.2).toFixed(2)));
+    const nextPage = () => setPageNum((p) => Math.min(numPages || p + 1, p + 1));
+    const prevPage = () => setPageNum((p) => Math.max(1, p - 1));
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -245,7 +310,7 @@ const PdfPane = forwardRef(function PdfPane(
                         <>
                             <div className="w-px h-6 bg-emerald-500/20 mx-1"/>
                             <button onClick={onClose}
-                                    className="px-2 py-1 rounded border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10">Close
+                                    className="px-3 py-1 rounded border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10">Close
                             </button>
                         </>
                     )}
@@ -270,19 +335,13 @@ const PdfPane = forwardRef(function PdfPane(
                 </div>
             </div>
 
-            {/* локальные стили для подсветок */}
+            {/* локальные стили подсветок */}
             <style>{`
-        .textLayer span {
-          color: transparent; /* оставляем нативный вид PDF.js, но без паразитной окраски */
-          mix-blend-mode: normal;
-        }
+        .textLayer span { color: transparent; }
         .textLayer .pdf-span-hl {
-          background: rgba(250, 204, 21, 0.35); /* amber-300/35 */
+          background: rgba(250, 204, 21, 0.35);
           border-radius: 2px;
           outline: 1px solid rgba(245, 158, 11, 0.35);
-        }
-        .pdf-hl-region { /* overlay rectangles */
-          box-sizing: border-box;
         }
       `}</style>
         </div>
