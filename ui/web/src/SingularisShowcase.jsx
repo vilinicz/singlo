@@ -123,59 +123,6 @@ function renderLegend(cy) {
   `;
 }
 
-function bindInteractions(cy) {
-    let clickTimer = null, lastId = null, lastTs = 0;
-    const DOUBLE_MS = 280;
-    cy.off('tap');
-    cy.off('tap', 'node');
-    cy.off('tap', 'core');
-
-    function highlightNodeEdges(node) {
-        cy.elements('edge.hl').removeClass('hl');
-        cy.nodes('.active').removeClass('active').unselect();
-        if (!node || node.empty()) return;
-        node.addClass('active').select();
-        const inc = node.connectedEdges();
-        if (inc && inc.length) inc.addClass('hl');
-    }
-
-    function clearHighlight() {
-        cy.elements('edge.hl').removeClass('hl');
-        cy.nodes('.active').removeClass('active').unselect();
-    }
-
-    cy.on('tap', 'node', (ev) => {
-        const n = ev.target, now = Date.now();
-        if (lastId === n.id() && (now - lastTs) < DOUBLE_MS) {
-            clearTimeout(clickTimer);
-            clickTimer = null;
-            lastId = null;
-            lastTs = 0;
-            const d = n.data();
-            alert(`${d.type}\n\n${d.text || "(no text)"}\n\nconf=${(d.conf ?? 0).toFixed(2)}\n${d.id}`);
-            return;
-        }
-        lastId = n.id();
-        lastTs = now;
-        clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-            highlightNodeEdges(n);
-            clickTimer = null;
-            lastId = null;
-            lastTs = 0;
-        }, DOUBLE_MS);
-    });
-    cy.on('tap', (ev) => {
-        if (ev.target === cy) {
-            clearTimeout(clickTimer);
-            clearHighlight();
-            lastId = null;
-            lastTs = 0;
-            clickTimer = null;
-        }
-    });
-}
-
 export default function SingularisShowcase() {
     const [file, setFile] = useState(null);
     const [docId, setDocId] = useState("");
@@ -185,6 +132,17 @@ export default function SingularisShowcase() {
     const cyRef = useRef(null);
     const graphHostRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [modalNode, setModalNode] = useState(null); // {id,type,text,conf,page}
+    const pdfUrl = status?.artifacts?.pdf || null;    // от /status
+
+    useEffect(() => {
+        function onKey(e) {
+            if (e.key === 'Escape') setModalNode(null);
+        }
+
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
 
     function progressValue() {
         if (!status || !status.stage) return 0;
@@ -256,7 +214,7 @@ export default function SingularisShowcase() {
                 cy = cyRef.current = cytoscape({
                     container: host,
                     pixelRatio: 1,
-                    wheelSensitivity: 0.2,
+                    wheelSensitivity: 0.8,
                     minZoom: 0.2,
                     maxZoom: 2,
                     style: [
@@ -378,8 +336,8 @@ export default function SingularisShowcase() {
                         "transition-property": "opacity, width, underlay-padding", "transition-duration": "120ms"
                     }
                 },
-                {selector: "node:selected", style: {"border-width": 2, "border-color": "#000"}},
-                {selector: "edge:selected", style: {"line-color": "#000", "target-arrow-color": "#000", "width": 2}},
+                {selector: "node:selected", style: {"border-width": 3, "border-color": "#000"}},
+                {selector: "edge:selected", style: {"line-color": "#000", "target-arrow-color": "#000", "width": 3}},
             ]).update();
 
             // layout — preset (S2 уже дал col/row)
@@ -410,6 +368,66 @@ export default function SingularisShowcase() {
             (e) {
             console.error(e);
         }
+    }
+
+
+    function bindInteractions(cy) {
+        let clickTimer = null, lastId = null, lastTs = 0;
+        const DOUBLE_MS = 280;
+        cy.off('tap');
+        cy.off('tap', 'node');
+        cy.off('tap', 'core');
+
+        function highlightNodeEdges(node) {
+            cy.elements('edge.hl').removeClass('hl');
+            cy.nodes('.active').removeClass('active').unselect();
+            if (!node || node.empty()) return;
+            node.addClass('active').select();
+            const inc = node.connectedEdges();
+            if (inc && inc.length) inc.addClass('hl');
+        }
+
+        function clearHighlight() {
+            cy.elements('edge.hl').removeClass('hl');
+            cy.nodes('.active').removeClass('active').unselect();
+        }
+
+        cy.on('tap', 'node', (ev) => {
+            const n = ev.target, now = Date.now();
+            if (lastId === n.id() && (now - lastTs) < DOUBLE_MS) {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                lastId = null;
+                lastTs = 0;
+                const d = n.data();
+                setModalNode({
+                    id: d.id,
+                    type: d.type,
+                    text: d.text || d.label || "",
+                    conf: d.conf ?? 0,
+                    page: d.page ?? d?.prov?.page ?? d?.prov?.["page"] ?? null // если есть
+                });
+                return;
+            }
+            lastId = n.id();
+            lastTs = now;
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => {
+                highlightNodeEdges(n);
+                clickTimer = null;
+                lastId = null;
+                lastTs = 0;
+            }, DOUBLE_MS);
+        });
+        cy.on('tap', (ev) => {
+            if (ev.target === cy) {
+                clearTimeout(clickTimer);
+                clearHighlight();
+                lastId = null;
+                lastTs = 0;
+                clickTimer = null;
+            }
+        });
     }
 
     function Donut({value = 0, size = 120, stroke = 10}) {
@@ -577,19 +595,69 @@ export default function SingularisShowcase() {
                          className="h-full w-full rounded-3xl border border-emerald-600/40 bg-slate-900/60 shadow-2xl"/>
                 </section>
             )}
-        </div>
-    );
-}
+            {/* Modal */}
+            {modalNode && (
+                <div
+                    className="fixed inset-0 z-[1000] flex items-center justify-center"
+                    aria-modal="true" role="dialog"
+                    onClick={() => setModalNode(null)}
+                >
+                    {/* backdrop */}
+                    <div className="absolute inset-0 bg-black/60"/>
 
-function SpinnerCircle({progress = 0, done = false}) {
-    return (
-        <div className="relative h-24 w-24">
-            <div
-                className={`absolute inset-0 rounded-full border-2 ${done ? "border-emerald-400" : "animate-spin border-emerald-400/30 border-t-emerald-400"}`}/>
-            <div className="absolute inset-1 rounded-full border border-emerald-400/40"/>
-            <div
-                className="absolute inset-0 grid place-items-center text-sm font-semibold text-emerald-200">{done ? 100 : Math.round(progress)}%
-            </div>
+                    {/* dialog */}
+                    <div
+                        className="relative z-10 w-[min(900px,92vw)] max-h-[86vh] rounded-2xl bg-slate-900/95 border border-emerald-500/30 shadow-xl p-6"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <div className="text-emerald-300 font-semibold text-lg">
+                                    {modalNode.type} <span
+                                    className="text-emerald-200/60 text-sm">({modalNode.id})</span>
+                                </div>
+                                <div className="text-emerald-200/60 text-xs mt-1">
+                                    conf: {(modalNode.conf || 0).toFixed(2)}{modalNode.page != null ? ` · page ${modalNode.page}` : ""}
+                                </div>
+                            </div>
+                            <button
+                                className="px-3 py-1 rounded-md border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                                onClick={() => setModalNode(null)}
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="mt-4">
+                            <div className="text-emerald-50 whitespace-pre-wrap leading-relaxed text-[15px]">
+                                {modalNode.text || "(no text)"}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between">
+                            <div className="text-emerald-200/60 text-xs">
+                                Double-click node → open details
+                            </div>
+                            {pdfUrl ? (
+                                <a
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400 text-emerald-100"
+                                    href={`${pdfUrl}#page=${encodeURIComponent(modalNode.page || 1)}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                >
+                                    Show in PDF
+                                </a>
+                            ) : (
+                                <button
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600 text-slate-300 cursor-not-allowed"
+                                    title="PDF URL is not available from status.artifacts.pdf"
+                                >
+                                    Show in PDF
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
