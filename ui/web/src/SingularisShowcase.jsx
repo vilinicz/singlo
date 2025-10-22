@@ -21,6 +21,8 @@ export default function SingularisShowcase() {
     const [graphVisible, setGraphVisible] = useState(false);
     const cyRef = useRef(null);
     const graphHostRef = useRef(null);
+    const fileInputRef = useRef(null);
+
 
     // total duration for finalize display
     const totalDurationMs = useMemo(() => (status?.stages || []).reduce((s, x) => s + (x?.duration_ms || 0), 0), [status]);
@@ -68,11 +70,13 @@ export default function SingularisShowcase() {
                     clearInterval(t);
                     setPolling(false);
                     if (data?.state === "done") {
+                        // 1) сразу строим граф
+                        await renderGraph();
+                        // 2) ждём 2 секунды и плавно показываем секцию графа
                         setTimeout(() => {
-                            renderGraph();
                             setGraphVisible(true);
-                            graphHostRef.current?.scrollIntoView({behavior: "smooth", block: "start"});
-                        }, 250);
+                            graphHostRef.current?.scrollIntoView({behavior: "smooth", block: "center"});
+                        }, 2000);
                     }
                 }
             } catch (e) {
@@ -208,9 +212,9 @@ export default function SingularisShowcase() {
         <div className="min-h-screen w-full bg-slate-950 text-emerald-100">
             {/* Matrix rain background */}
             <div
-                className="pointer-events-none fixed inset-0 -z-20 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.06),transparent_60%)]"/>
+                className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.06),transparent_60%)]"/>
             <div
-                className="pointer-events-none fixed inset-0 -z-10 opacity-[0.15] [mask-image:linear-gradient(to_bottom,black,transparent)]">
+                className="pointer-events-none fixed inset-0 z-0 opacity-[0.21] [mask-image:linear-gradient(to_bottom,black,transparent)]">
                 <MatrixRain/></div>
 
             <section className="mx-auto max-w-6xl px-5 py-12 md:py-16">
@@ -225,9 +229,11 @@ export default function SingularisShowcase() {
                 {!docId && (
                     <div className="mx-auto max-w-3xl">
                         <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
-                             className="flex min-h-[260px] items-center justify-center rounded-3xl border-2 border-dashed border-emerald-500/50 bg-slate-900/50 p-6 text-center shadow-2xl">
+                             onClick={() => fileInputRef.current?.click()}
+                             className="flex min-h-[260px] items-center justify-center rounded-3xl border-2 border-dashed border-emerald-500/50 bg-slate-900/50 p-6 text-center shadow-2xl cursor-pointer">
                             <label className="w-full cursor-pointer">
-                                <input type="file" accept="application/pdf" className="hidden" onChange={onBrowse}/>
+                                <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden"
+                                       onChange={onBrowse}/>
                                 <div className="mx-auto max-w-sm">
                                     <div className="text-lg font-medium text-emerald-200/90">Drop PDF here</div>
                                     <div className="mt-1 text-xs text-emerald-200/70">or click to choose a file</div>
@@ -253,7 +259,7 @@ export default function SingularisShowcase() {
                 {docId && (
                     <div
                         className="mx-auto mt-6 max-w-6xl rounded-3xl border border-emerald-600/40 bg-slate-900/60 p-6 shadow-2xl">
-                        <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+                        <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch">
                             {/* Vertical stages */}
                             <div className="flex flex-1 flex-col gap-4">
                                 {STAGES_ORDER.map((s) => {
@@ -265,7 +271,8 @@ export default function SingularisShowcase() {
                                 })}
                             </div>
                             {/* Gauge */}
-                            <div className="flex w-full max-w-[240px] flex-col items-center justify-center gap-3">
+                            <div
+                                className="flex w-full max-w-[240px] flex-col items-center justify-center gap-3 self-stretch min-h-[240px]">
                                 <SpinnerCircle progress={pipelineProgress} done={status?.state === "done"}/>
                                 <div className="text-xs text-emerald-200/80">{pipelineProgress}%</div>
                                 <div
@@ -275,7 +282,7 @@ export default function SingularisShowcase() {
                     </div>
                 )}
             </section>
-            <div className="mx-auto mt-3 h-1 w-28 rounded-full bg-emerald-400/70"/>
+            <div className="mx-auto mt-3 h-1 w-28 rounded-full bg-emerald-400/70 mb-8"/>
             {/* GRAPH: fades in and slides up when visible; progress panel stays above */}
             {status?.state && (
                 <section
@@ -320,32 +327,45 @@ function MatrixRain() {
         resize();
         window.addEventListener("resize", onResize);
 
+
         const chars = "ACGT01".split("");
-        const fontSize = 14;
+        const fontSize = 16;
         let columns = 0;
         let drops = [];
+        let frame = 0;
+        const SLOW = 7; // update every 5rd frame to slow down
+
 
         function init() {
             columns = Math.floor(canvas.width / fontSize);
             drops = new Array(columns).fill(1);
         }
 
+
         init();
 
+
         const draw = () => {
-            ctx.fillStyle = "rgba(2,8,23,0.25)"; // fade trail
+            // throttle frames to slow the rain down
+            frame++;
+            ctx.fillStyle = "rgba(2,8,23,0.18)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (frame % SLOW !== 0) {
+                raf = requestAnimationFrame(draw);
+                return;
+            }
             ctx.fillStyle = "rgba(16,185,129,0.85)";
             ctx.font = `${fontSize}px monospace`;
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.99) drops[i] = 0;
                 drops[i]++;
             }
             raf = requestAnimationFrame(draw);
         };
         draw();
+
 
         return () => {
             cancelAnimationFrame(raf);
