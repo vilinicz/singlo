@@ -1,0 +1,327 @@
+[
+  {
+    "label": "Technique",
+    "pattern": [
+      {
+        "RIGHT_ID": "verb",
+        "RIGHT_ATTRS": {
+          "POS": "VERB"
+        }
+      },
+      {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "obl",
+        "RIGHT_ATTRS": {
+          "DEP": {
+            "IN": [
+              "obl",
+              "agent",
+              "pobj"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "adp",
+        "RIGHT_ATTRS": {
+          "LOWER": {
+            "IN": [
+              "using",
+              "with",
+              "by",
+              "via",
+              "through"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "legacy_biomed_dep_1"
+  },
+  {
+    "label": "Experiment",
+    "pattern": [
+      {
+        "RIGHT_ID": "verb",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "conduct",
+              "perform",
+              "administer",
+              "enroll",
+              "recruit",
+              "assign",
+              "randomize"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "obj",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "experiment",
+              "study",
+              "trial",
+              "assessment",
+              "evaluation",
+              "analysis"
+            ]
+          },
+          "DEP": {
+            "IN": [
+              "dobj",
+              "obj",
+              "pobj",
+              "obl"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "legacy_biomed_dep_2"
+  },
+  {
+    "label": "Conclusion",
+    "pattern": [
+      {
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "conclude",
+              "confirm",
+              "support",
+              "suggest",
+              "indicate",
+              "underscore",
+              "highlight"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "subj",
+        "RIGHT_ATTRS": {
+          "DEP": {
+            "IN": [
+              "nsubj",
+              "nsubjpass"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "legacy_biomed_dep_3"
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "improve",
+              "increase",
+              "decrease",
+              "reduce",
+              "associate",
+              "correlate"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "obl_by",
+        "RIGHT_ATTRS": {
+          "LOWER": "by"
+        },
+        "OP": "?"
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "num",
+        "RIGHT_ATTRS": {
+          "LIKE_NUM": true
+        },
+        "OP": "?"
+      }
+    ],
+    "name": "legacy_biomed_dep_4"
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "find",
+              "show",
+              "demonstrate",
+              "observe",
+              "report",
+              "indicate"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "subj",
+        "RIGHT_ATTRS": {
+          "LOWER": {
+            "IN": [
+              "we",
+              "our",
+              "results"
+            ]
+          },
+          "DEP": {
+            "IN": [
+              "nsubj",
+              "nsubjpass"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "that",
+        "RIGHT_ATTRS": {
+          "LOWER": "that"
+        },
+        "OP": "?"
+      }
+    ],
+    "name": "legacy_biomed_dep_5"
+  },
+  {
+    "label": "Result",
+    "pattern": [
+      {
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": "observe"
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "auxpass",
+        "RIGHT_ATTRS": {
+          "DEP": "auxpass"
+        },
+        "OP": "?"
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "neg",
+        "RIGHT_ATTRS": {
+          "DEP": "neg"
+        },
+        "OP": "?"
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "nsubj",
+        "RIGHT_ATTRS": {
+          "DEP": {
+            "IN": [
+              "nsubjpass",
+              "nsubj"
+            ]
+          }
+        },
+        "OP": "?"
+      }
+    ],
+    "name": "legacy_biomed_dep_6"
+  },
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "propose",
+              "hypothesize",
+              "suggest"
+            ]
+          }
+        }
+      },
+      {
+        "LEFT_ID": "v",
+        "REL_OP": ">",
+        "RIGHT_ID": "nsubj",
+        "RIGHT_ATTRS": {
+          "LOWER": {
+            "IN": [
+              "we",
+              "authors",
+              "study",
+              "paper",
+              "work",
+              "results"
+            ]
+          },
+          "DEP": {
+            "IN": [
+              "nsubj",
+              "nsubjpass"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "legacy_biomed_dep_7"
+  },
+  {
+    "label": "Hypothesis",
+    "pattern": [
+      {
+        "RIGHT_ID": "h",
+        "RIGHT_ATTRS": {
+          "LOWER": "hypothesis"
+        }
+      },
+      {
+        "LEFT_ID": "h",
+        "REL_OP": "<",
+        "RIGHT_ID": "v",
+        "RIGHT_ATTRS": {
+          "LEMMA": {
+            "IN": [
+              "propose",
+              "explain",
+              "support",
+              "suggest"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "legacy_biomed_dep_8"
+  }
+]

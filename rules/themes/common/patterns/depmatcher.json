@@ -1,94 +1,512 @@
 [
   {
-    "label": "Result",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["increase","decrease","improve","associate","correlate","affect","influence","demonstrate","show"]}}},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "advmod", "RIGHT_ATTRS": {"LOWER": {"IN": ["significantly","significant"]}}, "OP": "?"},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}},
-      {"LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "obj",  "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","attr","pobj"]}}}
-    ]
-  },
-  {
-    "label": "Result",
-    "pattern": [
-      {"RIGHT_ID": "adj",  "RIGHT_ATTRS": {"POS": "ADJ", "LOWER": {"IN": ["significant","positive","negative","strong","weak"]}}},
-      {"LEFT_ID": "adj",   "REL_OP": ">", "RIGHT_ID": "noun", "RIGHT_ATTRS": {"POS": "NOUN", "LEMMA": {"IN": ["association","correlation","relationship","difference","effect","increase","decrease","improvement"]}}},
-      {"LEFT_ID": "noun",  "REL_OP": ">", "RIGHT_ID": "subj", "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj","nsubjpass"]}}}
-    ]
-  },
-{
-  "label": "Result",
-  "pattern": [
-    {"RIGHT_ID": "root", "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": {"IN": ["observe","find","see","correlate","associate"]}}},
-    {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "between", "RIGHT_ATTRS": {"LOWER": "between"}},
-    {"LEFT_ID": "between", "REL_OP": ">", "RIGHT_ID": "obj1", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","dobj","obl"]}}},
-    {"LEFT_ID": "root", "REL_OP": ">", "RIGHT_ID": "andtok", "RIGHT_ATTRS": {"LOWER": "and"}},
-    {"LEFT_ID": "andtok", "REL_OP": ">", "RIGHT_ID": "obj2", "RIGHT_ATTRS": {"DEP": {"IN": ["conj","pobj","dobj","obl"]}}}
-  ]
-},
-
-  {
-    "label": "Technique",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["use","apply","employ","implement","measure","estimate","fit"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
-    ]
-  },
-
-  {
-    "label": "Technique",
-    "pattern": [
-      { "RIGHT_ID": "verb", "RIGHT_ATTRS": { "POS": "VERB" } },
-      { "LEFT_ID": "verb", "REL_OP": ">", "RIGHT_ID": "prep", "RIGHT_ATTRS": { "LOWER": { "IN": ["using","with","by","via","through"] } } },
-      { "LEFT_ID": "prep", "REL_OP": ">", "RIGHT_ID": "tool", "RIGHT_ATTRS": { "DEP": { "IN": ["pobj","obl"] } } }
-    ]
-  },
-
-  {
-    "label": "Experiment",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["conduct","perform","run","carry"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}}}
-    ]
-  },
-
-  {
+    "name": "ANA_DEP",
     "label": "Analysis",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["analyze","analyse","assess","evaluate","test","estimate","compute","regress","model","compare"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "test",
+                "analyze",
+                "analyse",
+                "evaluate",
+                "assess",
+                "model",
+                "fit",
+                "estimate",
+                "adjust",
+                "correlate",
+                "regress"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "head",
+          "RIGHT_ATTRS": {
+            "LOWER": {
+              "IN": [
+                "regression",
+                "regressions",
+                "anova",
+                "ancova",
+                "correlation",
+                "coefficient",
+                "rho"
+              ]
+            }
+          }
+        }
+      ],
+      [
+        {
+          "RIGHT_ID": "head",
+          "RIGHT_ATTRS": {
+            "LOWER": {
+              "IN": [
+                "regression",
+                "regressions",
+                "anova",
+                "ancova",
+                "correlation",
+                "coefficient",
+                "rho"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "head",
+          "REL_OP": ">>",
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "model",
+                "fit",
+                "estimate",
+                "adjust",
+                "assess",
+                "evaluate"
+              ]
+            }
+          }
+        }
+      ]
     ]
   },
-
   {
-    "label": "Hypothesis",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["hypothesize","propose","suggest","assume","postulate","argue","expect","predict"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "mark", "RIGHT_ATTRS": {"LOWER": "that"}, "OP": "?"}
+    "name": "ANA_MODEL_NOUN",
+    "label": "Analysis",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "n",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "regression",
+                "model",
+                "analysis"
+              ]
+            },
+            "POS": "NOUN"
+          }
+        },
+        {
+          "LEFT_ID": "n",
+          "REL_OP": ">>",
+          "RIGHT_ID": "mod",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "amod",
+                "compound"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "logistic",
+                "linear",
+                "cox",
+                "multivariable",
+                "multivariate"
+              ]
+            }
+          }
+        }
+      ]
     ]
   },
-
   {
+    "name": "CONC_DEP",
     "label": "Conclusion",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["conclude","indicate","suggest","imply","confirm"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "mark", "RIGHT_ATTRS": {"LOWER": "that"}, "OP": "?"}
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "conclude",
+                "suggest",
+                "support",
+                "confirm",
+                "highlight",
+                "underscore",
+                "indicate",
+                "demonstrate",
+                "reveal",
+                "show"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "subj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "nsubj",
+                "nsubjpass"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "we",
+                "our",
+                "results",
+                "findings",
+                "data",
+                "study",
+                "analysis",
+                "these",
+                "this"
+              ]
+            }
+          }
+        }
+      ]
     ]
   },
-
   {
-    "label": "Dataset",
-    "pattern": [
-      {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": {"IN": ["include","enroll","recruit","collect","sample"]}}},
-      {"LEFT_ID": "verb",  "REL_OP": ">", "RIGHT_ID": "obj", "RIGHT_ATTRS": {"DEP": {"IN": ["dobj","obj","pobj"]}}}
+    "name": "CONC_VERB_THAT",
+    "label": "Conclusion",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "conclude",
+                "suggest",
+                "indicate",
+                "support",
+                "confirm"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "comp",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "ccomp",
+                "xcomp",
+                "advcl"
+              ]
+            }
+          }
+        }
+      ]
     ]
   },
-
   {
+    "name": "HYP_CCOMP_THAT",
+    "label": "Hypothesis",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "hypothesize",
+                "propose",
+                "predict",
+                "expect",
+                "suggest"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "that",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "mark",
+                "complm"
+              ]
+            },
+            "LOWER": "that"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "comp",
+          "RIGHT_ATTRS": {
+            "DEP": "ccomp"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "HYP_XCOMP_TO",
+    "label": "Hypothesis",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "aim",
+                "seek",
+                "plan",
+                "intend",
+                "attempt"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "comp",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "xcomp",
+                "ccomp"
+              ]
+            },
+            "POS": "VERB"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_ASSOC_SUBJ_LIT",
     "label": "Input Fact",
-    "pattern": [
-      {"RIGHT_ID": "prep", "RIGHT_ATTRS": {"LOWER": {"IN": ["according","based"]}}},
-      {"LEFT_ID": "prep",  "REL_OP": ">", "RIGHT_ID": "pobj", "RIGHT_ATTRS": {"DEP": {"IN": ["pobj","obl"]}}}
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "associate",
+                "correlate",
+                "relate",
+                "show",
+                "demonstrate",
+                "indicate",
+                "report"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "subj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "nsubj",
+                "nsubjpass"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "previous",
+                "prior",
+                "earlier",
+                "literature",
+                "studies",
+                "work",
+                "research",
+                "reports"
+              ]
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_COMPARE_TO",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": "compare"
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "to",
+          "RIGHT_ATTRS": {
+            "DEP": "prep",
+            "LOWER": "to"
+          }
+        },
+        {
+          "LEFT_ID": "to",
+          "REL_OP": ">>",
+          "RIGHT_ID": "ref",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_IDENTIFY_AS",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "identify",
+                "classify",
+                "label"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "obj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "dobj",
+                "obj"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "prep",
+          "RIGHT_ATTRS": {
+            "DEP": "prep",
+            "LOWER": "as"
+          }
+        },
+        {
+          "LEFT_ID": "prep",
+          "REL_OP": ">>",
+          "RIGHT_ID": "role",
+          "RIGHT_ATTRS": {
+            "DEP": "pobj"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_STATS_RATIO_NUM",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "n",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "ratio",
+                "auc",
+                "rmse",
+                "accuracy",
+                "precision",
+                "recall",
+                "specificity",
+                "sensitivity"
+              ]
+            },
+            "POS": "NOUN"
+          }
+        },
+        {
+          "LEFT_ID": "n",
+          "REL_OP": ">>",
+          "RIGHT_ID": "num",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "nummod",
+                "appos"
+              ]
+            },
+            "LIKE_NUM": true
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_WE_VERB",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "RIGHT_ID": "v",
+          "RIGHT_ATTRS": {
+            "LEMMA": {
+              "IN": [
+                "show",
+                "find",
+                "observe",
+                "demonstrate",
+                "indicate",
+                "reveal",
+                "suggest",
+                "report"
+              ]
+            }
+          }
+        },
+        {
+          "LEFT_ID": "v",
+          "REL_OP": ">>",
+          "RIGHT_ID": "subj",
+          "RIGHT_ATTRS": {
+            "DEP": {
+              "IN": [
+                "nsubj",
+                "nsubjpass"
+              ]
+            },
+            "LOWER": {
+              "IN": [
+                "we",
+                "our",
+                "results",
+                "findings",
+                "these"
+              ]
+            }
+          }
+        }
+      ]
     ]
   }
 ]

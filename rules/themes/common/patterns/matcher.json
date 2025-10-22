@@ -1,104 +1,1581 @@
 [
-
-  { "label": "Result", "pattern": [ {"LIKE_NUM": true}, {"TEXT": "%"}, {"LOWER": "of"}, {"LOWER": {"IN": ["measurements","trials","cases","participants","subjects","samples"]}} ] },
-  { "label": "Result", "pattern": [ {"LOWER": {"IN": ["significant","significantly"]}}, {"LOWER": {"IN": ["increase","decrease","improvement","reduction","difference","effect","association"]}} ] },
-  { "label": "Result", "pattern": [ {"LOWER": {"IN": ["p","p-value","pvalue"]}}, {"IS_PUNCT": true, "OP": "?"}, {"TEXT": {"REGEX": "^(<|=)$"}}, {"IS_SPACE": true, "OP": "*"}, {"TEXT": {"REGEX": "^0?\\.\\d+$"}} ] },
-
-
   {
-    "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["positive","negative","strong","weak"]}},
-      {"LOWER": {"IN": ["tendency","association","correlation","relationship","link"]}},
-      {"LOWER": "between"},
-      {"IS_ALPHA": true, "OP": "+"},
-      {"LOWER": "and"},
-      {"IS_ALPHA": true, "OP": "+"}
+    "name": "ANA_SURFACE",
+    "label": "Analysis",
+    "patterns": [
+      [
+        {
+          "LOWER": "we"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "analyze",
+              "analyse",
+              "assess",
+              "evaluate",
+              "model",
+              "fit",
+              "estimate",
+              "adjust",
+              "normalize",
+              "standardize"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "regression",
+              "logistic",
+              "linear",
+              "cox",
+              "anova",
+              "ancova",
+              "mixed-effects",
+              "multivariate",
+              "univariate"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "kaplan-meier",
+              "survival",
+              "hazard",
+              "odds"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "significance",
+              "multiple",
+              "testing",
+              "bonferroni",
+              "fdr"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "welch",
+              "welch’s"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "t",
+              "t-test",
+              "ttest"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "fisher",
+              "fisher’s"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "exact",
+              "exact-test",
+              "test"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "spearman",
+              "spearman’s"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "rho",
+              "rank",
+              "correlation"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "phi"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "coefficient",
+              "corr",
+              "correlation"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "weighted",
+              "weights"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "logistic",
+              "logit"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "regression",
+              "model",
+              "models"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "odds"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "ratio",
+              "ratios"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "sas",
+              "stata",
+              "spss",
+              "r"
+            ]
+          }
+        },
+        {
+          "LIKE_NUM": true,
+          "OP": "?"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "model",
+              "models",
+              "coefficient",
+              "coefficients",
+              "parameter",
+              "parameters"
+            ]
+          }
+        }
+      ]
     ]
   },
   {
+    "name": "CONC_ABS_HEAD",
+    "label": "Conclusion",
+    "patterns": [
+      [
+        {
+          "IS_TITLE": true,
+          "TEXT": {
+            "IN": [
+              "Conclusion",
+              "Conclusions",
+              "CONCLUSION",
+              "CONCLUSIONS"
+            ]
+          }
+        },
+        {
+          "TEXT": {
+            "IN": [
+              ":",
+              "—",
+              "-",
+              "–"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "CONC_IMP_SHOULD",
+    "label": "Conclusion",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "research",
+              "practice",
+              "investigators",
+              "further"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "should",
+              "must",
+              "need",
+              "needs"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "CONC_SUMMARY_ABS",
+    "label": "Conclusion",
+    "patterns": [
+      [
+        {
+          "LEMMA": {
+            "IN": [
+              "appear",
+              "seem",
+              "indicate",
+              "suggest"
+            ]
+          }
+        },
+        {
+          "LOWER": "to",
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "drive",
+              "lead",
+              "result"
+            ]
+          }
+        },
+        {
+          "LOWER": "by",
+          "OP": "?"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "CONC_SURFACE",
+    "label": "Conclusion",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "in",
+              "overall",
+              "in",
+              "summary",
+              "collectively"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "conclude",
+              "conclusion",
+              "summarize",
+              "suggest"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "in",
+              "the",
+              "this",
+              "present"
+            ]
+          }
+        },
+        {
+          "LOWER": "study"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "reveal",
+              "demonstrate",
+              "suggest"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "these",
+              "our"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "results",
+              "findings"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "suggest",
+              "indicate"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "HYP_OBJECTIVES_HEAD",
+    "label": "Hypothesis",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "objective",
+              "objectives"
+            ]
+          }
+        },
+        {
+          "TEXT": {
+            "IN": [
+              ":",
+              "—",
+              "-",
+              "–"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "HYP_SURFACE",
+    "label": "Hypothesis",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we",
+              "our"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "hypothesize",
+              "hypothesise",
+              "postulate",
+              "posit",
+              "predict",
+              "propose"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we",
+              "our"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "hypothesis",
+              "hypotheses"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we",
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": "study",
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "aim",
+              "seek"
+            ]
+          }
+        },
+        {
+          "LOWER": "to"
+        }
+      ],
+      [
+        {
+          "LOWER": "we"
+        },
+        {
+          "LEMMA": "expect"
+        },
+        {
+          "LOWER": "that"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "the",
+              "this"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "aim",
+              "aims",
+              "objective",
+              "objectives",
+              "goal",
+              "goals",
+              "purpose"
+            ]
+          }
+        },
+        {
+          "LOWER": "of"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": "study"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we",
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "seek",
+              "attempt"
+            ]
+          }
+        },
+        {
+          "LOWER": "to"
+        }
+      ],
+      [
+        {
+          "LOWER": "to"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "verify",
+              "test",
+              "determine",
+              "identify"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "which",
+              "whether",
+              "if"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "objective",
+              "objectives"
+            ]
+          }
+        },
+        {
+          "TEXT": {
+            "IN": [
+              ":",
+              "—",
+              "-",
+              "–"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "the",
+              "this"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "aim",
+              "aims",
+              "objective",
+              "objectives",
+              "goal",
+              "goals",
+              "purpose"
+            ]
+          }
+        },
+        {
+          "LOWER": "of"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "analysis",
+              "study"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "analysis",
+              "study"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "aim"
+            ]
+          }
+        },
+        {
+          "LOWER": "to"
+        }
+      ],
+      [
+        {
+          "LOWER": "to"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "describe",
+              "delineate",
+              "investigate",
+              "assess",
+              "examine",
+              "analyze",
+              "analyse",
+              "determine",
+              "identify"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_BRACK_NUM",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "TEXT": {
+            "REGEX": "^\\[\\s*\\d+(\\s*[,–-]\\s*\\d+)*\\s*\\]$"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_CONTEXT_PAREN_NUM",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "LOWER": "as"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "demonstrate",
+              "report",
+              "describe",
+              "note",
+              "observe",
+              "document"
+            ]
+          }
+        },
+        {
+          "LOWER": "in"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "previous",
+              "prior",
+              "earlier"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "work",
+              "study",
+              "studies",
+              "research",
+              "reports",
+              "literature",
+              "paper",
+              "trial"
+            ]
+          }
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "previous",
+              "prior",
+              "earlier"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "work",
+              "study",
+              "studies",
+              "research",
+              "reports",
+              "literature",
+              "paper",
+              "trial"
+            ]
+          }
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "see",
+              "cf"
+            ]
+          }
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_DOI",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "LOWER": "doi"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "IS_ASCII": true
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_ETAL_YEAR",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "IS_TITLE": true
+        },
+        {
+          "LOWER": "et"
+        },
+        {
+          "LOWER": "al"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_PAREN_AUTHOR_YEAR",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "ORTH": "("
+        },
+        {
+          "IS_TITLE": true,
+          "OP": "*"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "LOWER": "et"
+        },
+        {
+          "LOWER": "al"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "IS_ALPHA": true,
+          "OP": "?"
+        },
+        {
+          "ORTH": ")"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_PAREN_NUM_AFTER_NAME",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "IS_TITLE": true,
+          "OP": "+"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ],
+      [
+        {
+          "IS_TITLE": true,
+          "OP": "+"
+        },
+        {
+          "LOWER": "and",
+          "OP": "?"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "colleague",
+              "colleagues",
+              "coworkers",
+              "associates"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ],
+      [
+        {
+          "IS_TITLE": true,
+          "OP": "+"
+        },
+        {
+          "LOWER": "et"
+        },
+        {
+          "LOWER": "al"
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "ORTH": "("
+        },
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "ORTH": ")"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_CIT_PAREN_YEAR_ONLY",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "ORTH": "("
+        },
+        {
+          "TEXT": {
+            "REGEX": "^(1[89]|20)\\d{2}$"
+          }
+        },
+        {
+          "ORTH": ")"
+        }
+      ],
+      [
+        {
+          "ORTH": "("
+        },
+        {
+          "TEXT": {
+            "REGEX": "^(1[89]|20)\\d{2}[a-z]$"
+          }
+        },
+        {
+          "ORTH": ")"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_PREV_ASSOC",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "previous",
+              "prior",
+              "earlier",
+              "many"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "work",
+              "study",
+              "studies",
+              "research",
+              "reports",
+              "literature"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "demonstrate",
+              "indicate",
+              "report",
+              "find",
+              "document"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "previous",
+              "prior",
+              "earlier"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "work",
+              "study",
+              "studies",
+              "research",
+              "reports",
+              "literature"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "has",
+              "have",
+              "is",
+              "are",
+              "was",
+              "were"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "demonstrate",
+              "indicate",
+              "associate"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "it",
+              "this"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": "be"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "shown",
+              "demonstrated",
+              "reported",
+              "indicated",
+              "established"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "that"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "associate"
+            ]
+          }
+        },
+        {
+          "LOWER": "with"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "INF_SURFACE",
+    "label": "Input Fact",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "according",
+              "given",
+              "based"
+            ]
+          }
+        },
+        {
+          "LOWER": "on",
+          "OP": "?"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "it",
+              "this"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "be"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "known",
+              "established",
+              "well-known"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "prior",
+              "previous",
+              "existing"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "work",
+              "evidence",
+              "studies",
+              "literature"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "guidelines",
+              "consensus",
+              "recommendations"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "baseline",
+              "assumption",
+              "assumptions",
+              "inclusion",
+              "exclusion",
+              "criteria"
+            ]
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "RES_ABS_CONT",
     "label": "Result",
-    "pattern": [
-      {"LOWER": {"IN": ["observed","found","seen"]}},
-      {"LOWER": "between"},
-      {"IS_ALPHA": true, "OP": "+"},
-      {"LOWER": "and"},
-      {"IS_ALPHA": true, "OP": "+"}
+    "patterns": [
+      [
+        {
+          "LIKE_NUM": true
+        },
+        {
+          "TEXT": {
+            "REGEX": "%|\\)$"
+          }
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        }
+      ]
     ]
   },
-
-  { "label": "Result",
-    "pattern": [
-      { "LOWER": { "IN": ["auc","auroc","accuracy","precision","recall","f1","sensitivity","specificity","ppv","npv","rmse","mae","mse"] } }
+  {
+    "name": "RES_ABS_HEAD_RESULTS",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "IS_TITLE": true,
+          "TEXT": {
+            "IN": [
+              "Results",
+              "RESULTS"
+            ]
+          }
+        },
+        {
+          "TEXT": {
+            "IN": [
+              ":",
+              "—",
+              "-",
+              "–"
+            ]
+          }
+        }
+      ]
     ]
   },
-  { "label": "Result",
-    "pattern": [
-      { "LOWER": { "IN": ["compared","relative","versus","vs"] } },
-      { "LOWER": { "IN": ["to","with"] } }
+  {
+    "name": "RES_ASSOC_OUR",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we",
+              "our"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "results",
+              "findings"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "demonstrate",
+              "indicate",
+              "reveal",
+              "find",
+              "observe"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "that"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "associate"
+            ]
+          }
+        },
+        {
+          "LOWER": "with"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "this",
+              "the"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "study",
+              "analysis"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "demonstrate",
+              "indicate",
+              "reveal",
+              "find",
+              "observe"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "that"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "associate"
+            ]
+          }
+        },
+        {
+          "LOWER": "with"
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "we"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "find",
+              "observe",
+              "show"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "that"
+            ]
+          },
+          "OP": "?"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "associate"
+            ]
+          }
+        },
+        {
+          "LOWER": "with"
+        }
+      ]
     ]
   },
-  { "label": "Result",
-    "pattern": [
-      { "LOWER": { "IN": ["confidence","ci"] } },
-      { "LOWER": { "IN": ["interval","95%","90%","99%"] } }
+  {
+    "name": "RES_STATS",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "LOWER": "p"
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "<",
+              "≤",
+              "<="
+            ]
+          }
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "ci",
+              "odds",
+              "hazard"
+            ]
+          }
+        },
+        {
+          "IS_PUNCT": true,
+          "OP": "?"
+        },
+        {
+          "LIKE_NUM": true
+        }
+      ]
     ]
   },
- { "label": "Result",
-    "pattern": [
-      { "LOWER": "we" },
-      { "LOWER": { "IN": ["found","showed","observed","demonstrated","reported","indicated"] } },
-      { "LOWER": "that", "OP": "?" }
+  {
+    "name": "RES_SUMMARY",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "LOWER": "statistical"
+        },
+        {
+          "LEMMA": "analysis"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "reveal",
+              "demonstrate",
+              "suggest"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "these",
+              "our"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "results",
+              "findings"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "reveal",
+              "demonstrate",
+              "suggest"
+            ]
+          }
+        }
+      ]
     ]
   },
-
-  { "label": "Technique", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["use","used","apply","applied","employ","employed","implement","implemented"]}} ] },
-
-
-  { "label": "Experiment", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["conduct","conducted","perform","performed","run","ran","carry","carried"]}}, {"LOWER": {"IN": ["experiment","experiments","study","trial","evaluation","benchmark"]}} ] },
-
-
-  { "label": "Dataset", "pattern": [ {"LOWER": {"IN": ["dataset","corpus","cohort","recordings","measurements"]}} ] },
-  { "label": "Dataset", "pattern": [ {"LIKE_NUM": true}, {"LOWER": {"IN": ["participants","subjects","patients","records"]}} ] },
-
-
-  { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"}, {"LOWER": {"IN": ["analyze","analysed","analyzed","compute","computed","estimate","estimated","fit","fitted","model","modeled","evaluate","evaluated"]}} ] },
-  { "label": "Analysis", "pattern": [ {"LOWER": {"IN": ["regression","anova","t-test","ttest","logistic","cox","glm","mixed-effects","bayesian","fisher","welch","spearman","rho","exact"]}} ] },
-
-
- {
-  "label": "Hypothesis",
-  "pattern": [
-    {"LOWER": {"IN": ["we","this","our"]}, "OP": "?"},
-    {"LOWER": {"IN": ["hypothesize","hypothesise","propose","postulate","assume","aim","aimed","aims","objective","objectives","goal"]}},
-    {"LOWER": "to", "OP": "?"}
-  ]
-},
-{
-  "label": "Hypothesis",
-  "pattern": [
-    {"LOWER": {"IN": ["the","this"]}, "OP": "?"},
-    {"LOWER": {"IN": ["study","work","paper"]}},
-    {"LOWER": {"IN": ["aims","aimed","seeks","intends"]}},
-    {"LOWER": "to", "OP": "?"}
-  ]
-},
-
-
-  { "label": "Input Fact", "pattern": [ {"LOWER": {"IN": ["according","previous","prior","it","it","it"]}}, {"LOWER": {"IN": ["to","studies","work","is","is","is"]}, "OP": "?"} ] },
-  { "label": "Input Fact", "pattern": [ {"LOWER": {"IN": ["it","there"]}}, {"LOWER": {"IN": ["is","are","has","have"]}}, {"LOWER": {"IN": ["known","well-known","evidence","evident"]}} ] },
-
-
-  { "label": "Input Fact", "pattern": [ {"TEXT": {"REGEX": "^\\[[0-9,;\\s]+\\]$"}} ] },
-  { "label": "Input Fact", "pattern": [ {"TEXT": {"REGEX": "^\\([A-Z][a-z]+(\\s+et\\sal\\.)?,\\s?\\d{4}(;\\s?\\d{4})*\\)$"}} ] },
-
-
- {
-  "label": "Conclusion",
-  "pattern": [
-    {"LOWER": {"IN": ["these","overall","in","to"]}, "OP": "?"},
-    {"LOWER": {"IN": ["results","findings","observations","conclusion","summary","conclude"]}},
-    {"LOWER": {"IN": ["suggest","indicate","support","imply","show"]}}
-  ]
-}
+  {
+    "name": "RES_VERB_CUES",
+    "label": "Result",
+    "patterns": [
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "results",
+              "findings",
+              "statistical"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "reveal",
+              "demonstrate",
+              "suggest"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "these",
+              "our"
+            ]
+          }
+        },
+        {
+          "LOWER": {
+            "IN": [
+              "results",
+              "findings"
+            ]
+          }
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "reveal",
+              "demonstrate",
+              "suggest"
+            ]
+          }
+        }
+      ]
+    ]
+  }
 ]

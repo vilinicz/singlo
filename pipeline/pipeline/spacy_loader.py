@@ -178,13 +178,14 @@ def load_spacy_patterns(
         nlp: "spacy.language.Language",
         themes_root: str | Path,
         themes: Optional[List[str]]
-) -> Tuple[Matcher, Optional[DependencyMatcher], Dict[str, float], Dict[str, List[str]]]:
+) -> Tuple[Matcher, Optional[DependencyMatcher], Dict[str, float], Dict[str, str], Dict[str, List[str]]]:
     """
     Собирает matcher/depmatcher/lexicon из набора тем.
     Возвращает:
       - matcher (всегда, иначе бросает RuntimeError),
       - depmatcher (или None, если парсера нет или не нашлось dep-паттернов),
       - type_boosts (объединённый),
+      - rule_labels: имя правила → канонический тип,
       - loaded_paths: {"matcher":[...], "depmatcher":[...], "lexicons":[...]} — строки путей.
     """
     themes_root = Path(themes_root or "/app/rules/themes")
@@ -194,6 +195,8 @@ def load_spacy_patterns(
     matcher = Matcher(nlp.vocab)
     loaded_m: List[str] = []
     m_count = 0
+    rule_labels: Dict[str, str] = {}
+    token_auto_idx = 0
 
     if not mpaths:
         raise RuntimeError(f"No matcher.json files found (themes={themes or ['(none)']}) under {themes_root}")
@@ -204,14 +207,33 @@ def load_spacy_patterns(
         for obj in arr:
             if not isinstance(obj, dict):
                 continue
-            label = _canon_type(str(obj.get("label", "")))
-            pattern = obj.get("pattern")
-            if not label or not isinstance(pattern, list):
+            raw_label = str(obj.get("label", "")).strip()
+            label = _canon_type(raw_label) or raw_label
+            patterns_raw = obj.get("patterns")
+            if patterns_raw and isinstance(patterns_raw, list):
+                pattern_list = []
+                for pat in patterns_raw:
+                    if isinstance(pat, list):
+                        pattern_list.append(pat)
+                if not pattern_list:
+                    continue
+            else:
+                pattern = obj.get("pattern")
+                if not isinstance(pattern, list):
+                    continue
+                pattern_list = [pattern]
+            if not label:
                 continue
+            rule_name = str(obj.get("name", "")).strip()
+            if not rule_name:
+                token_auto_idx += 1
+                safe_label = label.lower().replace(" ", "_")
+                rule_name = f"{safe_label}_rule_{token_auto_idx}"
             try:
-                matcher.add(label, [pattern])
+                matcher.add(rule_name, pattern_list)
                 m_count += 1
                 added_here += 1
+                rule_labels[rule_name] = label
             except Exception as e:
                 raise RuntimeError(f"Bad token pattern in {p} for label={label}: {e}") from e
         if added_here > 0:
@@ -229,25 +251,42 @@ def load_spacy_patterns(
     if ("parser" in nlp.pipe_names) and dpaths:
         depmatcher = DependencyMatcher(nlp.vocab)
         d_count = 0
+        dep_auto_idx = 0
         for p in dpaths:
             arr = _read_json_array(p)
             added_here = 0
             for obj in arr:
                 if not isinstance(obj, dict):
                     continue
-                label = _canon_type(str(obj.get("label", "")))
-                pat = obj.get("pattern")
-                if not label or not isinstance(pat, list) or not all(isinstance(x, dict) for x in pat):
-                    raise RuntimeError(f"Dep pattern in {p} for label={label} must be a List[dict] (no 'nodes/edges').")
-                # раскрываем опциональные узлы OP:"?"
-                expanded = _expand_optional_nodes(pat)
-                if not expanded:
+                raw_label = str(obj.get("label", "")).strip()
+                label = _canon_type(raw_label) or raw_label
+                patterns_raw = obj.get("patterns")
+                if patterns_raw and isinstance(patterns_raw, list):
+                    raw_patterns = [pat for pat in patterns_raw if isinstance(pat, list) and all(isinstance(x, dict) for x in pat)]
+                else:
+                    pat = obj.get("pattern")
+                    if not isinstance(pat, list) or not all(isinstance(x, dict) for x in pat):
+                        raise RuntimeError(f"Dep pattern in {p} for label={label} must be a List[dict] (no 'nodes/edges').")
+                    raw_patterns = [pat]
+                if not raw_patterns or not label:
                     continue
+
+                expanded_batches: List[List[dict]] = []
+                for pat in raw_patterns:
+                    expanded = _expand_optional_nodes(pat)
+                    expanded_batches.extend(expanded)
+                if not expanded_batches:
+                    continue
+                rule_name = str(obj.get("name", "")).strip()
+                if not rule_name:
+                    dep_auto_idx += 1
+                    safe_label = label.lower().replace(" ", "_")
+                    rule_name = f"{safe_label}_dep_rule_{dep_auto_idx}"
                 try:
-                    for seq in expanded:
-                        depmatcher.add(label, [seq])  # spaCy ждёт List[List[dict]]
+                    depmatcher.add(rule_name, expanded_batches)  # spaCy ждёт List[List[dict]]
                     d_count += 1
                     added_here += 1
+                    rule_labels[rule_name] = label
                 except Exception as e:
                     raise RuntimeError(f"Bad dep pattern in {p} for label={label}: {e}") from e
             if added_here > 0:
@@ -277,4 +316,4 @@ def load_spacy_patterns(
             continue
 
     loaded_paths = {"matcher": loaded_m, "depmatcher": loaded_d, "lexicons": [str(p) for p in lpaths]}
-    return matcher, depmatcher, boosts, loaded_paths
+    return matcher, depmatcher, boosts, rule_labels, loaded_paths
