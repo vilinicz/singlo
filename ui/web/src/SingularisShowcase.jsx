@@ -678,18 +678,12 @@ export default function SingularisShowcase() {
                                             ? modalNode.coords
                                             : null;
 
-                                        // 2) иначе fallback на bbox [x0,y0,x1,y1] или массив таких bbox
-                                        if (!rects) {
-                                            if (Array.isArray(modalNode.bbox?.[0])) rects = modalNode.bbox;
-                                            else if (Array.isArray(modalNode.bbox)) rects = [modalNode.bbox];
-                                        }
-
                                         setPdfOpen(true);
                                         console.log("[HL] rects preBEFORE openHighlight:", rects);
                                         setTimeout(() => {
-                                            console.log("[HL] rects BEFORE openHighlight:", rects);
+                                            console.log("[HL] rects BEFORE openHighlight:", rects, modalNode.page + 1);
                                             pdfRef.current?.openHighlight({
-                                                page: modalNode.page || 1,
+                                                page: modalNode.page + 1 || 1,
                                                 rects,  // PdfPane теперь сам поймёт и [{x,y,w,h}], и [x0,y0,x1,y1]
                                                 // zoom: 1.4,
                                             });

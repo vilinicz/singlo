@@ -131,74 +131,39 @@ const PdfPane = forwardRef(function PdfPane({pdfUrl, onClose}, ref) {
         }
     };
 
-    // ------- highlight -------
-    const highlightSpansByBBoxes = (rects, tolerance = 1) => {
+    // ПРОСТОЕ РИСОВАНИЕ ПРЯМОУГОЛЬНИКОВ ПО coords (origin: top-left)
+    const highlightByCoords = (coords) => {
         const viewport = viewportRef.current;
-        if (!viewport) return;
-        const textLayerDiv = textLayerRef.current, overlay = overlayRef.current;
-        if (!textLayerDiv || !overlay) return;
+        const overlay = overlayRef.current;
+        if (!viewport || !overlay || !Array.isArray(coords) || !coords.length) return;
 
-        const list = normalizeRects(rects);
-        if (!list.length) return;
+        overlay.innerHTML = "";
 
-        const bottomRects = list.map(([x0, y0, x1, y1]) => ({
-            x: x0 * viewport.scale,
-            y: viewport.height - y1 * viewport.scale,
-            w: (x1 - x0) * viewport.scale,
-            h: (y1 - y0) * viewport.scale,
-        }));
-        const topRects = list.map(([x0, y0, x1, y1]) => ({
-            x: x0 * viewport.scale,
-            y: y0 * viewport.scale,
-            w: (x1 - x0) * viewport.scale,
-            h: (y1 - y0) * viewport.scale,
-        }));
+        for (const {x, y, w, h} of coords) {
+            // coords в "PDF единицах" от ЛЕВОГО ВЕРХНЕГО угла страницы
+            const X = x * viewport.scale;
+            const Y = y * viewport.scale;
+            const W = w * viewport.scale;
+            const H = h * viewport.scale;
 
-        const paintAndCount = (rectsCss) => {
-            overlay.innerHTML = "";
-            rectsCss.forEach(({x, y, w, h}) => {
-                const r = document.createElement("div");
-                Object.assign(r.style, {
-                    position: "absolute",
-                    left: `${x}px`, top: `${y}px`,
-                    width: `${w}px`, height: `${h}px`,
-                    background: "rgba(250,204,21,0.28)",
-                    outline: "1px solid rgba(245,158,11,0.45)",
-                    borderRadius: "4px",
-                    mixBlendMode: "multiply",
-                    pointerEvents: "none",
-                    boxSizing: "border-box",
-                });
-                overlay.appendChild(r);
+            const r = document.createElement("div");
+            Object.assign(r.style, {
+                position: "absolute",
+                left: `${X}px`,
+                top: `${Y}px`,
+                width: `${W}px`,
+                height: `${H}px`,
+                background: "rgba(250, 204, 21, 0.28)",
+                outline: "1px solid rgba(245, 158, 11, 0.45)",
+                borderRadius: "4px",
+                mixBlendMode: "multiply",
+                pointerEvents: "none",
+                boxSizing: "border-box",
             });
+            overlay.appendChild(r);
+        }
 
-            const spans = Array.from(textLayerDiv.querySelectorAll("span"));
-            const parent = textLayerDiv.getBoundingClientRect();
-            const intersects = (a, b) => !(
-                a.x + a.w < b.x + tolerance ||
-                a.x > b.x + b.w - tolerance ||
-                a.y + a.h < b.y + tolerance ||
-                a.y > b.y + b.h - tolerance
-            );
-            let hits = 0;
-            spans.forEach(s => s.classList.remove("pdf-span-hl"));
-            spans.forEach(s => {
-                const r = s.getBoundingClientRect();
-                const local = {x: r.left - parent.left, y: r.top - parent.top, w: r.width, h: r.height};
-                for (const cr of rectsCss) {
-                    if (intersects(local, cr)) {
-                        s.classList.add("pdf-span-hl");
-                        hits++;
-                        break;
-                    }
-                }
-            });
-            return hits;
-        };
-
-        let hits = paintAndCount(bottomRects);
-        if (hits === 0) hits = paintAndCount(topRects);
-
+        // авто-скролл к первому прямоугольнику
         const first = overlay.firstElementChild;
         if (first && wrapRef.current) {
             const box = first.getBoundingClientRect();
@@ -207,7 +172,6 @@ const PdfPane = forwardRef(function PdfPane({pdfUrl, onClose}, ref) {
             wrapRef.current.scrollBy({top: dy, behavior: "smooth"});
         }
     };
-
     // ------- Public API -------
     useImperativeHandle(ref, () => ({
         openHighlight: async ({page, rects, zoom}) => {
@@ -228,7 +192,7 @@ const PdfPane = forwardRef(function PdfPane({pdfUrl, onClose}, ref) {
                 }
             }
 
-            highlightSpansByBBoxes(rects);
+            highlightByCoords(rects);
         },
         setZoom: (z) => setScale(z),
         goToPage: (p) => setPageNum(p),
