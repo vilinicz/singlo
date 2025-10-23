@@ -338,28 +338,39 @@ def ensure_minimal_backbone(nodes: List[Dict[str, Any]],
     return edges
 
 
+def _ensure_geo(n: dict, fallback: dict | None = None) -> dict:
+    """Гарантируем, что у узла есть page/coords/bbox. Берём с узла, из prov, затем из fallback."""
+    prov = n.get("prov") or {}
+    page = n.get("page") or prov.get("page")
+    coords = n.get("coords") or prov.get("coords")
+    bbox = n.get("bbox") or prov.get("bbox")
+
+    if fallback:
+        page = page if (isinstance(page, int) and page >= 0) else fallback.get("page")
+        coords = coords if isinstance(coords, list) else fallback.get("coords")
+        bbox = bbox if isinstance(bbox, list) else fallback.get("bbox")
+
+    # финально нормализуем типы
+    try:
+        n["page"] = int(page) if page is not None else 0
+    except:
+        n["page"] = 0
+    n["coords"] = coords if isinstance(coords, list) else []
+    n["bbox"] = bbox if isinstance(bbox, list) else []
+    return n
+
+
 ## Assign simple column/row hints by type ordering to aid UI layout.
 def _layout_columns(doc_id: str,
                     nodes: list[dict],
                     edges: list[dict],
                     *,
-                    column_order: list[str] | None = None,
-                    left_margin: int = 120,
-                    top_margin: int = 120,
-                    x_step: int = 260,
-                    y_step: int = 140,
-                    col_padding: int = 0) -> dict:
+                    column_order: list[str] | None = None) -> dict:
     """
     Колончатая раскладка для фронта.
-    - column_order: фиксированный порядок типов (если None — используем канонический).
-    - x_step / y_step: расстояние между столбцами и между блоками по вертикали.
-    - left_margin / top_margin: отступы от края канваса.
-    - col_padding: дополнительный отступ между столбцами (если нужен).
-
     Каждому узлу проставляет:
       node["data"]["col"] = индекс столбца
       node["data"]["row"] = порядковый номер в столбце
-      node["position"] = {"x": X, "y": Y}
     """
     # Канонический порядок (8 колонок)
     default_order = [
@@ -374,11 +385,6 @@ def _layout_columns(doc_id: str,
     except Exception:
         def _norm_type(t: str) -> str:
             return t
-
-    # Карта индекс -> x
-    x_positions: dict[int, int] = {}
-    for ci, _ in enumerate(order):
-        x_positions[ci] = left_margin + ci * (x_step + col_padding)
 
     # Разброс по колонкам
     buckets: dict[str, list[dict]] = {t: [] for t in order}
@@ -422,13 +428,10 @@ def _layout_columns(doc_id: str,
     for ci, t in enumerate(order):
         col_nodes = buckets.get(t, [])
         for ri, n in enumerate(col_nodes):
-            nx = x_positions[ci]
-            ny = top_margin + ri * y_step
-            # гарантируем структуры 'data' и 'position'
+            # гарантируем структуры 'data'
             n.setdefault("data", {})
             n["data"]["col"] = ci
             n["data"]["row"] = ri
-            n["position"] = {"x": nx, "y": ny}
             # перепишем тип в каноническое имя столбца
             n["type"] = t
             laid_nodes.append(n)
@@ -436,16 +439,12 @@ def _layout_columns(doc_id: str,
     # Узлы «других» типов (если есть) — добавим колонкой после последних
     if other:
         ci = len(order)
-        x_positions[ci] = left_margin + ci * (x_step + col_padding)
         order.append("Other")
         other.sort(key=_ord_key)
         for ri, n in enumerate(other):
-            nx = x_positions[ci]
-            ny = top_margin + ri * y_step
             n.setdefault("data", {})
             n["data"]["col"] = ci
             n["data"]["row"] = ri
-            n["position"] = {"x": nx, "y": ny}
             n["type"] = "Other"
             laid_nodes.append(n)
 
@@ -454,17 +453,6 @@ def _layout_columns(doc_id: str,
         "doc_id": doc_id,
         "nodes": laid_nodes,
         "edges": edges,
-        "meta": {
-            "layout": {
-                "mode": "columns",
-                "columns": order,
-                "left_margin": left_margin,
-                "top_margin": top_margin,
-                "x_step": x_step,
-                "y_step": y_step,
-                "col_padding": col_padding
-            }
-        }
     }
     return graph
 
@@ -521,6 +509,21 @@ def run_s2(export_dir: str):
 
     nodes = list(s1.get("nodes", []))
     edges = list(s1.get("edges", []))
+
+    # --- GEO SNAPSHOT из S1: чтобы всегда можно было восстановить
+    orig_geo = {}
+    for n in nodes:
+        nid = n.get("id")
+        if not nid:
+            continue
+        prov = n.get("prov") or {}
+        orig_geo[nid] = {
+            "page": n.get("page") or prov.get("page") or 0,
+            "coords": (n.get("coords") if isinstance(n.get("coords"), list) else []) or (
+                prov.get("coords") if isinstance(prov.get("coords"), list) else []) or [],
+            "bbox": (n.get("bbox") if isinstance(n.get("bbox"), list) else []) or (
+                prov.get("bbox") if isinstance(prov.get("bbox"), list) else []) or [],
+        }
 
     # --- 1) нормализация типа и дедуп узлов ---
     def _norm(n: dict) -> dict:
@@ -735,6 +738,11 @@ def run_s2(export_dir: str):
 
     # финальная зачистка: порог + дедуп по (from,to,type)
     edges = [e for e in edges if float(e.get("conf", 0.0)) >= 0.55]
+
+    # --- вернуть геометрию из снапшота S1
+    for n in nodes:
+        fb = orig_geo.get(n.get("id"))
+        _ensure_geo(n, fb)
 
     tmp = {}
     for e in edges:
