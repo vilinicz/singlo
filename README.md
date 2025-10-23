@@ -5,6 +5,7 @@
 
 Singularis turns scientific PDFs into graphs of atomic research elements—Input Fact, Hypothesis, Experiment, Technique, Result, Dataset, Analysis, Conclusion—linked with typed edges. The goal is to reach 80–90% of an LLM read-out’s quality at 10–100× lower cost and latency; LLMs are used sparingly (refine/QA/auto-rule suggestion), while the core extraction is deterministic and cheap.
 
+![img1.png](temp/img1.png)
 ### Architecture (services & code map)
 
 * grobid — PDF→TEI for S0
@@ -46,7 +47,7 @@ Singularis turns scientific PDFs into graphs of atomic research elements—Input
 
 3. Open a web page: http://localhost:3000/
 
-
+![img2.png](temp/img2.png)
 ### Technologies (runtime & libs)
 
 * **Python 3.11**, custom S1→S2 pipeline.
