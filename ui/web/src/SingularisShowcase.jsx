@@ -232,15 +232,18 @@ export default function SingularisShowcase() {
             const have = new Set();
             const grid = makeGrid(cy);
             const trunc = (s, n = 140) => (s && s.length > n ? s.slice(0, n).trim() + "…" : (s || ""));
-
             // nodes — раскладываем по col/row (из S2), иначе — уважаем входные позиции
             for (const n of data.nodes || []) {
                 const col = Number.isFinite(n.data?.col) ? n.data.col : null;
                 const row = Number.isFinite(n.data?.row) ? n.data.row : null;
+                const page = n.page ?? n.data?.page ?? n.data?.prov?.page ?? n.prov?.page ?? null;
+                const bbox = n.bbox ?? n.data?.bbox ?? n.data?.prov?.bbox ?? n.prov?.bbox ?? null;
+                const coords = n.coords ?? n.data?.coords ?? n.data?.prov?.coords ?? n.prov?.coords ?? null;
                 elements.push({
                     data: {
                         id: n.id, type: n.type, text: n.text || "", conf: n.conf ?? 0,
-                        col, row, label: trunc(n.text || "")
+                        col, row, label: trunc(n.text || ""),
+                        page, bbox, coords
                     },
                     position: (col != null && row != null) ? {
                         x: grid.colX(col),
@@ -405,17 +408,19 @@ export default function SingularisShowcase() {
                 lastTs = 0;
 
                 const d = n.data();
-                // ⚠️ сюда подставь корректные поля, откуда ты берёшь страницу и bbox
                 const page = d.page ?? d?.prov?.page ?? null;
                 const bbox = d.bbox ?? d?.prov?.bbox ?? null;
+                const coords = d.coords ?? d?.prov?.coords ?? null;   // ← добавили
+                const rawText = d.text ?? d?.prov?.text ?? d.label;   // ← если хочешь показывать «исходный текст»
 
                 setModalNode({
                     id: d.id,
                     type: d.type,
-                    text: d.text || d.label || "",
+                    text: rawText || "",
                     conf: d.conf ?? 0,
                     page,
-                    bbox, // <— важно!
+                    bbox,
+                    coords, // ← добавили
                 });
                 return;
             }
@@ -668,18 +673,25 @@ export default function SingularisShowcase() {
                                         if (!pdfUrl) return;            // status.artifacts.pdf
                                         if (!modalNode) return;
 
-                                        // нормализуем bbox к массиву прямоугольников
-                                        const rects = Array.isArray(modalNode.bbox?.[0])
-                                            ? modalNode.bbox
-                                            : (modalNode.bbox ? [modalNode.bbox] : []);
+                                        // 1) если есть coords [{x,y,w,h}], используем их
+                                        let rects = Array.isArray(modalNode.coords)
+                                            ? modalNode.coords
+                                            : null;
+
+                                        // 2) иначе fallback на bbox [x0,y0,x1,y1] или массив таких bbox
+                                        if (!rects) {
+                                            if (Array.isArray(modalNode.bbox?.[0])) rects = modalNode.bbox;
+                                            else if (Array.isArray(modalNode.bbox)) rects = [modalNode.bbox];
+                                        }
 
                                         setPdfOpen(true);
-                                        // подождём, чтобы панель примонтировалась
+                                        console.log("[HL] rects preBEFORE openHighlight:", rects);
                                         setTimeout(() => {
+                                            console.log("[HL] rects BEFORE openHighlight:", rects);
                                             pdfRef.current?.openHighlight({
                                                 page: modalNode.page || 1,
-                                                rects,
-                                                // zoom: 1.4, // опционально: форснуть масштаб
+                                                rects,  // PdfPane теперь сам поймёт и [{x,y,w,h}], и [x0,y0,x1,y1]
+                                                // zoom: 1.4,
                                             });
                                         }, 0);
                                     }}
