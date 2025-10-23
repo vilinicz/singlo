@@ -218,7 +218,7 @@ export default function SingularisShowcase() {
                 cy = cyRef.current = cytoscape({
                     container: host,
                     pixelRatio: 1,
-                    wheelSensitivity: 0.9,
+                    wheelSensitivity: 2,
                     minZoom: 0.2,
                     maxZoom: 2,
                     style: [
@@ -646,7 +646,7 @@ export default function SingularisShowcase() {
                                         className="text-emerald-200/60 text-sm">({modalNode.id})</span>
                                     </div>
                                     <div className="text-emerald-200/60 text-xs mt-1">
-                                        conf: {(modalNode.conf || 0).toFixed(2)}{modalNode.page != null ? ` · page ${modalNode.page}` : ""}
+                                        conf: {(modalNode.conf || 0).toFixed(2)}{modalNode.page != null ? ` · page ${modalNode.page + 1}` : ""}
                                     </div>
                                 </div>
                                 <button
