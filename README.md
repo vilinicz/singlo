@@ -3,7 +3,7 @@
 
 ### Overview
 
-Singularis turns scientific PDFs into graphs of atomic research elements—Input Fact, Hypothesis, Experiment, Technique, Result, Dataset, Analysis, Conclusion—linked with typed edges. The goal is to reach 80–90% of an LLM read-out’s quality at 10–100× lower cost and latency; LLMs are used sparingly (refine/QA/auto-rule suggestion), while the core extraction is deterministic and cheap.
+Singularis turns scientific PDFs into graphs of atomic research elements—Input Fact, Hypothesis, Experiment, Technique, Result, Dataset, Analysis, Conclusion—linked with typed edges. The goal is to reach 80–90% of an LLM read-out’s quality at 10–100× lower cost and latency; LLMs are used sparingly (refine/QA/auto-rule suggestion), while the core extraction is deterministic and cheap. [Presentation](https://docs.google.com/presentation/d/1ZZb7BJr3nzyBe192ZdPyMlc1WzHPWfMUgSZLLiQ7AF4/)
 
 ![img1.png](temp/img1.png)
 ### Architecture (services & code map)
