@@ -25,7 +25,7 @@ from rq.connections import Connection
 import redis
 
 # --- S0 (GROBID) ---
-from .s0_grobid import grobid_fulltext_tei, tei_to_s0
+from .s0 import grobid_fulltext_tei, tei_to_s0
 
 # --- S1 / S2 ---
 from .s1 import run_s1

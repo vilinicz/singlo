@@ -217,7 +217,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "CONC_ABS_HEAD",
@@ -274,7 +281,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "DISCUSSION",
+        "CONCLUSION"
+      ]
+    }
   },
   {
     "name": "CONC_SUMMARY_ABS",
@@ -309,7 +323,14 @@
           "OP": "?"
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "ABSTRACT",
+        "DISCUSSION"
+      ]
+    }
   },
   {
     "name": "CONC_SURFACE",
@@ -416,7 +437,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ]
+    }
   },
   {
     "name": "HYP_SURFACE",
@@ -818,7 +846,14 @@
           "ORTH": ")"
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ]
+    }
   },
   {
     "name": "INF_CIT_DOI",
@@ -983,7 +1018,14 @@
           "ORTH": ")"
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ]
+    }
   },
   {
     "name": "INF_CIT_PAREN_YEAR_ONLY",
@@ -1145,7 +1187,14 @@
           "LOWER": "with"
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ]
+    }
   },
   {
     "name": "INF_SURFACE",
@@ -1258,7 +1307,14 @@
           "OP": "?"
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "RES_ABS_HEAD_RESULTS",
@@ -1519,7 +1575,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "RESULTS",
+        "DISCUSSION",
+        "ABSTRACT"
+      ]
+    }
   },
   {
     "name": "RES_VERB_CUES",
@@ -1576,6 +1640,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "RESULTS",
+        "DISCUSSION",
+        "ABSTRACT"
+      ]
+    }
   }
 ]

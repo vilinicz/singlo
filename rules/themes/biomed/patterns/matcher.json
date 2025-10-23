@@ -178,7 +178,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "ABSTRACT",
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "EXP_SURFACE",
@@ -318,7 +326,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS",
+        "ABSTRACT"
+      ]
+    }
   },
   {
     "name": "TEC_ABS_HEAD_METHODS",
@@ -347,7 +363,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT"
+      ]
+    }
   },
   {
     "name": "TEC_SURFACE",
@@ -546,7 +568,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "METHODS",
+        "RESULTS",
+        "ABSTRACT"
+      ]
+    }
   },
   {
     "name": "TEC_USING",

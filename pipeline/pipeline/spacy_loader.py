@@ -5,7 +5,7 @@ spacy_loader.py — загрузка spaCy-модели и data-driven патт�
 Публичные функции:
 - load_spacy_model() -> (nlp, dep_enabled, model_name)
 - load_spacy_patterns(nlp, themes_root, themes)
-    -> (matcher, depmatcher|None, type_boosts, loaded_paths)
+    -> (matcher, depmatcher|None, type_boosts, rule_configs, loaded_paths)
 """
 
 from __future__ import annotations
@@ -178,14 +178,14 @@ def load_spacy_patterns(
         nlp: "spacy.language.Language",
         themes_root: str | Path,
         themes: Optional[List[str]]
-) -> Tuple[Matcher, Optional[DependencyMatcher], Dict[str, float], Dict[str, str], Dict[str, List[str]]]:
+) -> Tuple[Matcher, Optional[DependencyMatcher], Dict[str, float], Dict[str, Dict[str, Any]], Dict[str, List[str]]]:
     """
     Собирает matcher/depmatcher/lexicon из набора тем.
     Возвращает:
       - matcher (всегда, иначе бросает RuntimeError),
       - depmatcher (или None, если парсера нет или не нашлось dep-паттернов),
       - type_boosts (объединённый),
-      - rule_labels: имя правила → канонический тип,
+      - rule_configs: имя правила → {label, meta},
       - loaded_paths: {"matcher":[...], "depmatcher":[...], "lexicons":[...]} — строки путей.
     """
     themes_root = Path(themes_root or "/app/rules/themes")
@@ -195,7 +195,7 @@ def load_spacy_patterns(
     matcher = Matcher(nlp.vocab)
     loaded_m: List[str] = []
     m_count = 0
-    rule_labels: Dict[str, str] = {}
+    rule_configs: Dict[str, Dict[str, Any]] = {}
     token_auto_idx = 0
 
     if not mpaths:
@@ -233,7 +233,10 @@ def load_spacy_patterns(
                 matcher.add(rule_name, pattern_list)
                 m_count += 1
                 added_here += 1
-                rule_labels[rule_name] = label
+                rule_configs[rule_name] = {
+                    "label": label,
+                    "meta": obj.get("meta", {})
+                }
             except Exception as e:
                 raise RuntimeError(f"Bad token pattern in {p} for label={label}: {e}") from e
         if added_here > 0:
@@ -286,7 +289,10 @@ def load_spacy_patterns(
                     depmatcher.add(rule_name, expanded_batches)  # spaCy ждёт List[List[dict]]
                     d_count += 1
                     added_here += 1
-                    rule_labels[rule_name] = label
+                    rule_configs[rule_name] = {
+                        "label": label,
+                        "meta": obj.get("meta", {})
+                    }
                 except Exception as e:
                     raise RuntimeError(f"Bad dep pattern in {p} for label={label}: {e}") from e
             if added_here > 0:
@@ -316,4 +322,4 @@ def load_spacy_patterns(
             continue
 
     loaded_paths = {"matcher": loaded_m, "depmatcher": loaded_d, "lexicons": [str(p) for p in lpaths]}
-    return matcher, depmatcher, boosts, rule_labels, loaded_paths
+    return matcher, depmatcher, boosts, rule_configs, loaded_paths

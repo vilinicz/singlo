@@ -197,39 +197,48 @@ def _txt(n: Dict[str, Any]) -> str:
 
 # ── dedup_nodes: сохраняем исходный тип в type_raw для дебага ────────────────
 ## Merge near-duplicate nodes; preserve the most confident representative.
-def dedup_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def dedup_nodes(nodes: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     """
     Дедуп по ключу из dedup_key(): (type, norm_text(text), SPECIAL for Hypothesis/IMRAD).
     Сохраняем максимально уверенный узел; аккумулируем провенанс; полярность — neutral, если расходится.
+    Возвращает (dedup_nodes, id_map), где id_map: old_id → canonical_id.
     """
     buckets: Dict[Tuple, List[Dict[str, Any]]] = defaultdict(list)
     for n in nodes:
         m = dict(n)
         m["type_raw"] = m.get("type")
         m["type"] = normalize_type(m.get("type"))
-        k = dedup_key(m)  # <— используем спец-ключ
+        k = dedup_key(m)
         buckets[k].append(m)
 
     out: List[Dict[str, Any]] = []
+    id_map: Dict[str, str] = {}
     for _, arr in buckets.items():
         if len(arr) == 1:
-            out.append(arr[0])
+            node = arr[0]
+            out.append(node)
+            node_id = node.get("id")
+            if node_id:
+                id_map[node_id] = node_id
             continue
-        # берём самый уверенный как главный
         arr.sort(key=lambda x: float(x.get("conf", 0.0)), reverse=True)
         top = dict(arr[0])
-        # провенанс: складываем в prov_multi, а основной prov оставляем от «главного»
+        top_id = top.get("id")
+        if top_id:
+            id_map[top_id] = top_id
         provs = [a.get("prov") for a in arr if a.get("prov")]
         if provs:
             top["prov_multi"] = provs
-        # полярность: если разношёрстная — neutral
         pols = {(a.get("polarity") or "neutral") for a in arr}
         if len(pols) > 1:
             top["polarity"] = "neutral"
-        # conf: максимум
         top["conf"] = float(max(float(a.get("conf", 0.0)) for a in arr))
         out.append(top)
-    return out
+        for dup in arr[1:]:
+            dup_id = dup.get("id")
+            if dup_id and top_id:
+                id_map[dup_id] = top_id
+    return out, id_map
 
 
 ## Build an id→node index for quick lookups.
@@ -533,7 +542,20 @@ def run_s2(export_dir: str):
 
     nodes = [_norm(n) for n in nodes]
     # ожидается, что dedup_nodes уже есть в модуле
-    nodes = dedup_nodes(nodes)  # noqa: F405
+    nodes, id_map = dedup_nodes(nodes)  # noqa: F405
+
+    # переназначаем id рёбер согласно каноническим узлам
+    remapped_edges: List[Dict[str, Any]] = []
+    for e in edges:
+        frm = id_map.get(e.get("from"))
+        to = id_map.get(e.get("to"))
+        if not frm or not to:
+            continue
+        e2 = dict(e)
+        e2["from"] = frm
+        e2["to"] = to
+        remapped_edges.append(e2)
+    edges = remapped_edges
 
     # 2) релинковка и нормализация рёбер по типам узлов
     edges = relink_edges(nodes, edges)

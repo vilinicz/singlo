@@ -35,7 +35,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "DATA_SAMPLE_OF",
@@ -67,7 +75,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "DATA_SOURCE",
@@ -177,7 +193,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "EXP_DOBJ",
@@ -230,7 +253,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "EXP_PASSIVE_PROC",
@@ -273,7 +303,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "EXP_IMMERSE_SALIVA",

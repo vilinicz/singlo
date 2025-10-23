@@ -78,7 +78,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "ANA_MODEL_NOUN",
@@ -121,7 +128,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "METHODS",
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "CONC_DEP",
@@ -174,7 +188,18 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "DISCUSSION",
+        "CONCLUSION",
+        "ABSTRACT"
+      ],
+      "demote": [
+        "Dataset"
+      ]
+    }
   },
   {
     "name": "CONC_VERB_THAT",
@@ -339,7 +364,15 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 2,
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ],
+      "label": "Input Fact"
+    }
   },
   {
     "name": "RES_COMPARE_TO",
@@ -370,7 +403,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "RES_IDENTIFY_AS",
@@ -420,7 +459,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "RES_STATS_RATIO_NUM",
@@ -460,7 +505,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "weight": 1,
+      "sections": [
+        "RESULTS"
+      ]
+    }
   },
   {
     "name": "RES_WE_VERB",

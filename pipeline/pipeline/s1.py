@@ -437,7 +437,7 @@ def _score_sentence(nlp_doc: Doc,
                     matcher: Matcher | None,
                     depmatcher: Optional[DependencyMatcher],
                     type_boosts: Dict[str, float],
-                    rule_labels: Dict[str, str],
+                    rule_configs: Dict[str, Dict[str, Any]],
                     dep_enabled: bool) -> Tuple[Optional[str], float, Dict[str, Any], List[dict]]:
     """
     Считает очки по token- и dep-паттернам, устойчив к разным формам token_maps из DependencyMatcher:
@@ -449,13 +449,20 @@ def _score_sentence(nlp_doc: Doc,
     matched_rules: List[dict] = []
 
     # --- Token patterns (Matcher)
+    imrad_normed = (imrad_hint or "OTHER").upper()
+
     if matcher is not None:
         for match_id, start, end in matcher(nlp_doc):
             try:
                 rule_name = nlp_doc.vocab.strings[match_id]
             except Exception:
                 continue
-            tname = rule_labels.get(rule_name) or _canon_type(rule_name) or "Other"
+            cfg = rule_configs.get(rule_name, {})
+            meta = cfg.get("meta") or {}
+            allowed_sections = {str(sec).upper() for sec in meta.get("sections", []) if isinstance(sec, str)}
+            if allowed_sections and imrad_normed not in allowed_sections:
+                continue
+            tname = cfg.get("label") or _canon_type(rule_name) or "Other"
             if tname in NODE_TYPES:
                 hits[tname] = hits.get(tname, 0.0) + 1.0
                 frag = nlp_doc[start:end].text
@@ -476,7 +483,12 @@ def _score_sentence(nlp_doc: Doc,
                 rule_name = nlp_doc.vocab.strings[match_id]
             except Exception:
                 continue
-            tname = rule_labels.get(rule_name) or _canon_type(rule_name) or "Other"
+            cfg = rule_configs.get(rule_name, {})
+            meta = cfg.get("meta") or {}
+            allowed_sections = {str(sec).upper() for sec in meta.get("sections", []) if isinstance(sec, str)}
+            if allowed_sections and imrad_normed not in allowed_sections:
+                continue
+            tname = cfg.get("label") or _canon_type(rule_name) or "Other"
             if tname not in NODE_TYPES:
                 continue
             if tname == "Result":
@@ -966,7 +978,7 @@ def run_s1(s0_path: str,
     # загрузка spaCy и паттернов
     nlp, dep_enabled, model_name = load_spacy_model()
     # NOTE: spacy_loader теперь возвращает loaded_paths, а не registry
-    matcher, depmatcher, type_boosts, rule_labels, loaded_paths = load_spacy_patterns(
+    matcher, depmatcher, type_boosts, rule_configs, loaded_paths = load_spacy_patterns(
         nlp, themes_root or "/app/rules/themes", theme_override
     )
     themes_used = theme_override or ["common"]
@@ -990,7 +1002,7 @@ def run_s1(s0_path: str,
         # doc для spaCy
         doc = nlp(text)
         tname, conf, dbg, rule_hits = _score_sentence(
-            doc, text, imrad, matcher, depmatcher, type_boosts, rule_labels, dep_enabled
+            doc, text, imrad, matcher, depmatcher, type_boosts, rule_configs, dep_enabled
         )
         if tname is not None and dbg.get("scored"):
             tname = tiebreak_label(dbg["scored"], tname)
