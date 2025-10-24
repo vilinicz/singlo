@@ -341,7 +341,7 @@ def tei_iter_sentences(tei_xml: str):
         if tag == "head":
             head_txt = txt(el)
             label = map_head_to_hint(head_txt)
-            if label != "OTHER" and not _should_ignore_head(el, label):
+            if label != "OTHER": # and not _should_ignore_head(el, label):
                 current_imrad_section = label
 
         elif tag == "s":
