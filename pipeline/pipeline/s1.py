@@ -153,6 +153,73 @@ LINK_WINDOW_FORWARD = 6  # чуть шире, но только вперёд п�
 # max allowed page distance for edge candidates
 PAGE_DELTA_MAX = 2
 
+# Настройки окон для пар типов: большее окно для удалённых, но семантически связанных связок.
+EDGE_PAIR_PARAMS = {
+    ("Technique", "Experiment"): {"max_forward": 10, "max_k": 3, "max_page_delta": 2},
+    ("Technique", "Result"): {"max_forward": 14, "max_k": 2, "max_page_delta": 2, "bonus": 0.02},
+    ("Experiment", "Result"): {"max_forward": 24, "max_k": 4, "max_page_delta": 3, "min_conf": 0.55, "bonus": 0.04},
+    ("Result", "Hypothesis"): {"max_forward": 28, "max_k": 4, "max_page_delta": 3, "min_conf": 0.53},
+    ("Dataset", "Experiment"): {"max_forward": 16, "max_k": 2, "max_page_delta": 3},
+    ("Dataset", "Analysis"): {"max_forward": 18, "max_k": 2, "max_page_delta": 3},
+    ("Analysis", "Result"): {"max_forward": 14, "max_k": 2, "max_page_delta": 2},
+    ("Result", "Result"): {"max_forward": 14, "max_k": 2, "max_page_delta": 2},
+    ("Dataset", "Result"): {"max_forward": 14, "max_k": 2, "max_page_delta": 3, "min_conf": 0.58},
+}
+
+# Минимальный набор стоп-слов для оценок пересечения.
+EDGE_STOPWORDS = {
+    "the", "and", "or", "of", "to", "in", "for", "on", "with", "by", "an", "a",
+    "was", "were", "is", "are", "this", "that", "these", "those", "from", "as",
+    "using", "use", "our", "their", "we", "they", "it", "at", "be"
+}
+
+RESULT_SUPPORT_CUES = ("suggest", "indicate", "support", "confirm", "demonstrate", "show", "reveal")
+
+IMRAD_RANK = {
+    "ABSTRACT": 0,
+    "INTRO": 1,
+    "INTRODUCTION": 1,
+    "BACKGROUND": 1,
+    "METHODS": 2,
+    "MATERIALS AND METHODS": 2,
+    "RESULTS": 3,
+    "DISCUSSION": 4,
+    "CONCLUSION": 5,
+    "CONCLUSIONS": 5,
+    "OTHER": 6,
+    "REFERENCES": 7
+}
+
+LONG_RANGE_SPECS = [
+    {
+        "pair": ("Hypothesis", "Experiment"),
+        "edge_type": "tests",
+        "from_secs": {"INTRO", "ABSTRACT"},
+        "to_secs": {"METHODS"},
+        "bonus": 0.06,
+        "min_conf": 0.58,
+        "max_per_src": 1
+    },
+    {
+        "pair": ("Experiment", "Result"),
+        "edge_type": "produces",
+        "from_secs": {"METHODS"},
+        "to_secs": {"RESULTS", "DISCUSSION"},
+        "bonus": 0.05,
+        "min_conf": 0.6,
+        "max_per_src": 2
+    },
+    {
+        "pair": ("Result", "Conclusion"),
+        "edge_type": "auto_result_conclusion",
+        "from_secs": {"RESULTS", "DISCUSSION"},
+        "to_secs": {"CONCLUSION", "DISCUSSION"},
+        "bonus": 0.05,
+        "min_conf": 0.57,
+        "max_per_src": 1
+    },
+]
+
 _RX_CIT_AUTHOR_YEAR = re.compile(
     r'\((?:[A-Z][a-zA-Z\-]+(?:\s+et\s+al\.)?(?:\s*&\s*[A-Z][a-zA-Z\-]+)?,?\s*)\d{4}[a-z]?\)', re.U)
 _RX_CIT_BRACKETS_NUM = re.compile(r'\[(?:\d+(?:\s*[-–]\s*\d+)?(?:\s*,\s*\d+)*)\]', re.U)
@@ -674,6 +741,65 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
     for n in nodes:
         by_type.get(n["type"], []).append(n)
 
+    token_cache: Dict[str, Set[str]] = {}
+    fig_cache: Dict[str, Tuple[Set[str], Set[str]]] = {}
+
+    def _edge_tokens(n: Dict[str, Any]) -> Set[str]:
+        tok = token_cache.get(n["id"])
+        if tok is not None:
+            return tok
+        words = set(re.findall(r"[A-Za-z0-9]+", (n.get("text") or "").lower()))
+        cleaned = {w for w in words if w not in EDGE_STOPWORDS and len(w) > 2}
+        token_cache[n["id"]] = cleaned
+        return cleaned
+
+    def _edge_refs(n: Dict[str, Any]) -> Tuple[Set[str], Set[str]]:
+        refs = fig_cache.get(n["id"])
+        if refs is not None:
+            return refs
+        figs, tabs = extract_fig_table_refs(n.get("text", ""))
+        pair = (set(figs), set(tabs))
+        fig_cache[n["id"]] = pair
+        return pair
+
+    def _semantic_adjustment(src: Dict[str, Any], dst: Dict[str, Any]) -> Tuple[float, float]:
+        pair = (src.get("type"), dst.get("type"))
+        bonus = 0.0
+        penalty = 0.0
+
+        toks_src = _edge_tokens(src)
+        toks_dst = _edge_tokens(dst)
+        shared = toks_src & toks_dst
+        if shared:
+            bonus += min(0.04, 0.015 * len(shared))
+
+        figs_src, tabs_src = _edge_refs(src)
+        figs_dst, tabs_dst = _edge_refs(dst)
+        if figs_src & figs_dst or tabs_src & tabs_dst:
+            bonus += 0.04
+
+        text_src = (src.get("text") or "").lower()
+        text_dst = (dst.get("text") or "").lower()
+
+        if pair == ("Experiment", "Result"):
+            if _has_numeric(dst.get("text", "")):
+                bonus += 0.05
+            if src["prov"].get("imrad") != dst["prov"].get("imrad"):
+                bonus += 0.02
+        elif pair == ("Result", "Hypothesis"):
+            if any(cue in text_dst for cue in RESULT_SUPPORT_CUES):
+                bonus += 0.04
+        elif pair == ("Technique", "Result"):
+            if "method" in text_src or "protocol" in text_src:
+                bonus += 0.02
+        elif pair == ("Dataset", "Result"):
+            if not _has_numeric(dst.get("text", "")):
+                penalty += 0.06
+            if "table" in text_dst or "figure" in text_dst:
+                bonus += 0.02
+
+        return bonus, penalty
+
     def add_edge_hysteresis(src: Dict, dst: Dict, etype: str, base_conf: float):
         # локальные расстояния
         try:
@@ -682,9 +808,16 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
         except Exception:
             return  # перестраховка при битых индексах
 
+        pair = (src.get("type"), dst.get("type"))
+        cfg = EDGE_PAIR_PARAMS.get(pair, {})
+        min_conf = float(cfg.get("min_conf", CONF_EDGE_MIN))
+        bonus, penalty = _semantic_adjustment(src, dst)
+        extra = float(cfg.get("bonus", 0.0))
+        conf = min(1.0, max(0.0, base_conf + bonus + extra - penalty))
         thr = edge_min_threshold(CONF_EDGE_MIN, ds, dp)
-        if base_conf >= thr:
-            add_edge(src, dst, etype, base_conf)
+
+        if conf >= max(thr, min_conf):
+            add_edge(src, dst, etype, conf)
 
     def add_edge(src: Dict, dst: Dict, etype: str, conf: float):
         edges.append({
@@ -718,7 +851,18 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
         except Exception:
             return None
 
-    def nearest(src_list: List[Dict], dst_list: List[Dict], max_k=2, forward_only: bool = True) -> List[
+    def _imrad_key(n: dict) -> str:
+        prov = n.get("prov") or {}
+        return (prov.get("imrad") or "").upper()
+
+    def _imrad_rank(n: dict) -> int:
+        return IMRAD_RANK.get(_imrad_key(n), 99)
+
+    def nearest(src_list: List[Dict], dst_list: List[Dict], *,
+                max_k=2,
+                forward_only: bool = True,
+                max_forward: Optional[int] = None,
+                max_page_delta: Optional[int] = None) -> List[
         Tuple[Dict, Dict, int]]:
         cands = []
         for a in src_list:
@@ -727,9 +871,16 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
                 # --- forward-only: запрещаем рёбра "назад" по тексту
                 if forward_only:
                     try:
-                        if int(b["prov"]["sent_idx"]) <= int(a["prov"]["sent_idx"]):
+                        sb = int(b["prov"]["sent_idx"])
+                        sa = int(a["prov"]["sent_idx"])
+                        if sb <= sa:
                             continue
-                        if abs(int(a.get("page", 0)) - int(b.get("page", 0))) > PAGE_DELTA_MAX:
+                        p_delta = abs(int(a.get("page", 0)) - int(b.get("page", 0)))
+                        if max_page_delta is None:
+                            mpage = PAGE_DELTA_MAX
+                        else:
+                            mpage = max_page_delta
+                        if p_delta > mpage:
                             continue
                         if not imrad_ok(a["type"], a["prov"]["section"], b["type"], b["prov"]["section"]):
                             continue
@@ -740,12 +891,18 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
                 # --- page filter: если у обоих есть страницы, ограничиваем разницу
                 pa, pb = _page_of(a), _page_of(b)
                 if pa is not None and pb is not None:
-                    if abs(pb - pa) > PAGE_DELTA_MAX:
+                    if max_page_delta is None:
+                        mpage = PAGE_DELTA_MAX
+                    else:
+                        mpage = max_page_delta
+                    if abs(pb - pa) > mpage:
                         continue
 
                 d = _distance(a, b)
-                # для forward-окна разрешим чуть больше расстояние
-                max_d = LINK_WINDOW_FORWARD if forward_only else LINK_WINDOW_SENTENCES
+                if max_forward is None:
+                    max_d = LINK_WINDOW_FORWARD if forward_only else LINK_WINDOW_SENTENCES
+                else:
+                    max_d = max_forward
                 if d > max_d:
                     continue
                 best.append((a, b, d))
@@ -761,41 +918,207 @@ def _link_inside(doc_id: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any
             out.append((a, b, d))
         return out
 
+    def _polarity_edge_type(src: Dict[str, Any], default: str = "supports") -> str:
+        pol = (src.get("polarity") or "").lower()
+        if "negative" in pol or "refute" in pol:
+            return "refutes"
+        return default
+
+    def _add_long_range_edges():
+        if not LONG_RANGE_SPECS:
+            return
+        existing = {(e["from"], e["to"]) for e in edges}
+        for spec in LONG_RANGE_SPECS:
+            pair = spec.get("pair")
+            if not pair:
+                continue
+            src_type, dst_type = pair
+            src_list = sorted(by_type.get(src_type, []), key=lambda n: int(n["prov"]["sent_idx"]))
+            dst_list = sorted(by_type.get(dst_type, []), key=lambda n: int(n["prov"]["sent_idx"]))
+            if not src_list or not dst_list:
+                continue
+            from_secs = {s.upper() for s in spec.get("from_secs", [])}
+            to_secs = {s.upper() for s in spec.get("to_secs", [])}
+            max_per_src = int(spec.get("max_per_src", 1))
+            min_conf = float(spec.get("min_conf", CONF_EDGE_MIN))
+            bonus = float(spec.get("bonus", 0.0))
+            for src in src_list:
+                try:
+                    sa = int(src["prov"]["sent_idx"])
+                except Exception:
+                    continue
+                if from_secs and _imrad_key(src) not in from_secs:
+                    continue
+                candidates: List[Tuple[float, int, Dict[str, Any]]] = []
+                for dst in dst_list:
+                    if dst["id"] == src["id"]:
+                        continue
+                    try:
+                        sb = int(dst["prov"]["sent_idx"])
+                    except Exception:
+                        continue
+                    if sb <= sa:
+                        continue
+                    if to_secs and _imrad_key(dst) not in to_secs:
+                        continue
+                    if _imrad_rank(src) > _imrad_rank(dst):
+                        continue
+                    gap = sb - sa
+                    conf = (src.get("conf", 0.0) + dst.get("conf", 0.0)) / 2.0
+                    conf += bonus
+                    if spec["pair"] == ("Experiment", "Result") and _has_numeric(dst.get("text", "")):
+                        conf += 0.04
+                    if spec["pair"] == ("Result", "Conclusion"):
+                        if any(cue in (dst.get("text", "") or "").lower() for cue in RESULT_SUPPORT_CUES):
+                            conf += 0.03
+                    # penalize very distant links, но мягко
+                    if gap > 12:
+                        conf -= min(0.14, 0.004 * (gap - 12))
+                    # лёгкий бонус за общий токен
+                    shared_tokens = _edge_tokens(src) & _edge_tokens(dst)
+                    if shared_tokens:
+                        conf += min(0.03, 0.01 * len(shared_tokens))
+                    conf = max(0.0, min(1.0, conf))
+                    if conf < min_conf:
+                        continue
+                    candidates.append((conf, gap, dst))
+                if not candidates:
+                    continue
+                candidates.sort(key=lambda t: (-t[0], t[1]))
+                picked = 0
+                for conf, gap, dst in candidates:
+                    if picked >= max_per_src:
+                        break
+                    key = (src["id"], dst["id"])
+                    if key in existing:
+                        continue
+                    existing.add(key)
+                    picked += 1
+                    etype = spec.get("edge_type", "supports")
+                    if etype == "auto_result_conclusion":
+                        etype = _polarity_edge_type(src, "supports")
+                    edges.append({
+                        "from": src["id"],
+                        "to": dst["id"],
+                        "type": etype,
+                        "conf": round(conf, 3),
+                        "prov": {
+                            "hint": "longrange",
+                            "from": {"sec": src["prov"]["section"], "s": src["prov"]["sent_idx"]},
+                            "to": {"sec": dst["prov"]["section"], "s": dst["prov"]["sent_idx"]},
+                            "gap": gap
+                        }
+                    })
+
     # Technique → Experiment / Result
-    for a, b, _ in nearest(by_type["Technique"], by_type["Experiment"], max_k=2, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Technique", "Experiment"), {})
+    for a, b, _ in nearest(
+        by_type["Technique"],
+        by_type["Experiment"],
+        max_k=cfg.get("max_k", 2),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "uses", (a["conf"] + b["conf"]) / 2)
-    for a, b, _ in nearest(by_type["Technique"], by_type["Result"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Technique", "Result"), {})
+    for a, b, _ in nearest(
+        by_type["Technique"],
+        by_type["Result"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "uses", (a["conf"] + b["conf"]) / 2)
 
     # Experiment → Result
-    for a, b, _ in nearest(by_type["Experiment"], by_type["Result"], max_k=3, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Experiment", "Result"), {})
+    for a, b, _ in nearest(
+        by_type["Experiment"],
+        by_type["Result"],
+        max_k=cfg.get("max_k", 3),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "produces", (a["conf"] + b["conf"]) / 2)
 
     # Result → Hypothesis
-    for a, b, _ in nearest(by_type["Result"], by_type["Hypothesis"], max_k=3, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Result", "Hypothesis"), {})
+    for a, b, _ in nearest(
+        by_type["Result"],
+        by_type["Hypothesis"],
+        max_k=cfg.get("max_k", 3),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         et = "supports" if a.get("polarity") != "negative" else "refutes"
         add_edge_hysteresis(a, b, et, (a["conf"] + b["conf"]) / 2)
 
     # Dataset → Experiment/Analysis
-    for a, b, _ in nearest(by_type["Dataset"], by_type["Experiment"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Dataset", "Experiment"), {})
+    for a, b, _ in nearest(
+        by_type["Dataset"],
+        by_type["Experiment"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
-    for a, b, _ in nearest(by_type["Dataset"], by_type["Analysis"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Dataset", "Analysis"), {})
+    for a, b, _ in nearest(
+        by_type["Dataset"],
+        by_type["Analysis"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "feeds", (a["conf"] + b["conf"]) / 2)
 
     # Analysis → Result
-    for a, b, _ in nearest(by_type["Analysis"], by_type["Result"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Analysis", "Result"), {})
+    for a, b, _ in nearest(
+        by_type["Analysis"],
+        by_type["Result"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "informs", (a["conf"] + b["conf"]) / 2)
 
     # --- Result → Result  (цепочки промежуточных результатов)
     # строгие ворота уже обеспечены: только вперёд, близко по страницам, малое окно предложений
-    for a, b, _ in nearest(by_type["Result"], by_type["Result"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Result", "Result"), {})
+    for a, b, _ in nearest(
+        by_type["Result"],
+        by_type["Result"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         if a["id"] == b["id"]:
             continue
         add_edge_hysteresis(a, b, "follows", (a["conf"] + b["conf"]) / 2)
 
     # --- Dataset → Result  (описательные/репортинговые результаты по датасету)
-    for a, b, _ in nearest(by_type["Dataset"], by_type["Result"], max_k=1, forward_only=True):
+    cfg = EDGE_PAIR_PARAMS.get(("Dataset", "Result"), {})
+    for a, b, _ in nearest(
+        by_type["Dataset"],
+        by_type["Result"],
+        max_k=cfg.get("max_k", 1),
+        forward_only=True,
+        max_forward=cfg.get("max_forward"),
+        max_page_delta=cfg.get("max_page_delta")
+    ):
         add_edge_hysteresis(a, b, "summarizes", (a["conf"] + b["conf"]) / 2)
+
+    _add_long_range_edges()
 
     edges = [e for e in edges if e["conf"] >= CONF_EDGE_MIN]
 

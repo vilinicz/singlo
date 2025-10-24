@@ -410,8 +410,40 @@
             ]
           }
         }
+      ],
+      [
+        {
+          "LOWER": {
+            "IN": [
+              "the",
+              "this",
+              "present"
+            ]
+          }
+        },
+        {
+          "LOWER": "study"
+        },
+        {
+          "LEMMA": {
+            "IN": [
+              "show",
+              "indicate",
+              "suggest",
+              "demonstrate",
+              "reveal"
+            ]
+          }
+        }
       ]
-    ]
+    ],
+    "meta": {
+      "sections": [
+        "ABSTRACT",
+        "DISCUSSION",
+        "CONCLUSION"
+      ]
+    }
   },
   {
     "name": "HYP_OBJECTIVES_HEAD",
@@ -720,7 +752,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "sections": [
+        "ABSTRACT",
+        "INTRO"
+      ]
+    }
   },
   {
     "name": "INF_CIT_BRACK_NUM",

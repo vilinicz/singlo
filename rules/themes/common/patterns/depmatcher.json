@@ -235,7 +235,14 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "sections": [
+        "ABSTRACT",
+        "DISCUSSION",
+        "CONCLUSION"
+      ]
+    }
   },
   {
     "name": "HYP_CCOMP_THAT",
@@ -279,7 +286,13 @@
           }
         }
       ]
-    ]
+    ],
+    "meta": {
+      "sections": [
+        "INTRO",
+        "ABSTRACT"
+      ]
+    }
   },
   {
     "name": "HYP_XCOMP_TO",

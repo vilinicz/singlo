@@ -38,6 +38,7 @@ DEFAULT_EDGE_FOR_PAIR = {
     ("Result", "Analysis"): "informs",
     ("Dataset", "Analysis"): "informs",
     ("Technique", "Analysis"): "uses",
+    ("Technique", "Result"): "uses",
     ("Analysis", "Conclusion"): "summarizes",
     ("Result", "Conclusion"): "supports",
 }
@@ -136,6 +137,7 @@ ALLOWED_EDGE_TYPES: Dict[Tuple[str, str], set] = {
     ("Result", "Analysis"): {"informs"},
     ("Dataset", "Analysis"): {"informs"},
     ("Technique", "Analysis"): {"uses"},
+    ("Technique", "Result"): {"uses", "informs"},
     ("Analysis", "Conclusion"): {"supports", "refutes", "summarizes"},
     ("Result", "Conclusion"): {"supports", "refutes"},
     # --- расширение допустимых пар из S1
@@ -592,6 +594,10 @@ def run_s2(export_dir: str):
     # todo сомнительно
     force_llm = os.environ.get("FORCE_LLM", "").lower() in ("1", "true", "yes")
     need_llm = force_llm or (counts.get("Result", 0) < 1) or (counts.get("Hypothesis", 0) < 1) or (coherence < 0.6)
+    if os.environ.get("DISABLE_LLM", "").lower() in {"1", "true", "yes"}:
+        need_llm = False
+    if need_llm and not os.environ.get("OPENAI_API_KEY"):
+        need_llm = False
 
     # --- 5) подготовка компактного payload'a для LLM (встроено тут) ---
     # Собираем немного контекста из S0: abstract/conclusion + 2–4 captions
